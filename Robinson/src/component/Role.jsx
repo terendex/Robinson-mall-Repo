@@ -1,32 +1,18 @@
-export const placeholderUsers = [
-  {
-    email: "user@example.com",
-    password: "123456",
-    name: "Regular Joshua",
-    role: "user",
-  },
-  {
-    email: "admin@example.com",
-    password: "admin2026",
-    name: "Admin Boss",
-    role: "admin",
-  },
-  {
-    email: "moderator@example.com",
-    password: "modpass",
-    name: "Moderator Ana",
-    role: "moderator",
-  },
-  {
-    email: "joshua@baguio.ph",
-    password: "baguio2026",
-    name: "Joshua",
-    role: "user",
-  },
-];
 
-export function findUserByCredentials(email, password) {
-  return placeholderUsers.find(
-    (u) => u.email === email && u.password === password
+import React from 'react';
+
+function Role() {
+  // Add logic to determine user role and redirect accordingly
+  return (
+    <div>
+      <h2>Role-based access control</h2>
+      <p>Select your role:</p>
+      <a href="/admin">Admin</a>
+      <a href="/manager">Manager</a>
+      <a href="/staff">Staff</a>
+      <a href="/customer">Customer</a>
+    </div>
   );
 }
+
+export default Role;
