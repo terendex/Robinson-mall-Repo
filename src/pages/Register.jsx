@@ -1,124 +1,51 @@
-import { useState } from "react";
-import { Link } from "react-router-dom";
-import "./Register.css";
+import '../styles/Register.css'
+import Header from '../components/Header';
 
-export default function Register() {
-  const [firstName, setFirstName] = useState("");
-  const [lastName, setLastName] = useState("");
-  const [email, setEmail] = useState("");
-  const [birthday, setBirthday] = useState("");
-  const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
-  const [agreedToTerms, setAgreedToTerms] = useState(false);
-  const [agreedToPrivacy, setAgreedToPrivacy] = useState(false);
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    console.log("Register:", {
-      firstName,
-      lastName,
-      email,
-      birthday,
-      password,
-      agreedToTerms,
-      agreedToPrivacy,
-    });
-  };
-
+const Register = ({ onToggle }) => {
   return (
-    <div className="register-container">
-      <div className="header">
-        <div className="logo">Robinsin-voucher</div>
-      </div>
-      <div className="register-form-container">
-        <div className="register-form">
+    <div className="register-page">
+      <Header />
+      <div className="register-container">
+        <div className="register-card">
           <h2>Create Account</h2>
-          <form onSubmit={handleSubmit}>
+          <form>
             <div className="form-group">
               <label>First Name</label>
-              <input
-                type="text"
-                placeholder="First Name"
-                value={firstName}
-                onChange={(e) => setFirstName(e.target.value)}
-              />
+              <input type="text" placeholder="First Name" />
             </div>
             <div className="form-group">
               <label>Last Name</label>
-              <input
-                type="text"
-                placeholder="Last Name"
-                value={lastName}
-                onChange={(e) => setLastName(e.target.value)}
-              />
+              <input type="text" placeholder="Last Name" />
             </div>
             <div className="form-group">
               <label>Email Address</label>
-              <input
-                type="email"
-                placeholder="Email Address"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-              />
+              <input type="email" placeholder="Email Address" />
             </div>
             <div className="form-group">
               <label>Birthday</label>
-              <div className="birthday-input">
-                <input
-                  type="text"
-                  placeholder="mm/dd/yyyy"
-                  value={birthday}
-                  onChange={(e) => setBirthday(e.target.value)}
-                />
-                <span className="calendar-icon"></span>
-              </div>
+              <input type="text" placeholder="mm/dd/yyyy" />
+              <i className="fa-regular fa-calendar"></i>
             </div>
             <div className="form-group">
               <label>Password *</label>
-              <div className="password-input">
-                <input
-                  type={showPassword ? "text" : "password"}
-                  placeholder="Password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                />
-                <span
-                  className="eye-icon"
-                  onClick={() => setShowPassword(!showPassword)}
-                ></span>
-              </div>
+              <input type="password" placeholder="Password" />
+              <i className="fa-regular fa-eye-slash"></i>
             </div>
-            <div className="form-group checkbox-group">
-              <input
-                type="checkbox"
-                id="terms"
-                checked={agreedToTerms}
-                onChange={(e) => setAgreedToTerms(e.target.checked)}
-              />
-              <label htmlFor="terms">
-                I agree to receive advertising and promotions from Robinsons Malls
-              </label>
+            <div className="form-check">
+              <input type="checkbox" id="promotions" />
+              <label htmlFor="promotions">I agree to receive advertising and promotions from Robinsons Malls</label>
             </div>
-            <div className="form-group checkbox-group">
-              <input
-                type="checkbox"
-                id="privacy"
-                checked={agreedToPrivacy}
-                onChange={(e) => setAgreedToPrivacy(e.target.checked)}
-              />
-              <label htmlFor="privacy">
-                I have read and agree to the Robinsons Malls' Privacy Policy
-              </label>
+            <div className="form-check">
+              <input type="checkbox" id="privacy" />
+              <label htmlFor="privacy">I have read and agree to the Robinsons Malls' <a href="#" className="privacy-link">Privacy Policy</a></label>
             </div>
-            <button type="submit" className="sign-up-btn">
-              Sign Up
-            </button>
+            <button type="submit" className="signup-btn">Sign Up</button>
           </form>
-          <p className="login-link">
-            Already have an account? <Link to="/login">Login</Link>
-          </p>
+          <p className="login-link">Already have an account? <span onClick={onToggle}>Login</span></p>
         </div>
       </div>
     </div>
-  );
+  )
 }
+
+export default Register

@@ -1,0 +1,101 @@
+.register-page {
+  background-color: #F0F2F5;
+  min-height: 100vh;
+}
+
+.register-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+  width: 100%;
+}
+
+.register-card {
+  background-color: white;
+  padding: 30px;
+  border-radius: 16px;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  max-width: 360px;
+}
+
+.register-card h2 {
+  text-align: center;
+  margin-bottom: 25px;
+  color: #C40000;
+  font-weight: 700;
+  font-size: 22px;
+}
+
+.form-group {
+  margin-bottom: 1rem;
+  position: relative;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 500;
+  font-size: 14px;
+}
+
+.form-group input {
+  width: 100%;
+  padding: 12px;
+  border: none;
+  background-color: #F0F0F0;
+  border-radius: 8px;
+  font-size: 14px;
+}
+
+.form-group i {
+  position: absolute;
+  top: 70%;
+  right: 15px;
+  transform: translateY(-50%);
+  color: #888;
+}
+
+.form-check {
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  font-size: 12px;
+}
+
+.form-check input {
+  margin-right: 8px;
+}
+
+.privacy-link {
+  color: #C40000;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.signup-btn {
+  width: 100%;
+  padding: 12px;
+  background-color: #C40000;
+  color: white;
+  border: none;
+  border-radius: 25px;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: 600;
+  margin-top: 10px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.login-link {
+  text-align: center;
+  margin-top: 25px;
+  font-size: 14px;
+}
+
+.login-link span {
+  color: #C40000;
+  cursor: pointer;
+  font-weight: 500;
+}
