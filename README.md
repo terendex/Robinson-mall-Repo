@@ -1,58 +1,16 @@
-# Robinson Mall App
+# React + Vite
 
-This is a React application for the Robinson Mall, providing different dashboards for various user roles.
+This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
-## Getting Started
+Currently, two official plugins are available:
 
-These instructions will get you a copy of the project up and running on your local machine for development and testing purposes.
+- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
+- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
 
-### Prerequisites
+## React Compiler
 
-You need to have Node.js and npm installed on your machine. You can download them from [https://nodejs.org/](https://nodejs.org/).
+The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
 
-### Installation
+## Expanding the ESLint configuration
 
-1.  Clone the repo.
-2.  Navigate to the `Robinson` directory.
-3.  Install NPM packages:
-    ```bash
-    npm install
-    ```
-
-## Available Scripts
-
-In the project directory, you can run:
-
-### `npm run dev`
-
-Runs the app in development mode.
-Open [http://localhost:3000](http://localhost:3000) (or the address shown in your terminal) to view it in the browser.
-
-The page will reload if you make edits.
-You will also see any lint errors in the console.
-
-### `npm run build`
-
-Builds the app for production to the `dist` folder.
-It correctly bundles React in production mode and optimizes the build for the best performance.
-
-### `npm run preview`
-
-Runs the built app in production mode.
-
-## Login Credentials
-
-You can use the following credentials to log in with different roles:
-
-*   **Admin:**
-    *   email: `Admin`
-    *   password: `Admin`
-*   **Manager:**
-    *   email: `Manager`
-    *   password: `Manager`
-*   **Staff:**
-    *   email: `Staff`
-    *   password: `Staff`
-*   **Customer:**
-    *   email: `Customer`
-    *   password: `Customer`
+If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
