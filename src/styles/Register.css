@@ -1,77 +1,89 @@
+body {
+  font-family: 'Merriweather Sans', sans-serif;
+}
+
 .register-page {
-  background-color: #F0F2F5;
-  min-height: 100vh;
+  background-color: #EFF4F8;
 }
 
 .register-container {
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: 20px;
-  width: 100%;
+  min-height: calc(100vh - 50px);
 }
 
 .register-card {
   background-color: white;
-  padding: 30px;
+  padding: 40px 30px;
   border-radius: 16px;
   box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
   width: 100%;
-  max-width: 360px;
+  max-width: 400px;
 }
 
 .register-card h2 {
   text-align: center;
-  margin-bottom: 25px;
+  margin-bottom: 30px;
   color: #C40000;
   font-weight: 700;
-  font-size: 22px;
+  font-size: 24px;
 }
 
 .form-group {
-  margin-bottom: 1rem;
+  margin-bottom: 1.2rem;
   position: relative;
+  text-align: left;
 }
 
 .form-group label {
   display: block;
   margin-bottom: 8px;
-  font-weight: 500;
+  font-weight: 400;
   font-size: 14px;
+}
+
+.form-group input::placeholder {
+  font-style: italic;
 }
 
 .form-group input {
   width: 100%;
   padding: 12px;
   border: none;
-  background-color: #F0F0F0;
+  background-color: #EFF4F8;
   border-radius: 8px;
   font-size: 14px;
+  box-sizing: border-box;
 }
 
 .form-group i {
   position: absolute;
-  top: 70%;
+  top: 50%;
   right: 15px;
   transform: translateY(-50%);
   color: #888;
+  margin-top: 15px;
 }
 
 .form-check {
   margin-bottom: 1rem;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   font-size: 12px;
+  font-weight: 400;
+  text-align: left;
 }
 
 .form-check input {
   margin-right: 8px;
+  margin-top: 2px; /* Adjust to vertically align with text */
 }
 
 .privacy-link {
   color: #C40000;
   text-decoration: none;
-  font-weight: 500;
+  font-weight: 600;
 }
 
 .signup-btn {
@@ -80,10 +92,10 @@
   background-color: #C40000;
   color: white;
   border: none;
-  border-radius: 25px;
+  border-radius: 8px;
   cursor: pointer;
   font-size: 16px;
-  font-weight: 600;
+  font-weight: 700;
   margin-top: 10px;
   box-shadow: 0 4px 8px rgba(0,0,0,0.1);
 }
@@ -92,10 +104,12 @@
   text-align: center;
   margin-top: 25px;
   font-size: 14px;
+  font-weight: 400;
 }
 
-.login-link span {
+.login-link a {
   color: #C40000;
   cursor: pointer;
-  font-weight: 500;
+  font-weight: 600;
+  text-decoration: none;
 }
