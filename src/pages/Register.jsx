@@ -1,10 +1,8 @@
 import '../styles/Register.css'
-import Header from '../components/Header';
 
 const Register = ({ onToggle }) => {
   return (
     <div className="register-page">
-      <Header />
       <div className="register-container">
         <div className="register-card">
           <h2>Create Account</h2>
@@ -41,7 +39,7 @@ const Register = ({ onToggle }) => {
             </div>
             <button type="submit" className="signup-btn">Sign Up</button>
           </form>
-          <p className="login-link">Already have an account? <span onClick={onToggle}>Login</span></p>
+          <p className="login-link">Already have an account? <a href="#" onClick={onToggle}>Login</a></p>
         </div>
       </div>
     </div>
