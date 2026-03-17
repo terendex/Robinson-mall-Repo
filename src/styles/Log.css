@@ -59,13 +59,17 @@ body {
   box-sizing: border-box;
 }
 
-.form-group i {
+.password-container {
+  position: relative;
+}
+
+.password-toggle-icon {
   position: absolute;
-  top: 50%;
+  top: 70%;
   right: 15px;
   transform: translateY(-50%);
-  color: #888;
-  margin-top: 15px;
+  cursor: pointer;
+  user-select: none;
 }
 
 .form-check {
@@ -134,6 +138,41 @@ body {
     font-size: 12px;
 }
 
+.error-container {
+  background-color: #FEEFEE;
+  border: 1px solid #F6D6D6;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: flex-start;
+}
+
+.error-icon {
+  color: #E53E3E;
+  font-size: 24px;
+  margin-right: 12px;
+  line-height: 1;
+}
+
+.error-text-container {
+  flex: 1;
+  text-align: left;
+}
+
+.error-title {
+  margin: 0;
+  color: #E53E3E;
+  font-weight: bold;
+}
+
+.error-message {
+  margin: 4px 0 0 0;
+  color: #EAA8AA;
+  font-size: 14px;
+}
+
+
 /* Tablet styles */
 @media (max-width: 768px) {
   .log-card {
@@ -168,9 +207,8 @@ body {
     font-size: 13px;
   }
 
-  .form-group i {
+  .password-toggle-icon {
     right: 12px;
-    margin-top: 14px;
   }
 
   .form-check {
