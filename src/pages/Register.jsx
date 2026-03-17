@@ -1,6 +1,7 @@
+import { Link } from 'react-router-dom';
 import '../styles/Register.css'
 
-const Register = ({ onToggle }) => {
+const Register = () => {
   return (
     <div className="register-page">
       <div className="register-container">
@@ -39,7 +40,7 @@ const Register = ({ onToggle }) => {
             </div>
             <button type="submit" className="signup-btn">Sign Up</button>
           </form>
-          <p className="login-link">Already have an account? <a href="#" onClick={onToggle}>Login</a></p>
+          <p className="login-link">Already have an account? <Link to="/login">Login</Link></p>
         </div>
       </div>
     </div>

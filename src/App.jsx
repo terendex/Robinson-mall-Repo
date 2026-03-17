@@ -1,23 +1,23 @@
-import { useState } from 'react'
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import Register from './pages/Register'
 import Log from './pages/Log'
 import Header from './components/Header'
 import './styles/App.css'
 
 function App() {
-  const [isRegister, setIsRegister] = useState(true)
-
   return (
-    <div className="App">
-      <Header />
-      <main className="main-content">
-        {isRegister ? (
-          <Register onToggle={() => setIsRegister(false)} />
-        ) : (
-          <Log onToggle={() => setIsRegister(true)} />
-        )}
-      </main>
-    </div>
+    <Router>
+      <div className="App">
+        <Header />
+        <main className="main-content">
+          <Routes>
+            <Route path="/" element={<Navigate to="/login" />} />
+            <Route path="/login" element={<Log />} />
+            <Route path="/register" element={<Register />} />
+          </Routes>
+        </main>
+      </div>
+    </Router>
   )
 }
 
