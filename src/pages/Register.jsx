@@ -22,10 +22,12 @@ const Register = ({ onToggle }) => {
             <div className="form-group">
               <label>Birthday</label>
               <input type="text" placeholder="mm/dd/yyyy" />
+              <i className="fa-regular fa-calendar"></i>
             </div>
             <div className="form-group">
               <label>Password *</label>
               <input type="password" placeholder="Password" />
+              <i className="fa-regular fa-eye-slash"></i>
             </div>
             <div className="form-check">
               <input type="checkbox" id="promotions" />

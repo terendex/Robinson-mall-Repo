@@ -15,23 +15,23 @@
 .logo-img {
   height: 40px;
   object-fit: contain;
+  margin-left: 90px;
 }
 
 @media (max-width: 768px) {
-  .header {
-    padding: 10px 0;
-  }
   .logo-img {
-    height: 35px;
+    margin-left: 25px;
   }
 }
 
 @media (max-width: 480px) {
   .header {
-    padding: 10px 0;
+    padding: 10px;
+    height: 40px;
   }
 
   .logo-img {
     height: 30px;
+    margin-left: 25px;
   }
 }
