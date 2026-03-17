@@ -8,6 +8,8 @@ import AdminDashboard from './pages/AdminDashboard';
 import ManagerDashboard from './pages/ManagerDashboard';
 import StaffDashboard from './pages/StaffDashboard';
 import CustomerDashboard from './pages/CustomerDashboard';
+import ForgotPassword from './pages/ForgotPassword';
+import PasswordReset from './pages/PasswordReset';
 import './styles/App.css'
 
 function App() {
@@ -42,6 +44,8 @@ function App() {
           <Route path="/" element={user ? <Navigate to={`/${user.role}`} /> : <Log onLogin={handleLogin} />} />
           <Route path="/login" element={<Log onLogin={handleLogin} />} />
           <Route path="/register" element={<Register />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/password-reset/:token" element={<PasswordReset />} />
           <Route path="/admin" element={user && user.role === 'admin' ? <AdminDashboard /> : <Navigate to="/login" />} />
           <Route path="/manager" element={user && user.role === 'manager' ? <ManagerDashboard /> : <Navigate to="/login" />} />
           <Route path="/staff" element={user && user.role === 'staff' ? <StaffDashboard /> : <Navigate to="/login" />} />

@@ -49,7 +49,8 @@ body {
   font-style: italic;
 }
 
-.form-group input {
+.form-group input,
+.form-group .react-datepicker-wrapper input {
   width: 100%;
   padding: 12px;
   border: none;
@@ -59,13 +60,26 @@ body {
   box-sizing: border-box;
 }
 
+.form-group .react-datepicker-wrapper {
+  width: 100%;
+}
+
 .form-group i {
   position: absolute;
-  top: 50%;
+  top: 70%;
   right: 15px;
   transform: translateY(-50%);
   color: #888;
-  margin-top: 15px;
+  cursor: pointer;
+}
+
+.password-toggle-icon {
+  position: absolute;
+  top: 70%;
+  right: 15px;
+  transform: translateY(-50%);
+  color: #888;
+  cursor: pointer;
 }
 
 .form-check {
@@ -99,7 +113,7 @@ body {
   font-size: 16px;
   font-weight: 700;
   margin-top: 10px;
-  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
 .login-link {
@@ -116,11 +130,33 @@ body {
   text-decoration: none;
 }
 
+.react-datepicker__header {
+  background-color: #C40000;
+  color: white;
+}
+
+.react-datepicker__current-month,
+.react-datepicker__day-name {
+  color: white;
+}
+
+.react-datepicker__navigation--previous-arrow::before,
+.react-datepicker__navigation--next-arrow::before {
+  border-color: white;
+}
+
+.react-datepicker__year-dropdown,
+.react-datepicker__month-dropdown {
+  background-color: #C40000;
+  color: white;
+}
+
 /* Tablet styles */
 @media (max-width: 768px) {
   .register-card {
     padding: 30px 25px;
   }
+
   .register-card h2 {
     font-size: 22px;
   }
@@ -131,6 +167,7 @@ body {
   .register-container {
     padding: 60px 15px 15px 15px;
   }
+
   .register-card {
     padding: 25px 20px;
     border-radius: 12px;
@@ -152,7 +189,10 @@ body {
 
   .form-group i {
     right: 12px;
-    margin-top: 14px;
+  }
+
+  .password-toggle-icon {
+    right: 12px;
   }
 
   .form-check {

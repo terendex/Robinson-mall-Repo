@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import "../styles/Log.css";
 import { FaEye, FaEyeSlash } from 'react-icons/fa';
@@ -11,12 +11,29 @@ export default function Log({ onLogin }) {
   const [error, setError] = useState("");
   const navigate = useNavigate();
 
+  useEffect(() => {
+    const rememberedEmail = localStorage.getItem('rememberedEmail');
+    const rememberedPassword = localStorage.getItem('rememberedPassword');
+    if (rememberedEmail && rememberedPassword) {
+      setEmail(rememberedEmail);
+      setPassword(rememberedPassword);
+      setRememberMe(true);
+    }
+  }, []);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
     try {
       const user = await onLogin(email, password);
       if (user) {
+        if (rememberMe) {
+          localStorage.setItem('rememberedEmail', email);
+          localStorage.setItem('rememberedPassword', password);
+        } else {
+          localStorage.removeItem('rememberedEmail');
+          localStorage.removeItem('rememberedPassword');
+        }
         switch (user.role) {
           case 'admin':
             navigate('/admin');
@@ -94,7 +111,7 @@ export default function Log({ onLogin }) {
               <label htmlFor="rememberMe">Remember Me</label>
             </div>
             <div className="forgot-password">
-                <a href="#">Forgot Password</a>
+                <Link to="/forgot-password">Forgot Password</Link>
             </div>
             <button type="submit" className="login-btn">Login</button>
           </form>
