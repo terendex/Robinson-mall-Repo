@@ -1,10 +1,18 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import React, { useState } from 'react';
 import axios from 'axios';
+import Header from './components/Header';
 import Register from './pages/Register'
 import Log from './pages/Log'
-import Header from './components/Header'
+import AdminLayout from './pages/admin/AdminLayout';
 import AdminDashboard from './pages/admin/AdminDashboard';
+import Vouchers from './pages/admin/Vouchers';
+import Campaigns from './pages/admin/Campaigns';
+import Claims from './pages/admin/Claims';
+import Transactions from './pages/admin/Transactions';
+import Users from './pages/admin/Users';
+import Reports from './pages/admin/Reports';
+import Settings from './pages/admin/Settings';
 import ManagerDashboard from './pages/manager/ManagerDashboard';
 import StaffDashboard from './pages/staff/StaffDashboard';
 import CustomerDashboard from './pages/customer/CustomerDashboard';
@@ -39,14 +47,27 @@ function App() {
   return (
     <Router>
       <div className="App">
-        <Header user={user} onLogout={handleLogout} />
+        <Header />
         <Routes>
           <Route path="/" element={user ? <Navigate to={`/${user.role}`} /> : <Log onLogin={handleLogin} />} />
           <Route path="/login" element={<Log onLogin={handleLogin} />} />
           <Route path="/register" element={<Register />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/password-reset/:token" element={<PasswordReset />} />
-          <Route path="/admin" element={user && user.role === 'admin' ? <AdminDashboard /> : <Navigate to="/login" />} />
+
+          {/* Admin Routes */}
+          <Route path="/admin" element={user && user.role === 'admin' ? <AdminLayout /> : <Navigate to="/login" />}>
+            <Route path="dashboard" element={<AdminDashboard />} />
+            <Route path="vouchers" element={<Vouchers />} />
+            <Route path="campaigns" element={<Campaigns />} />
+            <Route path="claims" element={<Claims />} />
+            <Route path="transactions" element={<Transactions />} />
+            <Route path="users" element={<Users />} />
+            <Route path="reports" element={<Reports />} />
+            <Route path="settings" element={<Settings />} />
+            <Route index element={<Navigate to="dashboard" />} />
+          </Route>
+
           <Route path="/manager" element={user && user.role === 'manager' ? <ManagerDashboard /> : <Navigate to="/login" />} />
           <Route path="/staff" element={user && user.role === 'staff' ? <StaffDashboard /> : <Navigate to="/login" />} />
           <Route path="/customer" element={user && user.role === 'customer' ? <CustomerDashboard /> : <Navigate to="/login" />} />

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
 import '../styles/PasswordReset.css';
 
@@ -68,6 +68,9 @@ const PasswordReset = () => {
               <button type="submit" className="submit-btn">Reset Password</button>
             </form>
           )}
+          <div className="back-link" style={{ marginTop: '1rem', textAlign: 'center' }}>
+            <Link to="/forgot-password" style={{ color: '#C40000', fontWeight: 600, textDecoration: 'none' }}>Back to Forgot Password</Link>
+          </div>
         </div>
       </div>
     </div>

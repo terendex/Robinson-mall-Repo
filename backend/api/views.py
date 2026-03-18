@@ -53,16 +53,9 @@ class PasswordResetRequestView(views.APIView):
         user.password_reset_token = token
         user.save()
 
-        reset_link = f"http://localhost:3000/password-reset/{token}"
+        reset_link = f"http://localhost:5173/password-reset/{token}"
 
         try:
-            # --- BEGIN DEBUGGING --- 
-            print("--- EMAIL DEBUGGING --- ")
-            print(f"SENDGRID_API_KEY from os.environ: {os.environ.get('SENDGRID_API_KEY')}")
-            print(f"DEFAULT_FROM_EMAIL from os.environ: {os.environ.get('DEFAULT_FROM_EMAIL')}")
-            print(f"settings.DEFAULT_FROM_EMAIL: {settings.DEFAULT_FROM_EMAIL}")
-            # --- END DEBUGGING --- 
-
             send_mail(
                 'Password Reset Request',
                 f'Click the link to reset your password: {reset_link}',
