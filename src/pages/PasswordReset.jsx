@@ -22,7 +22,7 @@ const PasswordReset = () => {
     }
 
     try {
-      const response = await axios.post(`http://127.0.0.1:8000/api/users/password-reset/${token}/`, { password });
+      const response = await axios.post(`http://localhost:8000/api/users/password-reset/${token}/`, { password });
       if (response.status === 200) {
         setMessage('Your password has been successfully reset. You can now log in with your new password.');
         setTimeout(() => navigate('/login'), 5000);

@@ -1,5 +1,6 @@
 import secrets
 import smtplib
+import os
 from django.conf import settings
 from django.contrib.auth.tokens import default_token_generator
 from django.core.mail import send_mail
@@ -55,6 +56,13 @@ class PasswordResetRequestView(views.APIView):
         reset_link = f"http://localhost:3000/password-reset/{token}"
 
         try:
+            # --- BEGIN DEBUGGING --- 
+            print("--- EMAIL DEBUGGING --- ")
+            print(f"SENDGRID_API_KEY from os.environ: {os.environ.get('SENDGRID_API_KEY')}")
+            print(f"DEFAULT_FROM_EMAIL from os.environ: {os.environ.get('DEFAULT_FROM_EMAIL')}")
+            print(f"settings.DEFAULT_FROM_EMAIL: {settings.DEFAULT_FROM_EMAIL}")
+            # --- END DEBUGGING --- 
+
             send_mail(
                 'Password Reset Request',
                 f'Click the link to reset your password: {reset_link}',

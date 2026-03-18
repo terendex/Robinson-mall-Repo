@@ -4,10 +4,10 @@ import axios from 'axios';
 import Register from './pages/Register'
 import Log from './pages/Log'
 import Header from './components/Header'
-import AdminDashboard from './pages/AdminDashboard';
-import ManagerDashboard from './pages/ManagerDashboard';
-import StaffDashboard from './pages/StaffDashboard';
-import CustomerDashboard from './pages/CustomerDashboard';
+import AdminDashboard from './pages/admin/AdminDashboard';
+import ManagerDashboard from './pages/manager/ManagerDashboard';
+import StaffDashboard from './pages/staff/StaffDashboard';
+import CustomerDashboard from './pages/customer/CustomerDashboard';
 import ForgotPassword from './pages/ForgotPassword';
 import PasswordReset from './pages/PasswordReset';
 import './styles/App.css'
