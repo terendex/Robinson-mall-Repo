@@ -65,6 +65,10 @@
   font-weight: 900;
 }
 
+.sidenav .nav-links li a .fa-solid {
+    font-weight: 900;
+}
+
 .sidenav .admin-user {
   padding: 25px 32px;
   display: flex;
