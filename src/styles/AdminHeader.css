@@ -1,0 +1,210 @@
+.admin-header {
+  height: 60px;
+  width: 100%;
+  display: flex;
+  background-color: #ffffff;
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 1005; /* Above sidebar overlay */
+  box-shadow: 0 1px 15px rgba(0, 0, 0, 0.08); /* Crisp and bright */
+}
+
+.admin-logo-section {
+  width: 290px;
+  min-width: 290px;
+  background-color: #c50000;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  height: 100%;
+  padding: 0 0 0 32px; /* Logo alignment */
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  box-sizing: border-box;
+}
+
+.admin-header-logo {
+  height: 48px;
+  max-width: 100%;
+  object-fit: contain;
+}
+
+.admin-header-main {
+  flex-grow: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+  background-color: #ffffff;
+}
+
+.admin-header-left {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.admin-header-right {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+/* Sidebar Toggle - Matching Image 139 */
+.sidebar-toggle-btn {
+  background: none;
+  border: none;
+  font-size: 24px;
+  color: #5d5d5d;
+  cursor: pointer;
+  padding: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.2s;
+  margin-right: 5px;
+}
+
+.sidebar-toggle-btn i {
+  width: 24px;
+}
+
+.sidebar-toggle-btn:hover {
+  color: #c50000;
+}
+
+/* Vertical Separator */
+.header-separator {
+  width: 1px;
+  height: 24px;
+  background-color: #ddd;
+  margin: 0 5px;
+}
+
+/* Search Container - Pill shape from image 139 */
+.header-search-container {
+  display: flex;
+  align-items: center;
+  background-color: #f1f4f9; /* Soft light gray */
+  border: none;
+  border-radius: 25px; /* Pill shape */
+  padding: 8px 18px;
+  width: 320px;
+  margin-left: 10px;
+}
+
+.header-search-container i {
+  color: #777;
+  font-size: 14px;
+  margin-right: 12px;
+}
+
+.header-search-container input {
+  background: none;
+  border: none;
+  outline: none;
+  width: 100%;
+  font-size: 14px;
+  color: #333;
+}
+
+.header-search-container input::placeholder {
+  color: #999;
+}
+
+/* Icon Buttons matched to image */
+.header-icon-btn {
+  position: relative;
+  font-size: 24px;
+  color: #5d5d5d;
+  cursor: pointer;
+  padding: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.2s;
+}
+
+.header-icon-btn:hover {
+  color: #333;
+}
+
+.notification-dot {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 9px;
+  height: 9px;
+  background-color: #e31818;
+  border: 2px solid white;
+  border-radius: 50%;
+}
+
+/* User Profile matched to image */
+.header-user-profile {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  padding: 4px;
+  margin-left: 5px;
+}
+
+.profile-avatar {
+  font-size: 34px;
+  color: #5d5d5d;
+}
+
+.profile-caret {
+  font-size: 16px;
+  color: #5d5d5d;
+  font-weight: bold;
+}
+
+/* Responsive Styles */
+@media (max-width: 1024px) {
+  .header-search-container {
+    width: 220px;
+  }
+}
+
+@media (max-width: 768px) {
+  .admin-logo-section {
+    display: none; 
+  }
+  
+  .admin-header-main {
+    padding: 0 10px;
+  }
+
+  .admin-header-left {
+    gap: 8px;
+  }
+
+  .header-search-container {
+    width: 160px;
+    padding: 6px 10px;
+  }
+
+  .header-icon-btn {
+    font-size: 20px;
+  }
+
+  .profile-avatar {
+    font-size: 28px;
+  }
+
+  /* Make sure header is NOT dimmed or different color on mobile */
+  .admin-header {
+    background-color: #ffffff;
+    opacity: 1 !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .admin-logo-section {
+    display: none; /* Hide logo box on very small screens to fit search/icons */
+  }
+}
+
+

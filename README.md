@@ -1,16 +1,151 @@
-# React + Vite
+# Robinson Mall
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A full-stack web application for Robinson Mall featuring role-based dashboards (Admin, Manager, Staff, Customer), user authentication, voucher/campaign management, and password reset via SendGrid email.
 
-Currently, two official plugins are available:
+## Tech Stack
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+| Layer    | Technology                                                  |
+| -------- | ----------------------------------------------------------- |
+| Frontend | React 19, Vite, React Router v7, Axios, React Icons         |
+| Backend  | Django 6, Django REST Framework, django-cors-headers         |
+| Database | SQLite (default)                                            |
+| Email    | SendGrid                                                    |
 
-## React Compiler
+---
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Prerequisites
 
-## Expanding the ESLint configuration
+- **Node.js** ≥ 18 and **npm** (for the frontend)
+- **Python** ≥ 3.10 and **pip** (for the backend)
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+---
+
+## Installation
+
+### 1. Clone the Repository
+
+```bash
+git clone https://github.com/terendex/Robinson-mall-Repo.git
+cd Robinson-mall-Repo
+```
+
+---
+
+### 2. Frontend Setup
+
+Install the frontend dependencies from the project root:
+
+```bash
+npm install
+```
+
+---
+
+### 3. Backend Setup
+
+#### a) Create a Python virtual environment
+
+```bash
+cd backend
+python -m venv venv
+```
+
+Activate it:
+
+- **Windows (PowerShell):**
+  ```powershell
+  .\venv\Scripts\Activate
+  ```
+- **macOS / Linux:**
+  ```bash
+  source venv/bin/activate
+  ```
+
+#### b) Install Python dependencies
+
+```bash
+pip install django djangorestframework django-cors-headers python-dotenv django-sendgrid-v5
+```
+
+#### c) Configure environment variables
+
+Create a `.env` file inside the `backend/` directory (if one doesn't already exist):
+
+```env
+SENDGRID_API_KEY=your_sendgrid_api_key_here
+DEFAULT_FROM_EMAIL=your_email@example.com
+```
+
+#### d) Run database migrations
+
+```bash
+python manage.py migrate
+```
+
+#### e) Create a superuser (optional — for admin access)
+
+```bash
+python manage.py createsuperuser
+```
+
+---
+
+## Running the Application
+
+You need **two terminals** — one for the backend and one for the frontend.
+
+### Terminal 1 — Start the Backend Server
+
+```bash
+cd backend
+python manage.py runserver
+```
+
+The API will be available at **http://127.0.0.1:8000/api/**
+
+### Terminal 2 — Start the Frontend Dev Server
+
+From the project root:
+
+```bash
+npm run dev
+```
+
+The app will be available at **http://localhost:5173/**
+
+---
+
+## Available Scripts
+
+| Command           | Description                        |
+| ----------------- | ---------------------------------- |
+| `npm run dev`     | Start the Vite development server  |
+| `npm run build`   | Build the frontend for production  |
+| `npm run preview` | Preview the production build       |
+| `npm run lint`    | Run ESLint                         |
+
+---
+
+## Project Structure
+
+```
+Robinson-mall-Repo/
+├── backend/                # Django backend
+│   ├── api/                # REST API app (models, views, serializers, urls)
+│   ├── data/               # Django project settings (settings.py, urls.py)
+│   ├── .env                # Environment variables (SendGrid keys)
+│   ├── db.sqlite3          # SQLite database
+│   └── manage.py           # Django management script
+├── src/                    # React frontend source
+│   ├── components/         # Reusable React components
+│   ├── pages/              # Page components (admin, manager, staff, customer)
+│   ├── styles/             # CSS stylesheets
+│   ├── assets/             # Static assets
+│   ├── App.jsx             # Root application component
+│   └── main.jsx            # Entry point
+├── public/                 # Public static files
+├── index.html              # HTML entry point
+├── package.json            # Frontend dependencies & scripts
+├── vite.config.js          # Vite configuration
+└── eslint.config.js        # ESLint configuration
+```
