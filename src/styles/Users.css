@@ -107,27 +107,51 @@
 .users-table {
   width: 100%;
   border-collapse: collapse;
+  table-layout: fixed; /* Ensures column widths are respected */
 }
 
 .users-table th {
-  text-align: left;
   padding: 15px;
   color: #666;
   font-weight: 600;
   font-size: 14px;
-  border-bottom: 1px solid #eee;
+  border-bottom: 2px solid #f1f4f9;
 }
 
 .users-table td {
-  padding: 20px 15px;
+  padding: 16px 15px;
   border-bottom: 1px solid #f9f9f9;
   vertical-align: middle;
+}
+
+/* Column Widths & Alignments */
+.users-table th:nth-child(1),
+.users-table td:nth-child(1) {
+  width: 35%;
+  text-align: left;
+}
+
+.users-table th:nth-child(2),
+.users-table td:nth-child(2),
+.users-table th:nth-child(3),
+.users-table td:nth-child(3),
+.users-table th:nth-child(4),
+.users-table td:nth-child(4) {
+  width: 18%;
+  text-align: center;
+}
+
+.users-table th:nth-child(5),
+.users-table td:nth-child(5) {
+  width: 11%;
+  text-align: center;
 }
 
 .user-info {
   display: flex;
   align-items: center;
   gap: 15px;
+  max-width: 100%;
 }
 
 .user-avatar {
