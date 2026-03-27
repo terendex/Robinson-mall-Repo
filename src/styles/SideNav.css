@@ -1,25 +1,29 @@
-
 .sidenav {
-  height: 100vh;
-  width: 290px;
+  height: calc(100vh - 60px); /* Adjust for header height */
+  width: 290px; /* Revert to 290 */
   position: fixed;
-  z-index: 101;
-  top: 0;
+  z-index: 102;
+  top: 60px;
   left: 0;
   background-color: #c50000;
   color: white;
   display: flex;
   flex-direction: column;
-  transition: width 0.3s;
+  transition: transform 0.3s ease;
+  transform: translateX(-100%); /* Closed by default */
 }
 
-.sidenav .logo {
-  padding: 25px 15px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  flex-shrink: 0;
-  border-bottom: 2px solid rgba(255, 255, 255, 0.2);
+.sidenav.open {
+  transform: translateX(0); /* Opened state */
+}
+
+@media (max-width: 768px) {
+  .sidenav {
+    top: 60px; /* Keep header visible on mobile too */
+    height: calc(100vh - 60px);
+    z-index: 1001; /* Above overlay (1000) but below header (1005) */
+    width: 260px;
+  }
 }
 
 .sidenav .logo .logo-side {
@@ -46,12 +50,12 @@
   text-decoration: none;
   font-size: 18px;
   color: #f1f1f1;
-  transition: background-color 0.3s, padding-left 0.3s;
+  transition: background-color 0.3s; /* Removed padding-left transition to prevent sliding icons */
 }
 
 .sidenav .nav-links li a:hover,
 .sidenav .nav-links li a.active {
-  background-color: rgba(0, 0, 0, 0.2);
+  background-color: rgba(255, 255, 255, 0.15); /* Match mockup transparency */
 }
 
 .sidenav .nav-links li a.active {
@@ -59,18 +63,15 @@
 }
 
 .sidenav .nav-links li a i {
-  margin-right: 16px;
-  width: 20px;
+  margin-right: 18px;
+  width: 24px;
+  font-size: 20px; /* Larger icons as in mockup */
   text-align: center;
   font-weight: 900;
 }
 
-.sidenav .nav-links li a .fa-solid {
-    font-weight: 900;
-}
-
 .sidenav .admin-user {
-  padding: 25px 32px;
+  padding: 25px 24px;
   display: flex;
   align-items: center;
   border-top: 2px solid rgba(255, 255, 255, 0.2);
@@ -79,7 +80,7 @@
 
 .sidenav .admin-user .admin-icon {
   font-size: 36px;
-  margin-right: 15px;
+  margin-right: 8px;
 }
 
 .sidenav .admin-user .admin-info p {
@@ -87,18 +88,45 @@
   line-height: 1.2;
 }
 
-/* Responsive styles */
+.sidenav .admin-user .admin-info .admin-name {
+  font-size: 17px;
+  font-weight: 700; /* Bold from mockup */
+  color: white;
+}
+
+.sidenav .admin-user .admin-info .admin-email {
+  font-size: 13px;
+  opacity: 0.85;
+}
+
+/* ===== Overlay (hidden on desktop) ===== */
+.sidenav-overlay {
+  display: none;
+}
+
 @media (max-width: 768px) {
   .sidenav {
-    width: 220px;
+    width: 260px;
   }
-
+  
   .sidenav .nav-links li a {
     padding: 12px 25px;
     font-size: 16px;
   }
 
   .sidenav .admin-user {
-    padding: 20px 25px;
+    padding: 20px 20px;
+  }
+
+  .sidenav .admin-user .admin-icon {
+    margin-right: 5px;
+  }
+
+  .sidenav-overlay {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 1000; /* Below header (1005) */
+    background-color: rgba(0, 0, 0, 0.5);
   }
 }
