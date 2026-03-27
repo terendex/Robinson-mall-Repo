@@ -251,11 +251,20 @@
 
   .admin-header-left {
     gap: 8px;
+    flex-grow: 1; /* Allow left section to expand and take more scroll space */
   }
 
   .header-search-container {
-    width: 160px;
+    width: 200px; /* Increased from 160px */
     padding: 6px 10px;
+    flex-grow: 1; /* Allow it to take up available space */
+    max-width: 240px; 
+  }
+
+  .search-results-dropdown {
+    min-width: 260px; /* Make results readable even if input is narrow */
+    left: 0;
+    width: auto;
   }
 
   .header-icon-btn {
