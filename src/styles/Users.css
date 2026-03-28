@@ -72,7 +72,7 @@
   background-color: white;
   border-radius: 16px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
-  overflow: hidden;
+  overflow-x: auto;
   padding: 24px;
 }
 
@@ -87,6 +87,7 @@
   border-radius: 25px;
   padding: 10px 20px;
   width: 350px;
+  box-sizing: border-box;
 }
 
 .user-search-pills i {
@@ -107,7 +108,8 @@
 .users-table {
   width: 100%;
   border-collapse: collapse;
-  table-layout: fixed; /* Ensures column widths are respected */
+  table-layout: fixed;
+  min-width: 800px;
 }
 
 .users-table th {
@@ -116,12 +118,14 @@
   font-weight: 600;
   font-size: 14px;
   border-bottom: 2px solid #f1f4f9;
+  white-space: nowrap;
 }
 
 .users-table td {
   padding: 16px 15px;
   border-bottom: 1px solid #f9f9f9;
   vertical-align: middle;
+  white-space: nowrap;
 }
 
 /* Column Widths & Alignments */
@@ -319,14 +323,10 @@
 }
 
 @media (max-width: 768px) {
-  .users-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 15px;
-  }
-  
   .user-search-pills {
     width: 100%;
+    margin-bottom: 20px;
+    padding: 14px 20px;
   }
 
   .users-table th:nth-child(3),

@@ -160,21 +160,25 @@ const Vouchers = () => {
                         {voucher.is_active ? 'Active' : 'Inactive'}
                       </span>
                     </td>
-                    <td style={{ position: 'relative', textAlign: 'center' }}>
-                      <button 
-                        className="triple-dot-btn" 
-                        onClick={() => setActiveActions(activeActions === voucher.id ? null : voucher.id)}
-                      >
-                        <i className="fa-solid fa-ellipsis-vertical"></i>
-                      </button>
-                      {activeActions === voucher.id && (
-                        <div className="dot-menu show">
-                          <button onClick={() => handleEditVoucher(voucher)}>Edit</button>
-                          <button onClick={() => toggleVoucherStatus(voucher)}>
-                            {voucher.is_active ? 'Disable' : 'Active'}
-                          </button>
-                        </div>
-                      )}
+                    <td style={{ textAlign: 'center' }}>
+                      <div style={{ position: 'relative', display: 'inline-block' }}>
+                        <button 
+                          className="triple-dot-btn" 
+                          onClick={() => setActiveActions(activeActions === voucher.id ? null : voucher.id)}
+                        >
+                          <i className="fa-solid fa-ellipsis-vertical"></i>
+                        </button>
+                        {activeActions === voucher.id && (
+                          <div className="dot-menu show">
+                            <button onClick={() => handleEditVoucher(voucher)}>
+                              <i className="fa-solid fa-pen-to-square"></i> Edit
+                            </button>
+                            <button onClick={() => toggleVoucherStatus(voucher)}>
+                              <i className={`fa-solid ${voucher.is_active ? 'fa-ban' : 'fa-check'}`}></i> {voucher.is_active ? 'Disable' : 'Active'}
+                            </button>
+                          </div>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))}

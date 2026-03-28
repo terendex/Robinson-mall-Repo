@@ -90,8 +90,8 @@
   background-color: white;
   border-radius: 16px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
-  overflow: hidden;
-  padding: 0; /* Remove padding for edge-to-edge look if desired, but screenshot shows padding around table content */
+  overflow-x: auto;
+  padding: 0;
 }
 
 .vouchers-table {
@@ -108,6 +108,7 @@
   text-transform: uppercase;
   letter-spacing: 0.5px;
   text-align: left;
+  white-space: nowrap;
 }
 
 .vouchers-table td {
@@ -115,6 +116,7 @@
   border-bottom: 1px solid #f0f0f0;
   vertical-align: middle;
   text-align: left;
+  white-space: nowrap;
 }
 
 .voucher-info-cell {
@@ -254,6 +256,15 @@
   background: none;
   cursor: pointer;
   font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.dot-menu button i {
+  color: #666;
+  width: 16px;
+  text-align: center;
 }
 
 .dot-menu button:hover {
