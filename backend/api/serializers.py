@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import User
+from .models import User, Voucher, Campaign
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
@@ -37,3 +37,16 @@ class UserSerializer(serializers.ModelSerializer):
             
         instance.save()
         return instance
+
+class VoucherSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Voucher
+        fields = '__all__'
+
+class CampaignSerializer(serializers.ModelSerializer):
+    voucher_name = serializers.ReadOnlyField(source='voucher.name')
+    voucher_code = serializers.ReadOnlyField(source='voucher.code')
+
+    class Meta:
+        model = Campaign
+        fields = '__all__'

@@ -11,8 +11,8 @@ from rest_framework import viewsets, status, views
 from rest_framework.response import Response
 from rest_framework.decorators import action
 from django.contrib.auth import authenticate, login
-from .models import User
-from .serializers import UserSerializer
+from .models import User, Voucher, Campaign
+from .serializers import UserSerializer, VoucherSerializer, CampaignSerializer
 
 
 class UserViewSet(viewsets.ModelViewSet):
@@ -100,3 +100,13 @@ class PasswordResetView(views.APIView):
         user.save()
 
         return Response({'detail': 'Password has been reset successfully.'}, status=status.HTTP_200_OK)
+
+
+class VoucherViewSet(viewsets.ModelViewSet):
+    queryset = Voucher.objects.all()
+    serializer_class = VoucherSerializer
+
+
+class CampaignViewSet(viewsets.ModelViewSet):
+    queryset = Campaign.objects.all()
+    serializer_class = CampaignSerializer
