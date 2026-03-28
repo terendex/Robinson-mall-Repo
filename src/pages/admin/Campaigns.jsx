@@ -55,8 +55,30 @@ const Campaigns = () => {
   const handleSaveCampaign = async (formData) => {
     try {
       if (campaignToEdit) {
+        // Update voucher if it was edited
+        if (formData.voucher && (formData.voucher_name !== undefined || formData.voucher_discount !== undefined)) {
+          let vName = formData.voucher_name;
+          let vCode = undefined;
+          if (vName && vName.includes('(') && vName.includes(')')) {
+            vName = formData.voucher_name.split('(')[0].trim();
+            vCode = formData.voucher_name.split('(')[1].replace(')', '').trim();
+          }
+          
+          const patchData = {};
+          if (vName) patchData.name = vName;
+          if (vCode) patchData.code = vCode;
+          if (formData.voucher_discount !== '') patchData.discount_percentage = parseInt(formData.voucher_discount, 10);
+          
+          if (Object.keys(patchData).length > 0) {
+            await axios.patch(`http://127.0.0.1:8000/api/vouchers/${formData.voucher}/`, patchData);
+          }
+        }
+        
         const response = await axios.patch(`http://127.0.0.1:8000/api/campaigns/${campaignToEdit.id}/`, formData);
-        setCampaigns(campaigns.map(c => c.id === campaignToEdit.id ? response.data : c));
+        
+        // Use updated campaign data, but fetch the full object again to get the fresh voucher details
+        const refreshedResponse = await axios.get(`http://127.0.0.1:8000/api/campaigns/${campaignToEdit.id}/`);
+        setCampaigns(campaigns.map(c => c.id === campaignToEdit.id ? refreshedResponse.data : c));
       } else {
         const response = await axios.post('http://127.0.0.1:8000/api/campaigns/', formData);
         setCampaigns([...campaigns, response.data]);

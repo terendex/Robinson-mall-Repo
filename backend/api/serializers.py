@@ -46,6 +46,7 @@ class VoucherSerializer(serializers.ModelSerializer):
 class CampaignSerializer(serializers.ModelSerializer):
     voucher_name = serializers.ReadOnlyField(source='voucher.name')
     voucher_code = serializers.ReadOnlyField(source='voucher.code')
+    voucher_discount = serializers.ReadOnlyField(source='voucher.discount_percentage')
 
     class Meta:
         model = Campaign

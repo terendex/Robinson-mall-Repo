@@ -7,6 +7,8 @@ const CampaignModal = ({ show, onClose, onSave, campaignToEdit }) => {
   const [formData, setFormData] = useState({
     name: '',
     voucher: '',
+    voucher_name: '',
+    voucher_discount: '',
     status: 'Active',
     budget: '',
     start_date: '',
@@ -24,6 +26,8 @@ const CampaignModal = ({ show, onClose, onSave, campaignToEdit }) => {
       setFormData({
         name: campaignToEdit.name || '',
         voucher: campaignToEdit.voucher || '',
+        voucher_name: campaignToEdit.voucher_name ? `${campaignToEdit.voucher_name} (${campaignToEdit.voucher_code})` : '',
+        voucher_discount: campaignToEdit.voucher_discount !== undefined && campaignToEdit.voucher_discount !== null ? campaignToEdit.voucher_discount : '',
         status: campaignToEdit.status || 'Active',
         budget: campaignToEdit.budget || '',
         start_date: campaignToEdit.start_date || '',
@@ -35,6 +39,8 @@ const CampaignModal = ({ show, onClose, onSave, campaignToEdit }) => {
       setFormData({
         name: '',
         voucher: '',
+        voucher_name: '',
+        voucher_discount: '',
         status: 'Active',
         budget: '',
         start_date: '',
@@ -85,14 +91,36 @@ const CampaignModal = ({ show, onClose, onSave, campaignToEdit }) => {
               required
             />
           </div>
-          <div className="form-group">
-            <label>Voucher Name</label>
-            <select name="voucher" value={formData.voucher} onChange={handleChange} required>
-              <option value="">Select a voucher</option>
-              {vouchers.map((v) => (
-                <option key={v.id} value={v.id}>{v.name} ({v.code})</option>
-              ))}
-            </select>
+          <div className="form-row" style={{ display: 'flex', gap: '15px' }}>
+            <div className="form-group" style={{ flex: 2 }}>
+              <label>Voucher Name</label>
+              {campaignToEdit ? (
+                <input
+                  type="text"
+                  name="voucher_name"
+                  value={formData.voucher_name || ''}
+                  onChange={handleChange}
+                />
+              ) : (
+                <select name="voucher" value={formData.voucher} onChange={handleChange} required>
+                  <option value="">Select a voucher</option>
+                  {vouchers.map((v) => (
+                    <option key={v.id} value={v.id}>{v.name} ({v.code})</option>
+                  ))}
+                </select>
+              )}
+            </div>
+            {campaignToEdit && (
+              <div className="form-group" style={{ flex: 1 }}>
+                <label>Discount (%)</label>
+                <input
+                  type="number"
+                  name="voucher_discount"
+                  value={formData.voucher_discount !== undefined && formData.voucher_discount !== null ? formData.voucher_discount : ''}
+                  onChange={handleChange}
+                />
+              </div>
+            )}
           </div>
           <div className="form-row" style={{ display: 'flex', gap: '15px' }}>
             <div className="form-group" style={{ flex: 1 }}>
