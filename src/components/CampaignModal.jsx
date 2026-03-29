@@ -74,7 +74,7 @@ const CampaignModal = ({ show, onClose, onSave, campaignToEdit }) => {
 
   return (
     <div className="modal-overlay">
-      <div className="modal-content user-modal">
+      <div className="modal-content">
         <div className="modal-header">
           <h2>{campaignToEdit ? 'Edit Campaign' : 'Add New Campaign'}</h2>
           <button className="close-x" onClick={onClose}>&times;</button>
@@ -91,7 +91,7 @@ const CampaignModal = ({ show, onClose, onSave, campaignToEdit }) => {
               required
             />
           </div>
-          <div className="form-row" style={{ display: 'flex', gap: '15px' }}>
+          <div className="form-row">
             <div className="form-group" style={{ flex: 2 }}>
               <label>Voucher Name</label>
               {campaignToEdit ? (
@@ -111,7 +111,7 @@ const CampaignModal = ({ show, onClose, onSave, campaignToEdit }) => {
               )}
             </div>
             {campaignToEdit && (
-              <div className="form-group" style={{ flex: 1 }}>
+              <div className="form-group">
                 <label>Discount (%)</label>
                 <input
                   type="number"
@@ -122,8 +122,8 @@ const CampaignModal = ({ show, onClose, onSave, campaignToEdit }) => {
               </div>
             )}
           </div>
-          <div className="form-row" style={{ display: 'flex', gap: '15px' }}>
-            <div className="form-group" style={{ flex: 1 }}>
+          <div className="form-row">
+            <div className="form-group">
               <label>Start Date</label>
               <input
                 type="date"
@@ -133,7 +133,7 @@ const CampaignModal = ({ show, onClose, onSave, campaignToEdit }) => {
                 required
               />
             </div>
-            <div className="form-group" style={{ flex: 1 }}>
+            <div className="form-group">
               <label>End Date</label>
               <input
                 type="date"
@@ -144,8 +144,8 @@ const CampaignModal = ({ show, onClose, onSave, campaignToEdit }) => {
               />
             </div>
           </div>
-          <div className="form-row" style={{ display: 'flex', gap: '15px' }}>
-            <div className="form-group" style={{ flex: 1 }}>
+          <div className="form-row">
+            <div className="form-group">
               <label>Reach</label>
               <input
                 type="number"
@@ -156,7 +156,7 @@ const CampaignModal = ({ show, onClose, onSave, campaignToEdit }) => {
                 required
               />
             </div>
-            <div className="form-group" style={{ flex: 1 }}>
+            <div className="form-group">
               <label>Conversions</label>
               <input
                 type="number"
@@ -168,8 +168,8 @@ const CampaignModal = ({ show, onClose, onSave, campaignToEdit }) => {
               />
             </div>
           </div>
-          <div className="form-row" style={{ display: 'flex', gap: '15px' }}>
-            <div className="form-group" style={{ flex: 1 }}>
+          <div className="form-row">
+            <div className="form-group">
               <label>Budget (₱)</label>
               <input
                 type="number"
@@ -180,7 +180,7 @@ const CampaignModal = ({ show, onClose, onSave, campaignToEdit }) => {
                 required
               />
             </div>
-            <div className="form-group" style={{ flex: 1 }}>
+            <div className="form-group">
               <label>Status</label>
               <select name="status" value={formData.status} onChange={handleChange}>
                 <option value="Active">Active</option>
