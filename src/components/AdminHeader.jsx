@@ -129,7 +129,7 @@ const AdminHeader = ({ toggleSidebar, user, isSidebarOpen }) => {
             <i className="fa-solid fa-envelope"></i>
             <span className="notification-dot"></span>
           </div>
-          <div className="header-icon-btn">
+          <div className="header-icon-btn" onClick={() => navigate('/privacy-policy')}>
             <i className="fa-solid fa-question-circle"></i>
           </div>
           <div className="header-icon-btn" ref={notificationDropdownRef}>

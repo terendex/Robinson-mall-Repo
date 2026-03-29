@@ -155,9 +155,9 @@ const Register = () => {
               <input type="checkbox" id="privacy" checked={agreePrivacy} onChange={() => setAgreePrivacy(!agreePrivacy)} />
               <label htmlFor="privacy">
                 I have read and agree to the Robinsons Malls'{' '}
-                <a href="#" className="privacy-link">
+                <Link to="/privacy-policy" className="privacy-link">
                   Privacy Policy
-                </a>
+                </Link>
               </label>
             </div>
             <button type="submit" className="signup-btn">

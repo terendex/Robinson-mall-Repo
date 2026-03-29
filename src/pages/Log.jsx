@@ -119,7 +119,7 @@ export default function Log({ onLogin }) {
             <p>Don't have an account? <Link to="/register">Sign up</Link></p>
           </div>
           <div className="terms-policy">
-            <p>Terms | Policy</p>
+            <p>Terms | <Link to="/privacy-policy">Policy</Link></p>
           </div>
         </div>
       </div>

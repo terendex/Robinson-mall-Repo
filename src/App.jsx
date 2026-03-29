@@ -18,6 +18,7 @@ import StaffDashboard from './pages/staff/StaffDashboard';
 import CustomerDashboard from './pages/customer/CustomerDashboard';
 import ForgotPassword from './pages/ForgotPassword';
 import PasswordReset from './pages/PasswordReset';
+import PrivacyPolicy from './pages/PrivacyPolicy';
 import './styles/App.css'
 
 function App() {
@@ -54,6 +55,7 @@ function App() {
           <Route path="/register" element={<Register />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/password-reset/:token" element={<PasswordReset />} />
+          <Route path="/privacy-policy" element={<PrivacyPolicy />} />
 
           {/* Admin Routes */}
           <Route path="/admin" element={user && user.role === 'admin' ? <AdminLayout user={user} /> : <Navigate to="/login" />}>
