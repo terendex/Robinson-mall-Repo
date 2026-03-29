@@ -256,7 +256,7 @@ const Claims = () => {
                           {claim.status}
                         </span>
                       </td>
-                      <td className="actions-cell">
+                      <td className="actions-cell" ref={activeActions === claim.id ? actionsRef : null}>
                         <button 
                           className="action-dot-btn"
                           onClick={() => setActiveActions(activeActions === claim.id ? null : claim.id)}
@@ -264,7 +264,7 @@ const Claims = () => {
                           <i className="fa-solid fa-ellipsis"></i>
                         </button>
                         {activeActions === claim.id && (
-                          <div className="action-dropdown" ref={actionsRef}>
+                          <div className="action-dropdown">
                             <button className="action-item" onClick={() => setActiveActions(null)}>
                               <i className="fa-regular fa-eye"></i> View Claim Details
                             </button>

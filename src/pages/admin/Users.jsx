@@ -13,9 +13,18 @@ const Users = () => {
   const [userToEdit, setUserToEdit] = useState(null);
   const [userToReset, setUserToReset] = useState(null);
   const [activeActions, setActiveActions] = useState(null);
+  const actionsRef = useRef(null);
 
   useEffect(() => {
     fetchUsers();
+    
+    const handleClickOutside = (event) => {
+      if (actionsRef.current && !actionsRef.current.contains(event.target)) {
+        setActiveActions(null);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   const fetchUsers = async () => {
@@ -227,7 +236,7 @@ const Users = () => {
                         {user.is_active ? 'Active' : 'Disabled'}
                       </span>
                     </td>
-                    <td style={{ position: 'relative' }}>
+                    <td style={{ position: 'relative' }} ref={activeActions === user.id ? actionsRef : null}>
                       <button 
                         className="action-trigger-btn" 
                         onClick={() => setActiveActions(activeActions === user.id ? null : user.id)}
