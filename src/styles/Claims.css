@@ -5,15 +5,16 @@
 }
 
 .claims-container {
-  max-width: 1200px;
-  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding: 24px;
 }
 
 .claims-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 32px;
 }
 
 .claims-header h1 {
@@ -75,6 +76,7 @@
   border-radius: 16px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
   padding: 24px;
+  min-height: 450px; /* Prevent action menu clipping */
 }
 
 .claim-table-controls {

@@ -186,6 +186,76 @@ class Command(BaseCommand):
             reach=8234,
             conversions=2458
         )
+        Campaign.objects.create(
+            name="Easter Special 2026",
+            voucher=v2,
+            status="Scheduled",
+            budget=30000,
+            start_date=datetime.date(2026, 3, 30),
+            end_date=datetime.date(2026, 4, 15),
+            reach=5420,
+            conversions=1234
+        )
+        Campaign.objects.create(
+            name="Mother's Day Promo",
+            voucher=v5,
+            status="Scheduled",
+            budget=45000,
+            start_date=datetime.date(2026, 5, 1),
+            end_date=datetime.date(2026, 5, 15),
+            reach=0,
+            conversions=0
+        )
+        Campaign.objects.create(
+            name="Holiday Cashback",
+            voucher=v4,
+            status="Active",
+            budget=15000,
+            start_date=datetime.date(2026, 3, 20),
+            end_date=datetime.date(2026, 4, 15),
+            reach=3200,
+            conversions=890
+        )
+        Campaign.objects.create(
+            name="Valentine's Day 2026",
+            voucher=v3,
+            status="Completed",
+            budget=70000,
+            start_date=datetime.date(2026, 2, 1),
+            end_date=datetime.date(2026, 2, 28),
+            reach=10004,
+            conversions=3221
+        )
+        Campaign.objects.create(
+            name="Flash Tech Sale",
+            voucher=v6,
+            status="Completed",
+            budget=25000,
+            start_date=datetime.date(2026, 1, 15),
+            end_date=datetime.date(2026, 1, 25),
+            reach=5500,
+            conversions=1800
+        )
+        Campaign.objects.create(
+            name="Coffee Lover's Week",
+            voucher=v4,
+            status="Active",
+            budget=8000,
+            start_date=datetime.date(2026, 3, 1),
+            end_date=datetime.date(2026, 3, 31),
+            reach=1200,
+            conversions=450
+        )
+        Campaign.objects.create(
+            name="Style Reboot 2026",
+            voucher=v1,
+            status="Active",
+            budget=35000,
+            start_date=datetime.date(2026, 3, 10),
+            end_date=datetime.date(2026, 5, 10),
+            reach=4500,
+            conversions=1200
+        )
 
         # Seed Specific Claims from the Image
         claims_data = [
