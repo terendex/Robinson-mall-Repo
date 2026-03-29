@@ -212,6 +212,92 @@
   border-radius: 50%;
 }
 
+.notification-button {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  position: relative;
+  color: inherit;
+  font-size: inherit;
+}
+
+.notification-badge {
+  position: absolute;
+  top: -2px;
+  right: -5px;
+  background-color: #e31818;
+  color: white;
+  border-radius: 50%;
+  padding: 2px 6px;
+  font-size: 12px;
+  font-weight: bold;
+  border: 2px solid white;
+}
+
+.notification-dropdown {
+  position: absolute;
+  top: 120%;
+  right: 0;
+  background-color: white;
+  border: 1px solid #ddd;
+  border-radius: 12px;
+  width: 320px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.12);
+  z-index: 1010;
+  animation: dropdownFadeIn 0.2s ease-out;
+}
+
+.notification-dropdown-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 20px;
+  border-bottom: 1px solid #eee;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  font-size: 18px;
+  color: #888;
+  cursor: pointer;
+}
+
+.notification-item {
+  display: flex;
+  align-items: center;
+  padding: 15px 20px;
+  border-bottom: 1px solid #eee;
+}
+
+.notification-item:last-child {
+  border-bottom: none;
+}
+
+.notification-item i {
+  font-size: 18px;
+  margin-right: 15px;
+  color: #c50000;
+}
+
+.notification-item p {
+  margin: 0;
+  color: #333;
+  font-size: 15px;
+  flex-grow: 1;
+}
+
+.dismiss-btn {
+  background: none;
+  border: none;
+  font-size: 16px;
+  color: #aaa;
+  cursor: pointer;
+}
+
+
 /* User Profile matched to image */
 .header-user-profile {
   display: flex;
@@ -220,6 +306,7 @@
   cursor: pointer;
   padding: 4px;
   margin-left: 5px;
+  position: relative;
 }
 
 .profile-avatar {
@@ -231,6 +318,42 @@
   font-size: 16px;
   color: #5d5d5d;
   font-weight: bold;
+}
+
+.profile-dropdown {
+  position: absolute;
+  top: 120%;
+  right: 0;
+  background-color: white;
+  border: 1px solid #ddd;
+  border-radius: 12px;
+  width: 200px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.12);
+  z-index: 1010;
+  animation: dropdownFadeIn 0.2s ease-out;
+}
+
+.profile-dropdown-item {
+  display: flex;
+  align-items: center;
+  padding: 15px 20px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.profile-dropdown-item:hover {
+  background-color: #f5f5f5;
+}
+
+.profile-dropdown-item i {
+  font-size: 16px;
+  margin-right: 15px;
+  color: #5d5d5d;
+}
+
+.profile-dropdown-item span {
+  font-size: 14px;
+  color: #333;
 }
 
 /* Responsive Styles */
@@ -287,5 +410,3 @@
     display: none; /* Hide logo box on very small screens to fit search/icons */
   }
 }
-
-

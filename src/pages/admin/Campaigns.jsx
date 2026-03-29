@@ -1,7 +1,8 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef, useContext } from 'react';
 import axios from 'axios';
 import CampaignModal from '../../components/CampaignModal';
 import CampaignDetailsModal from '../../components/CampaignDetailsModal';
+import NotificationContext from '../../context/NotificationContext';
 import '../../styles/Campaigns.css';
 
 const Campaigns = () => {
@@ -23,6 +24,7 @@ const Campaigns = () => {
   const [selectedCampaignForDetails, setSelectedCampaignForDetails] = useState(null);
   
   const statusFilterRef = useRef(null);
+  const { addNotification } = useContext(NotificationContext);
   
   useEffect(() => {
     fetchCampaigns();
@@ -67,6 +69,9 @@ const Campaigns = () => {
         status: newStatus
       });
       setCampaigns(campaigns.map(c => c.id === campaign.id ? response.data : c));
+      if (newStatus === 'Active') {
+        addNotification({ title: response.data.name, message: `is now ${newStatus}.`, icon: 'fa-tag' });
+      }
       setActiveActions(null);
     } catch (error) {
       console.error(`Error changing status to ${newStatus}:`, error);
@@ -99,9 +104,11 @@ const Campaigns = () => {
         
         const refreshedResponse = await axios.get(`http://127.0.0.1:8000/api/campaigns/${campaignToEdit.id}/`);
         setCampaigns(campaigns.map(c => c.id === campaignToEdit.id ? refreshedResponse.data : c));
+        addNotification({ title: refreshedResponse.data.name, message: 'has been updated.', icon: 'fa-tag' });
       } else {
         const response = await axios.post('http://127.0.0.1:8000/api/campaigns/', formData);
         setCampaigns([...campaigns, response.data]);
+        addNotification({ title: response.data.name, message: 'has been created.', icon: 'fa-plus' });
       }
       setShowModal(false);
     } catch (error) {
