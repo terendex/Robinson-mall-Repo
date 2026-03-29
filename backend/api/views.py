@@ -11,8 +11,8 @@ from rest_framework import viewsets, status, views
 from rest_framework.response import Response
 from rest_framework.decorators import action
 from django.contrib.auth import authenticate, login
-from .models import User, Voucher, Campaign
-from .serializers import UserSerializer, VoucherSerializer, CampaignSerializer
+from .models import User, Voucher, Campaign, Store, Claim
+from .serializers import UserSerializer, VoucherSerializer, CampaignSerializer, StoreSerializer, ClaimSerializer
 
 
 class UserViewSet(viewsets.ModelViewSet):
@@ -129,3 +129,18 @@ class CampaignViewSet(viewsets.ModelViewSet):
             campaign.save(update_fields=['status'])
 
         return super().get_queryset().order_by('-created_at')
+
+class StoreViewSet(viewsets.ModelViewSet):
+    queryset = Store.objects.all()
+    serializer_class = StoreSerializer
+
+class ClaimViewSet(viewsets.ModelViewSet):
+    queryset = Claim.objects.all()
+    serializer_class = ClaimSerializer
+
+    def get_queryset(self):
+        queryset = Claim.objects.all()
+        status = self.request.query_params.get('status')
+        if status:
+            queryset = queryset.filter(status=status)
+        return queryset.order_by('-created_at')

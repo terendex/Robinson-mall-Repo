@@ -9,10 +9,19 @@ class User(AbstractUser):
         ('customer', 'Customer'),
     )
     role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='customer')
+    phone_number = models.CharField(max_length=15, blank=True, null=True, default='')
     password_reset_token = models.CharField(max_length=100, blank=True, null=True)
 
     def __str__(self):
         return self.username
+
+class Store(models.Model):
+    name = models.CharField(max_length=100, default='New Store')
+    location = models.CharField(max_length=255, blank=True, null=True, default='')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.name
 
 class Voucher(models.Model):
     VOUCHER_TYPES = (
@@ -55,3 +64,21 @@ class Campaign(models.Model):
 
     def __str__(self):
         return self.name
+
+class Claim(models.Model):
+    STATUS_CHOICES = (
+        ('Pending', 'Pending'),
+        ('Approved', 'Approved'),
+        ('Rejected', 'Rejected'),
+    )
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='claims', null=True, blank=True)
+    voucher = models.ForeignKey(Voucher, on_delete=models.CASCADE, related_name='claims', null=True, blank=True)
+    store = models.ForeignKey(Store, on_delete=models.CASCADE, related_name='claims', null=True, blank=True)
+    receipt_no = models.CharField(max_length=100, default='', blank=True, null=True)
+    amount = models.DecimalField(max_digits=10, decimal_places=2, default=0, blank=True, null=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='Pending', blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"Claim {self.receipt_no} - {self.status}"
