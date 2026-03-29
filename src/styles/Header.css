@@ -5,6 +5,7 @@
   height: 50px;
   display: flex;
   align-items: center;
+  justify-content: space-between;
   position: fixed;
   top: 0;
   left: 0;
@@ -18,9 +19,29 @@
   margin-left: 90px;
 }
 
+.header-back-button {
+  background-color: white;
+  color: #C40000;
+  border: 1px solid #C40000;
+  padding: 8px 15px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 1rem;
+  margin-right: 90px;
+}
+
+.header-back-button:hover {
+  background-color: #d52b1e;
+  color: white;
+}
+
+
 @media (max-width: 768px) {
   .logo-img {
     margin-left: 25px;
+  }
+  .header-back-button {
+    margin-right: 25px;
   }
 }
 
@@ -33,5 +54,8 @@
   .logo-img {
     height: 30px;
     margin-left: 25px;
+  }
+  .header-back-button {
+    margin-right: 25px;
   }
 }

@@ -11,8 +11,8 @@ from rest_framework import viewsets, status, views
 from rest_framework.response import Response
 from rest_framework.decorators import action
 from django.contrib.auth import authenticate, login
-from .models import User
-from .serializers import UserSerializer
+from .models import User, Voucher, Campaign
+from .serializers import UserSerializer, VoucherSerializer, CampaignSerializer
 
 
 class UserViewSet(viewsets.ModelViewSet):
@@ -100,3 +100,32 @@ class PasswordResetView(views.APIView):
         user.save()
 
         return Response({'detail': 'Password has been reset successfully.'}, status=status.HTTP_200_OK)
+
+
+class VoucherViewSet(viewsets.ModelViewSet):
+    queryset = Voucher.objects.all()
+    serializer_class = VoucherSerializer
+
+
+from django.utils import timezone
+
+class CampaignViewSet(viewsets.ModelViewSet):
+    queryset = Campaign.objects.all()
+    serializer_class = CampaignSerializer
+
+    def get_queryset(self):
+        today = timezone.localtime().date()
+        
+        # Auto-update Scheduled to Active when start_date is hit
+        scheduled_campaigns = Campaign.objects.filter(status='Scheduled', start_date__lte=today)
+        for campaign in scheduled_campaigns:
+            campaign.status = 'Active'
+            campaign.save(update_fields=['status'])
+
+        # Auto-update Active to Completed when end_date has passed
+        active_campaigns = Campaign.objects.filter(status='Active', end_date__lt=today)
+        for campaign in active_campaigns:
+            campaign.status = 'Completed'
+            campaign.save(update_fields=['status'])
+
+        return super().get_queryset().order_by('-created_at')

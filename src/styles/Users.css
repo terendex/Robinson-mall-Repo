@@ -1,0 +1,336 @@
+.users-container {
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+}
+
+.users-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.users-header h1 {
+  font-size: 32px;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin: 0;
+}
+
+.add-user-btn {
+  background-color: #c50000;
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: background-color 0.2s;
+  box-shadow: 0 4px 12px rgba(197, 0, 0, 0.2);
+}
+
+.add-user-btn:hover {
+  background-color: #a00000;
+}
+
+/* Statistics Cards */
+.users-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 20px;
+}
+
+.stat-card {
+  background-color: white;
+  padding: 24px;
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.stat-card p {
+  color: #666;
+  font-size: 14px;
+  font-weight: 500;
+  margin: 0;
+}
+
+.stat-card h2 {
+  font-size: 36px;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin: 0;
+}
+
+/* User List Section */
+.user-list-section {
+  background-color: white;
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+  overflow-x: auto;
+  padding: 24px;
+}
+
+.user-list-header {
+  margin-bottom: 24px;
+}
+
+.user-search-pills {
+  display: flex;
+  align-items: center;
+  background-color: #f1f4f9;
+  border-radius: 25px;
+  padding: 10px 20px;
+  width: 350px;
+  box-sizing: border-box;
+}
+
+.user-search-pills i {
+  color: #777;
+  margin-right: 12px;
+}
+
+.user-search-pills input {
+  background: none;
+  border: none;
+  outline: none;
+  width: 100%;
+  font-size: 14px;
+  color: #333;
+}
+
+/* Table Styles */
+.users-table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+  min-width: 800px;
+}
+
+.users-table th {
+  padding: 15px;
+  color: #666;
+  font-weight: 600;
+  font-size: 14px;
+  border-bottom: 2px solid #f1f4f9;
+  white-space: nowrap;
+}
+
+.users-table td {
+  padding: 16px 15px;
+  border-bottom: 1px solid #f9f9f9;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+/* Column Widths & Alignments */
+.users-table th:nth-child(1),
+.users-table td:nth-child(1) {
+  width: 35%;
+  text-align: left;
+}
+
+.users-table th:nth-child(2),
+.users-table td:nth-child(2),
+.users-table th:nth-child(3),
+.users-table td:nth-child(3),
+.users-table th:nth-child(4),
+.users-table td:nth-child(4) {
+  width: 18%;
+  text-align: center;
+}
+
+.users-table th:nth-child(5),
+.users-table td:nth-child(5) {
+  width: 11%;
+  text-align: center;
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  max-width: 100%;
+}
+
+.user-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background-color: #555;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 700;
+  font-size: 16px;
+  flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.user-details {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  text-align: left; /* Explicitly left-align */
+}
+
+.user-name {
+  font-weight: 700;
+  color: #1a1a1a;
+  font-size: 15px;
+  line-height: 1.2;
+}
+
+.user-email {
+  font-size: 13px;
+  color: #888;
+  margin-top: 2px;
+}
+
+/* Role Pills */
+.role-pill {
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 700;
+  display: inline-block;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.role-pill.admin { 
+  background-color: #f0e6ff; 
+  color: #6c2bd9; 
+  border: 1px solid #d8b4fe; 
+}
+.role-pill.manager { 
+  background-color: #e0f2fe; 
+  color: #0369a1; 
+  border: 1px solid #bae6fd; 
+}
+.role-pill.staff { 
+  background-color: #f0fdf4; 
+  color: #15803d; 
+  border: 1px solid #bbf7d0; 
+}
+.role-pill.customer { 
+  background-color: #f8fafc; 
+  color: #64748b; 
+  border: 1px solid #e2e8f0; 
+}
+
+/* Status Pills */
+.status-pill {
+  padding: 4px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.status-pill.active {
+  background-color: #1eb533;
+  color: white;
+}
+
+.status-pill.pending {
+  background-color: #ffe89e;
+  color: #9c6e00;
+}
+
+/* Action Dropdown */
+.action-trigger-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 18px;
+  color: #999;
+  padding: 5px 10px;
+  transition: color 0.2s;
+}
+
+.action-trigger-btn:hover {
+  color: #333;
+}
+
+.action-dropdown {
+  position: absolute;
+  right: 0;
+  top: 40px;
+  background: white;
+  border: 1px solid #eee;
+  border-radius: 8px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  z-index: 100;
+  min-width: 130px;
+  overflow: hidden;
+  animation: dropdownFadeIn 0.2s ease;
+}
+
+.action-dropdown button {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 12px 15px;
+  text-align: left;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-size: 14px;
+  color: #444;
+  transition: background-color 0.2s;
+}
+
+.action-dropdown button:hover {
+  background-color: #f5f5f5;
+}
+
+.action-dropdown button.delete-action {
+  color: #c50000;
+}
+
+.action-dropdown button i {
+  width: 16px;
+  font-size: 14px;
+}
+
+/* Loader */
+.loading-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 200px;
+}
+
+.loader {
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid #c50000;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@media (max-width: 768px) {
+  .user-search-pills {
+    width: 100%;
+    margin-bottom: 20px;
+    padding: 14px 20px;
+  }
+
+  .users-table th:nth-child(3),
+  .users-table td:nth-child(3) {
+    display: none; /* Hide date on small mobile */
+  }
+}

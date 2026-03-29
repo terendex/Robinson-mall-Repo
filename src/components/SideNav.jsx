@@ -13,6 +13,12 @@ const SideNav = ({ user, isOpen, closeSidebar }) => {
 
   const displayEmail = user?.email || 'admin@example.com';
 
+  const handleNavLinkClick = () => {
+    if (window.innerWidth <= 768) {
+      closeSidebar();
+    }
+  };
+
   return (
     <>
       {/* Dark overlay behind sidebar on mobile */}
@@ -20,14 +26,14 @@ const SideNav = ({ user, isOpen, closeSidebar }) => {
 
       <div className={`sidenav${isOpen ? ' open' : ''}`}>
         <ul className="nav-links">
-          <li><NavLink to="/admin/dashboard" onClick={closeSidebar}><i className="fa-solid fa-table-cells-large"></i> Dashboard</NavLink></li>
-          <li><NavLink to="/admin/vouchers" onClick={closeSidebar}><i className="fa-solid fa-ticket-simple"></i> Vouchers</NavLink></li>
-          <li><NavLink to="/admin/campaigns" onClick={closeSidebar}><i className="fa-solid fa-tag"></i> Campaigns</NavLink></li>
-          <li><NavLink to="/admin/claims" onClick={closeSidebar}><i className="fa-solid fa-gift"></i> Claims</NavLink></li>
-          <li><NavLink to="/admin/transactions" onClick={closeSidebar}><i className="fa-solid fa-clock-rotate-left"></i> Transactions</NavLink></li>
-          <li><NavLink to="/admin/users" onClick={closeSidebar}><i className="fa-solid fa-user-group"></i> Users</NavLink></li>
-          <li><NavLink to="/admin/reports" onClick={closeSidebar}><i className="fa-solid fa-chart-simple"></i> Reports</NavLink></li>
-          <li><NavLink to="/admin/settings" onClick={closeSidebar}><i className="fa-solid fa-gear"></i> Settings</NavLink></li>
+          <li><NavLink to="/admin/dashboard" onClick={handleNavLinkClick}><i className="fa-solid fa-table-cells-large"></i> Dashboard</NavLink></li>
+          <li><NavLink to="/admin/vouchers" onClick={handleNavLinkClick}><i className="fa-solid fa-ticket-simple"></i> Vouchers</NavLink></li>
+          <li><NavLink to="/admin/campaigns" onClick={handleNavLinkClick}><i className="fa-solid fa-tag"></i> Campaigns</NavLink></li>
+          <li><NavLink to="/admin/claims" onClick={handleNavLinkClick}><i className="fa-solid fa-gift"></i> Claims</NavLink></li>
+          <li><NavLink to="/admin/transactions" onClick={handleNavLinkClick}><i className="fa-solid fa-clock-rotate-left"></i> Transactions</NavLink></li>
+          <li><NavLink to="/admin/users" onClick={handleNavLinkClick}><i className="fa-solid fa-user-group"></i> Users</NavLink></li>
+          <li><NavLink to="/admin/reports" onClick={handleNavLinkClick}><i className="fa-solid fa-chart-simple"></i> Reports</NavLink></li>
+          <li><NavLink to="/admin/settings" onClick={handleNavLinkClick}><i className="fa-solid fa-gear"></i> Settings</NavLink></li>
         </ul>
         <div className="admin-user">
           <div className="admin-icon"><i className="fa-solid fa-user-circle"></i></div>

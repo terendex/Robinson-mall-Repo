@@ -1,0 +1,313 @@
+.campaigns-container {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding: 24px;
+}
+
+.campaigns-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.campaigns-header h1 {
+  font-size: 28px;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin: 0;
+}
+
+.create-campaign-btn {
+  background-color: #c50000;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: background-color 0.2s;
+  box-shadow: 0 4px 12px rgba(197, 0, 0, 0.15);
+}
+
+.create-campaign-btn:hover {
+  background-color: #a00000;
+}
+
+/* Stats Section */
+.campaign-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+}
+
+.campaign-stat-card {
+  background-color: white;
+  padding: 24px;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.stat-title {
+  color: #888;
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.stat-value {
+  font-size: 32px;
+  font-weight: 700;
+  color: #1a1a1a;
+}
+
+/* Table Section */
+.campaign-table-section {
+  background-color: transparent;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.campaign-table-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #eaecee;
+  padding: 16px 24px;
+  border-radius: 12px 12px 0 0;
+}
+
+.campaign-search-wrapper {
+  background: white;
+  display: flex;
+  align-items: center;
+  padding: 8px 16px;
+  border-radius: 8px;
+  width: 300px;
+}
+
+.campaign-search-wrapper i {
+  color: #888;
+  margin-right: 10px;
+  font-size: 14px;
+}
+
+.campaign-search-wrapper input {
+  border: none;
+  outline: none;
+  width: 100%;
+  font-size: 14px;
+  color: #333;
+}
+
+.campaign-search-wrapper input::placeholder {
+  color: #aaa;
+}
+
+/* Status Filter Dropdown */
+.status-filter-container {
+  position: relative;
+}
+
+.custom-filter-button {
+  background: white;
+  border: 1px solid #e0e0e0;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #555;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s;
+}
+
+.custom-filter-button:hover, .custom-filter-button.active {
+  background: #f8f9fa;
+  border-color: #ccc;
+}
+
+.custom-filter-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  background: white;
+  border: 1px solid #eef0f3;
+  border-radius: 8px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  padding: 12px;
+  min-width: 160px;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  color: #333;
+  cursor: pointer;
+}
+
+.checkbox-label input[type="checkbox"] {
+  cursor: pointer;
+  width: 14px;
+  height: 14px;
+}
+
+/* Table */
+.campaign-table-wrapper {
+  background: white;
+  border-radius: 0 0 12px 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+  overflow-x: auto;
+}
+
+.campaigns-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.campaigns-table th {
+  padding: 16px 24px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #666;
+  border-bottom: 2px solid #f1f4f9;
+}
+
+.campaigns-table td {
+  padding: 20px 24px;
+  font-size: 14px;
+  color: #888;
+  border-bottom: 1px solid #f1f4f9;
+  vertical-align: middle;
+}
+
+.campaigns-table tbody tr:hover {
+  background-color: #fcfcfc;
+}
+
+.campaign-name-cell {
+  font-weight: 700;
+  color: #333 !important;
+  max-width: 180px;
+  line-height: 1.4;
+}
+
+.budget-cell {
+  color: #888;
+}
+
+.timeline-cell {
+  line-height: 1.6;
+}
+
+/* Status Badges */
+.status-badge-new {
+  padding: 6px 16px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  display: inline-block;
+  text-align: center;
+}
+
+.status-badge-new.active {
+  background-color: #00c83a;
+  color: white;
+}
+
+.status-badge-new.scheduled {
+  background-color: #3f3f46;
+  color: white;
+}
+
+.status-badge-new.completed {
+  background-color: #cffafe;
+  color: #0891b2;
+}
+
+.status-badge-new.canceled {
+  background-color: #fee2e2;
+  color: #dc2626;
+}
+
+/* Actions Cell */
+.actions-cell {
+  position: relative;
+  text-align: right;
+  padding-right: 24px;
+}
+
+.table-action-dot {
+  background: none;
+  border: none;
+  color: #1a1a1a;
+  cursor: pointer;
+  padding: 8px;
+  font-size: 16px;
+  transition: color 0.2s;
+}
+
+.table-action-dot:hover {
+  color: #c50000;
+}
+
+/* Dropdown */
+.campaign-action-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 24px;
+  background: white;
+  border: 1px solid #eef0f3;
+  border-radius: 8px;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+  padding: 8px;
+  min-width: 220px;
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+}
+
+.campaign-action-dropdown button {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  background: none;
+  border: none;
+  width: 100%;
+  text-align: left;
+  font-size: 13px;
+  color: #444;
+  cursor: pointer;
+  border-radius: 6px;
+}
+
+.campaign-action-dropdown button:hover {
+  background-color: #f8f9fa;
+  color: #1a1a1a;
+}
+
+.campaign-action-dropdown button i {
+  font-size: 14px;
+  color: #666;
+  width: 16px;
+  text-align: center;
+}

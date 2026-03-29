@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Outlet } from 'react-router-dom';
 import SideNav from '../../components/SideNav';
 import AdminHeader from '../../components/AdminHeader';
+import { NotificationProvider } from '../../context/NotificationContext';
 import '../../styles/AdminLayout.css';
 
 const AdminLayout = ({ user }) => {
@@ -11,17 +12,19 @@ const AdminLayout = ({ user }) => {
   const closeSidebar = () => setIsSidebarOpen(false);
 
   return (
-    <div className="admin-layout">
-      <AdminHeader toggleSidebar={toggleSidebar} user={user} isSidebarOpen={isSidebarOpen} />
-      <SideNav 
-        user={user} 
-        isOpen={isSidebarOpen} 
-        closeSidebar={closeSidebar} 
-      />
-      <main className={`admin-layout-main${isSidebarOpen ? ' sidebar-open' : ''}`}>
-        <Outlet />
-      </main>
-    </div>
+    <NotificationProvider>
+      <div className="admin-layout">
+        <AdminHeader toggleSidebar={toggleSidebar} user={user} isSidebarOpen={isSidebarOpen} />
+        <SideNav 
+          user={user} 
+          isOpen={isSidebarOpen} 
+          closeSidebar={closeSidebar} 
+        />
+        <main className={`admin-layout-main${isSidebarOpen ? ' sidebar-open' : ''}`}>
+          <Outlet />
+        </main>
+      </div>
+    </NotificationProvider>
   );
 };
 
