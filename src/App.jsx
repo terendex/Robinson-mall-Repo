@@ -43,6 +43,8 @@ function App() {
 
   const handleLogout = () => {
     setUser(null);
+    localStorage.removeItem('rememberedEmail');
+    localStorage.removeItem('rememberedPassword');
   };
 
   return (
