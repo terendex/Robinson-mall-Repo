@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import axios from 'axios';
 import CampaignModal from '../../components/CampaignModal';
 import CampaignDetailsModal from '../../components/CampaignDetailsModal';
@@ -8,14 +8,34 @@ const Campaigns = () => {
   const [campaigns, setCampaigns] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState('All');
+  
+  // Status filter state
+  const [statusFilters, setStatusFilters] = useState({
+    Active: false,
+    Completed: false,
+    Scheduled: false
+  });
+  const [isStatusDropdownOpen, setIsStatusDropdownOpen] = useState(false);
+  
   const [showModal, setShowModal] = useState(false);
   const [campaignToEdit, setCampaignToEdit] = useState(null);
   const [activeActions, setActiveActions] = useState(null);
   const [selectedCampaignForDetails, setSelectedCampaignForDetails] = useState(null);
-
+  
+  const statusFilterRef = useRef(null);
+  
   useEffect(() => {
     fetchCampaigns();
+  }, []);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (statusFilterRef.current && !statusFilterRef.current.contains(event.target)) {
+        setIsStatusDropdownOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   const fetchCampaigns = async () => {
@@ -41,14 +61,15 @@ const Campaigns = () => {
     setActiveActions(null);
   };
 
-  const handleDeleteCampaign = async (id) => {
-    if (window.confirm('Are you sure you want to delete this campaign?')) {
-      try {
-        await axios.delete(`http://127.0.0.1:8000/api/campaigns/${id}/`);
-        setCampaigns(campaigns.filter(c => c.id !== id));
-      } catch (error) {
-        console.error('Error deleting campaign:', error);
-      }
+  const updateCampaignStatus = async (campaign, newStatus) => {
+    try {
+      const response = await axios.patch(`http://127.0.0.1:8000/api/campaigns/${campaign.id}/`, {
+        status: newStatus
+      });
+      setCampaigns(campaigns.map(c => c.id === campaign.id ? response.data : c));
+      setActiveActions(null);
+    } catch (error) {
+      console.error(`Error changing status to ${newStatus}:`, error);
     }
   };
 
@@ -76,7 +97,6 @@ const Campaigns = () => {
         
         const response = await axios.patch(`http://127.0.0.1:8000/api/campaigns/${campaignToEdit.id}/`, formData);
         
-        // Use updated campaign data, but fetch the full object again to get the fresh voucher details
         const refreshedResponse = await axios.get(`http://127.0.0.1:8000/api/campaigns/${campaignToEdit.id}/`);
         setCampaigns(campaigns.map(c => c.id === campaignToEdit.id ? refreshedResponse.data : c));
       } else {
@@ -90,33 +110,26 @@ const Campaigns = () => {
     }
   };
 
-  const toggleCampaignStatus = async (campaign) => {
-    const nextStatusMap = {
-      'Active': 'Inactive',
-      'Inactive': 'Active',
-      'Scheduled': 'Active',
-      'Completed': 'Inactive'
-    };
-    const nextStatus = nextStatusMap[campaign.status] || 'Active';
-    
-    try {
-      const response = await axios.patch(`http://127.0.0.1:8000/api/campaigns/${campaign.id}/`, {
-        status: nextStatus
-      });
-      setCampaigns(campaigns.map(c => c.id === campaign.id ? response.data : c));
-      setActiveActions(null);
-    } catch (error) {
-      console.error('Error toggling campaign status:', error);
-    }
+  const handleFilterToggle = (status) => {
+    setStatusFilters(prev => ({
+      ...prev,
+      [status]: !prev[status]
+    }));
   };
 
   const filteredCampaigns = useMemo(() => {
+    const isAnyStatusSelected = Object.values(statusFilters).some(v => v);
+    
     return campaigns.filter(c => {
       const matchesSearch = c.name.toLowerCase().includes(searchQuery.toLowerCase());
-      const matchesStatus = statusFilter === 'All' || c.status === statusFilter;
+      
+      let matchesStatus = true;
+      if (isAnyStatusSelected) {
+        matchesStatus = statusFilters[c.status];
+      }
       return matchesSearch && matchesStatus;
     });
-  }, [campaigns, searchQuery, statusFilter]);
+  }, [campaigns, searchQuery, statusFilters]);
 
   const stats = useMemo(() => {
     return {
@@ -126,131 +139,152 @@ const Campaigns = () => {
     };
   }, [campaigns]);
 
+  const formatDateLabel = (dateString) => {
+    if (!dateString) return '';
+    return new Date(dateString).toISOString().split('T')[0];
+  };
+
   return (
     <div className="campaigns-page">
       <div className="campaigns-container">
         <div className="campaigns-header">
           <h1>Campaigns</h1>
           <button className="create-campaign-btn" onClick={handleAddCampaign}>
-            <i className="fa-solid fa-plus"></i> Create Campaigns
+            <i className="fa-solid fa-plus"></i> Create Campaign
           </button>
         </div>
 
         <div className="campaign-stats">
           <div className="campaign-stat-card">
-            <div className="stat-title">
-              <i className="fa-solid fa-circle active"></i>
-              <span>Active Campaigns</span>
-            </div>
+            <div className="stat-title">ACTIVE CAMPAIGNS</div>
             <div className="stat-value">{stats.active}</div>
           </div>
           <div className="campaign-stat-card">
-            <div className="stat-title">
-              <i className="fa-solid fa-users reach"></i>
-              <span>Total Reach</span>
-            </div>
+            <div className="stat-title">TOTAL REACH</div>
             <div className="stat-value">{stats.reach}</div>
           </div>
           <div className="campaign-stat-card">
-            <div className="stat-title">
-              <i className="fa-solid fa-calendar-days scheduled"></i>
-              <span>Scheduled</span>
-            </div>
+            <div className="stat-title">SCHEDULED CAMPAIGNS</div>
             <div className="stat-value">{stats.scheduled}</div>
           </div>
         </div>
 
-        <div className="campaigns-controls">
-          <div className="campaign-search-wrapper">
-            <i className="fa-solid fa-magnifying-glass"></i>
-            <input 
-              type="text" 
-              placeholder="Search campaigns" 
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-          </div>
-          <div className="campaign-filter-wrapper">
-            <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
-              <option value="All">All Status</option>
-              <option value="Active">Active</option>
-              <option value="Scheduled">Scheduled</option>
-              <option value="Completed">Completed</option>
-              <option value="Inactive">Inactive</option>
-            </select>
-          </div>
-        </div>
-
-        <div className="campaign-list">
-          {loading ? (
-            <div className="loading-container">
-              <div className="loader"></div>
+        <div className="campaign-table-section">
+          <div className="campaign-table-controls">
+            <div className="campaign-search-wrapper">
+              <i className="fa-solid fa-magnifying-glass"></i>
+              <input 
+                type="text" 
+                placeholder="Search campaigns" 
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
             </div>
-          ) : (
-            filteredCampaigns.map((campaign) => (
-              <div key={campaign.id} className="campaign-card">
-                <div className="campaign-card-header">
-                  <div className="campaign-header-left">
-                    <h3>{campaign.name}</h3>
-                    <span className={`campaign-badge ${campaign.status.toLowerCase()}`}>
-                      {campaign.status}
-                    </span>
-                  </div>
-                  <div className="campaign-header-right">
-                    <div className="header-meta-group">
-                      <div className="budget-section-final">
-                        <span className="budget-label-final">Budget</span>
-                        <span className="budget-value-final">₱{Number(campaign.budget).toLocaleString()}</span>
-                      </div>
-                      <button 
-                        className="card-triple-dot"
-                        onClick={() => setActiveActions(activeActions === campaign.id ? null : campaign.id)}
-                      >
-                        <i className="fa-solid fa-ellipsis-vertical"></i>
-                      </button>
-                    </div>
-                    <button 
-                      className="view-details-btn-final"
-                      onClick={() => setSelectedCampaignForDetails(campaign)}
-                    >
-                      View Details
-                    </button>
-                    {activeActions === campaign.id && (
-                      <div className="action-dropdown show" style={{ right: '0', top: '45px' }}>
-                        <button onClick={() => handleEditCampaign(campaign)}>
-                          <i className="fa-solid fa-pen-to-square"></i> Edit
-                        </button>
-                        <button onClick={() => toggleCampaignStatus(campaign)}>
-                          <i className={`fa-solid ${campaign.status === 'Active' ? 'fa-pause' : 'fa-play'}`}></i> 
-                          {campaign.status === 'Active' ? 'Disable' : 'Enable'}
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                <div className="campaign-card-content">
-                  <div className="info-group">
-                    <span className="info-label">Start Date</span>
-                    <span className="info-value">{new Date(campaign.start_date).toLocaleDateString()}</span>
-                  </div>
-                  <div className="info-group">
-                    <span className="info-label">End Date</span>
-                    <span className="info-value">{new Date(campaign.end_date).toLocaleDateString()}</span>
-                  </div>
-                  <div className="info-group">
-                    <span className="info-label">Reach</span>
-                    <span className="info-value">{Number(campaign.reach).toLocaleString()}</span>
-                  </div>
-                  <div className="info-group">
-                    <span className="info-label">Conversions</span>
-                    <span className="info-value">{Number(campaign.conversions).toLocaleString()}</span>
-                  </div>
-                </div>
-
+            
+            <div className="status-filter-container" ref={statusFilterRef}>
+              <div 
+                className={`custom-filter-button ${isStatusDropdownOpen ? 'active' : ''}`}
+                onClick={() => setIsStatusDropdownOpen(!isStatusDropdownOpen)}
+              >
+                <i className="fa-solid fa-filter"></i> Filter Status
               </div>
-            ))
-          )}
+              
+              {isStatusDropdownOpen && (
+                <div className="custom-filter-dropdown">
+                  <label className="checkbox-label">
+                    <input 
+                      type="checkbox" 
+                      checked={statusFilters.Active} 
+                      onChange={() => handleFilterToggle('Active')} 
+                    /> Active
+                  </label>
+                  <label className="checkbox-label">
+                    <input 
+                      type="checkbox" 
+                      checked={statusFilters.Completed} 
+                      onChange={() => handleFilterToggle('Completed')} 
+                    /> Completed
+                  </label>
+                  <label className="checkbox-label">
+                    <input 
+                      type="checkbox" 
+                      checked={statusFilters.Scheduled} 
+                      onChange={() => handleFilterToggle('Scheduled')} 
+                    /> Scheduled
+                  </label>
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="campaign-table-wrapper">
+            {loading ? (
+              <div className="loading-container">
+                <div className="loader"></div>
+              </div>
+            ) : (
+              <table className="campaigns-table">
+                <thead>
+                  <tr>
+                    <th>Campaign</th>
+                    <th>Reach</th>
+                    <th>Conversions</th>
+                    <th>Timeline</th>
+                    <th>Budget</th>
+                    <th>Status</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredCampaigns.map((campaign) => (
+                    <tr key={campaign.id}>
+                      <td className="campaign-name-cell">
+                        {campaign.name.split(' ').map((word, i, arr) => {
+                          // Simple attempt to match visual representation of wrapping
+                          return (
+                            <React.Fragment key={i}>
+                              {word}
+                              {i < arr.length - 1 && ' '}
+                            </React.Fragment>
+                          );
+                        })}
+                      </td>
+                      <td className="reach-cell">{Number(campaign.reach).toLocaleString()}</td>
+                      <td className="conversions-cell">{Number(campaign.conversions).toLocaleString()}</td>
+                      <td className="timeline-cell">
+                        {formatDateLabel(campaign.start_date)} to<br />
+                        {formatDateLabel(campaign.end_date)}
+                      </td>
+                      <td className="budget-cell">₱{Number(campaign.budget).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+                      <td>
+                        <span className={`status-badge-new ${campaign.status.toLowerCase()}`}>
+                          {campaign.status}
+                        </span>
+                      </td>
+                      <td className="actions-cell">
+                        <button 
+                          className="table-action-dot"
+                          onClick={() => setActiveActions(activeActions === campaign.id ? null : campaign.id)}
+                        >
+                          <i className="fa-solid fa-ellipsis"></i>
+                        </button>
+                        {activeActions === campaign.id && (
+                          <div className="campaign-action-dropdown show">
+                            <button onClick={() => { setSelectedCampaignForDetails(campaign); setActiveActions(null); }}>
+                              <i className="fa-regular fa-eye"></i> View Campaign Details
+                            </button>
+                            <button onClick={() => { handleEditCampaign(campaign); setActiveActions(null); }}>
+                              <i className="fa-regular fa-pen-to-square"></i> Edit Campaign Details
+                            </button>
+                          </div>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
         </div>
       </div>
 

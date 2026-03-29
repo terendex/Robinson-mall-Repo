@@ -107,6 +107,25 @@ class VoucherViewSet(viewsets.ModelViewSet):
     serializer_class = VoucherSerializer
 
 
+from django.utils import timezone
+
 class CampaignViewSet(viewsets.ModelViewSet):
     queryset = Campaign.objects.all()
     serializer_class = CampaignSerializer
+
+    def get_queryset(self):
+        today = timezone.localtime().date()
+        
+        # Auto-update Scheduled to Active when start_date is hit
+        scheduled_campaigns = Campaign.objects.filter(status='Scheduled', start_date__lte=today)
+        for campaign in scheduled_campaigns:
+            campaign.status = 'Active'
+            campaign.save(update_fields=['status'])
+
+        # Auto-update Active to Completed when end_date has passed
+        active_campaigns = Campaign.objects.filter(status='Active', end_date__lt=today)
+        for campaign in active_campaigns:
+            campaign.status = 'Completed'
+            campaign.save(update_fields=['status'])
+
+        return super().get_queryset().order_by('-created_at')

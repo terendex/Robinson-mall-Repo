@@ -1,8 +1,8 @@
 .campaigns-container {
   display: flex;
   flex-direction: column;
-  gap: 30px;
-  padding: 20px;
+  gap: 24px;
+  padding: 24px;
 }
 
 .campaigns-header {
@@ -12,7 +12,7 @@
 }
 
 .campaigns-header h1 {
-  font-size: 32px;
+  font-size: 28px;
   font-weight: 700;
   color: #1a1a1a;
   margin: 0;
@@ -22,15 +22,16 @@
   background-color: #c50000;
   color: white;
   border: none;
-  padding: 12px 24px;
+  padding: 10px 20px;
   border-radius: 8px;
+  font-size: 14px;
   font-weight: 600;
   cursor: pointer;
   display: flex;
   align-items: center;
   gap: 8px;
   transition: background-color 0.2s;
-  box-shadow: 0 4px 12px rgba(197, 0, 0, 0.2);
+  box-shadow: 0 4px 12px rgba(197, 0, 0, 0.15);
 }
 
 .create-campaign-btn:hover {
@@ -40,346 +41,273 @@
 /* Stats Section */
 .campaign-stats {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  grid-template-columns: repeat(3, 1fr);
   gap: 20px;
 }
 
 .campaign-stat-card {
   background-color: white;
   padding: 24px;
-  border-radius: 16px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
   display: flex;
   flex-direction: column;
-  gap: 15px;
+  gap: 12px;
 }
 
 .stat-title {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  color: #666;
-  font-size: 14px;
-  font-weight: 700;
+  color: #888;
+  font-size: 13px;
+  font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
 
-.stat-title i {
-  font-size: 18px;
-}
-
-.stat-title i.active { color: #1eb533; }
-.stat-title i.reach { color: #c50000; }
-.stat-title i.scheduled { color: #c50000; }
-
 .stat-value {
-  font-size: 42px;
-  font-weight: 800;
-  color: #1a1a1a;
-}
-
-.stat-title span {
-  text-decoration: underline;
-  cursor: pointer;
-}
-
-/* Controls */
-.campaigns-controls {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 20px;
-  background-color: white;
-  padding: 15px 24px;
-  border-radius: 16px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
-}
-
-.campaign-search-wrapper {
-  display: flex;
-  align-items: center;
-  background-color: #f1f4f9;
-  border-radius: 12px;
-  padding: 10px 20px;
-  flex: 1;
-}
-
-.campaign-search-wrapper i {
-  color: #777;
-  margin-right: 12px;
-}
-
-.campaign-search-wrapper input {
-  background: none;
-  border: none;
-  outline: none;
-  width: 100%;
-  font-size: 15px;
-  color: #333;
-}
-
-.campaign-filter-wrapper select {
-  appearance: none;
-  -webkit-appearance: none;
-  padding: 8px 36px 8px 16px;
-  border-radius: 20px;
-  border: 1px solid #eef0f3;
-  background-color: #f4f5f7;
-  background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D'http%3A//www.w3.org/2000/svg'%20width%3D'12'%20height%3D'12'%20viewBox%3D'0%200%2012%2012'%3E%3Cpath%20fill%3D'%231a1a1a'%20d%3D'M10.293%203.293L6%207.586%201.707%203.293A1%201%200%2000.293%204.707l5%205a1%201%200%20001.414%200l5-5a1%201%200%2010-1.414-1.414z'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 14px center;
-  background-size: 12px;
-  font-size: 14px;
-  font-weight: 500;
-  color: #1a1a1a;
-  outline: none;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.campaign-filter-wrapper select:hover {
-  background-color: #ebeef2;
-}
-
-/* Action Dropdown Refinements */
-.action-dropdown {
-  background: white;
-  border: 1px solid #eef0f3;
-  border-radius: 12px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-  padding: 8px;
-  min-width: 140px;
-  z-index: 100;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.action-dropdown button {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 10px 14px;
-  border: none;
-  background: none;
-  width: 100%;
-  text-align: left;
-  border-radius: 8px;
-  color: #444;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.action-dropdown button:hover {
-  background-color: #f8f9fa;
-  color: #1a1a1a;
-}
-
-.action-dropdown button i {
-  width: 16px;
-  color: #666;
-}
-
-/* Campaign List (Cards) */
-.campaign-list {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
-
-
-
-.campaign-card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-}
-
-.campaign-title-section {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.campaign-card {
-  background-color: white;
-  border-radius: 16px;
-  padding: 24px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
-  display: flex;
-  flex-direction: column;
-  gap: 15px; /* Compact gap to fit it all */
-  position: relative;
-}
-
-.campaign-card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-}
-
-.campaign-header-left {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.campaign-header-left h3 {
   font-size: 32px;
   font-weight: 700;
   color: #1a1a1a;
-  margin: 0;
-  letter-spacing: -0.5px;
 }
 
-.campaign-badge {
-  padding: 6px 18px;
-  border-radius: 20px;
-  font-size: 14px;
-  font-weight: 700;
-  color: white;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: fit-content;
-}
-
-.campaign-badge.active { background-color: #1dbf38; }
-.campaign-badge.scheduled { background-color: #0ea5e9; }
-.campaign-badge.completed { background-color: #64748b; }
-.campaign-badge.inactive { background-color: #ef4444; }
-
-.campaign-header-right {
+/* Table Section */
+.campaign-table-section {
+  background-color: transparent;
   display: flex;
   flex-direction: column;
-  align-items: flex-end;
-  gap: 15px;
-  position: relative;
+  gap: 0;
 }
 
-.header-meta-group {
+.campaign-table-controls {
   display: flex;
+  justify-content: space-between;
   align-items: center;
-  gap: 15px;
+  background-color: #eaecee;
+  padding: 16px 24px;
+  border-radius: 12px 12px 0 0;
 }
 
-.card-triple-dot {
-  background: none;
-  border: none;
-  padding: 4px 8px;
-  cursor: pointer;
-  color: #666;
-  font-size: 18px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 4px;
-  transition: all 0.2s;
-}
-
-.card-triple-dot:hover {
-  color: #1a1a1a;
-  background-color: #f1f4f9;
-}
-
-.budget-section-final {
-  text-align: right;
-}
-
-.budget-label-final {
-  font-size: 14px;
-  color: #888;
-  display: block;
-}
-
-.budget-value-final {
-  font-size: 24px;
-  font-weight: 800;
-  color: #c50000;
-}
-
-.view-details-btn-final {
+.campaign-search-wrapper {
   background: white;
-  border: 1px solid #e0e0e0;
-  padding: 8px 18px;
-  border-radius: 20px; /* Pill shape */
-  font-size: 13px;
-  font-weight: 600;
-  color: #555;
-  cursor: pointer;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 2px 5px rgba(0,0,0,0.02);
-}
-
-.view-details-btn-final:hover {
-  background-color: #f8f9fa;
-  border-color: #ced4da;
-  color: #1a1a1a;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.06);
-  transform: translateY(-1px);
-}
-
-.campaign-card-content {
   display: flex;
-  justify-content: space-between; /* Spaced out as requested */
   align-items: center;
-  padding-top: 20px;
-  border-top: 1px solid #f8f9fa;
+  padding: 8px 16px;
+  border-radius: 8px;
+  width: 300px;
 }
 
-.info-group {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
+.campaign-search-wrapper i {
+  color: #888;
+  margin-right: 10px;
+  font-size: 14px;
 }
 
-.info-group .info-label {
-  font-size: 11px;
-  color: #999;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.3px;
-}
-
-.info-group .info-value {
-  font-size: 15px;
-  font-weight: 700;
+.campaign-search-wrapper input {
+  border: none;
+  outline: none;
+  width: 100%;
+  font-size: 14px;
   color: #333;
 }
 
-.info-value {
-  font-size: 18px;
-  font-weight: 700;
-  color: #1a1a1a;
+.campaign-search-wrapper input::placeholder {
+  color: #aaa;
 }
 
-.view-details-btn {
+/* Status Filter Dropdown */
+.status-filter-container {
+  position: relative;
+}
+
+.custom-filter-button {
   background: white;
   border: 1px solid #e0e0e0;
   padding: 8px 16px;
   border-radius: 8px;
   font-size: 13px;
   font-weight: 500;
-  color: #666;
+  color: #555;
   cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
   transition: all 0.2s;
 }
 
-.view-details-btn:hover {
-  background-color: #f9f9f9;
+.custom-filter-button:hover, .custom-filter-button.active {
+  background: #f8f9fa;
   border-color: #ccc;
 }
 
-@media (max-width: 768px) {
-  .campaign-card-content {
-    flex-wrap: wrap;
-    gap: 20px;
-  }
-  
-  .info-group {
-    min-width: 40%;
-  }
+.custom-filter-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  background: white;
+  border: 1px solid #eef0f3;
+  border-radius: 8px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  padding: 12px;
+  min-width: 160px;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  color: #333;
+  cursor: pointer;
+}
+
+.checkbox-label input[type="checkbox"] {
+  cursor: pointer;
+  width: 14px;
+  height: 14px;
+}
+
+/* Table */
+.campaign-table-wrapper {
+  background: white;
+  border-radius: 0 0 12px 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+  overflow-x: auto;
+}
+
+.campaigns-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.campaigns-table th {
+  padding: 16px 24px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #666;
+  border-bottom: 2px solid #f1f4f9;
+}
+
+.campaigns-table td {
+  padding: 20px 24px;
+  font-size: 14px;
+  color: #888;
+  border-bottom: 1px solid #f1f4f9;
+  vertical-align: middle;
+}
+
+.campaigns-table tbody tr:hover {
+  background-color: #fcfcfc;
+}
+
+.campaign-name-cell {
+  font-weight: 700;
+  color: #333 !important;
+  max-width: 180px;
+  line-height: 1.4;
+}
+
+.budget-cell {
+  color: #888;
+}
+
+.timeline-cell {
+  line-height: 1.6;
+}
+
+/* Status Badges */
+.status-badge-new {
+  padding: 6px 16px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  display: inline-block;
+  text-align: center;
+}
+
+.status-badge-new.active {
+  background-color: #00c83a;
+  color: white;
+}
+
+.status-badge-new.scheduled {
+  background-color: #3f3f46;
+  color: white;
+}
+
+.status-badge-new.completed {
+  background-color: #cffafe;
+  color: #0891b2;
+}
+
+.status-badge-new.canceled {
+  background-color: #fee2e2;
+  color: #dc2626;
+}
+
+/* Actions Cell */
+.actions-cell {
+  position: relative;
+  text-align: right;
+  padding-right: 24px;
+}
+
+.table-action-dot {
+  background: none;
+  border: none;
+  color: #1a1a1a;
+  cursor: pointer;
+  padding: 8px;
+  font-size: 16px;
+  transition: color 0.2s;
+}
+
+.table-action-dot:hover {
+  color: #c50000;
+}
+
+/* Dropdown */
+.campaign-action-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 24px;
+  background: white;
+  border: 1px solid #eef0f3;
+  border-radius: 8px;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+  padding: 8px;
+  min-width: 220px;
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+}
+
+.campaign-action-dropdown button {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  background: none;
+  border: none;
+  width: 100%;
+  text-align: left;
+  font-size: 13px;
+  color: #444;
+  cursor: pointer;
+  border-radius: 6px;
+}
+
+.campaign-action-dropdown button:hover {
+  background-color: #f8f9fa;
+  color: #1a1a1a;
+}
+
+.campaign-action-dropdown button i {
+  font-size: 14px;
+  color: #666;
+  width: 16px;
+  text-align: center;
 }
