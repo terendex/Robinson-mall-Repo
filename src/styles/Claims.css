@@ -76,7 +76,6 @@
   border-radius: 16px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
   padding: 24px;
-  min-height: 450px; /* Prevent action menu clipping */
 }
 
 .claim-table-controls {
@@ -172,6 +171,8 @@
 
 .claim-table-wrapper {
   overflow-x: auto;
+  min-height: 400px; /* Prevent action menu clipping */
+  padding-bottom: 50px; /* Extra room for the menu */
 }
 
 .claims-table {

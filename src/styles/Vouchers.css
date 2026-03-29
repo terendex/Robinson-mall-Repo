@@ -93,6 +93,7 @@
   overflow-x: auto;
   padding: 0;
   min-height: 400px; /* Prevent action menu clipping */
+  padding-bottom: 60px; /* Space for the menu */
 }
 
 .vouchers-table {
