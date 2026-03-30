@@ -1,5 +1,7 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
+from django.db.models.signals import post_save
+from django.dispatch import receiver
 
 class User(AbstractUser):
     ROLE_CHOICES = (
@@ -82,3 +84,46 @@ class Claim(models.Model):
 
     def __str__(self):
         return f"Claim {self.receipt_no} - {self.status}"
+
+class Notification(models.Model):
+    NOTIFICATION_TYPES = (
+        ('info', 'Info'),
+        ('success', 'Success'),
+        ('warning', 'Warning'),
+        ('error', 'Error'),
+    )
+    title = models.CharField(max_length=100)
+    message = models.TextField()
+    notification_type = models.CharField(max_length=20, choices=NOTIFICATION_TYPES, default='info')
+    is_read = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.title
+
+@receiver(post_save, sender=Claim)
+def create_claim_notification(sender, instance, created, **kwargs):
+    if created:
+        Notification.objects.create(
+            title="New Claim",
+            message=f"Customer '{instance.user.first_name} {instance.user.last_name}' submitted a ₱{instance.amount} claim. Requires manual review.",
+            notification_type='info'
+        )
+
+@receiver(post_save, sender=User)
+def create_user_notification(sender, instance, created, **kwargs):
+    if created and instance.role == 'customer':
+        Notification.objects.create(
+            title="Customer Approval Pending",
+            message=f"A new customer '{instance.first_name} {instance.last_name}' requires profile verification before activation.",
+            notification_type='info'
+        )
+
+@receiver(post_save, sender=Campaign)
+def create_campaign_notification(sender, instance, created, **kwargs):
+    if created:
+        Notification.objects.create(
+            title="New Campaign",
+            message=f"Campaign '{instance.name}' has been created and is now {instance.status}.",
+            notification_type='success'
+        )

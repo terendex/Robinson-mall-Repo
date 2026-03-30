@@ -1,14 +1,18 @@
 # Robinson Mall
 
-A full-stack web application for Robinson Mall featuring role-based dashboards (Admin, Manager, Staff, Customer), user authentication, voucher/campaign management, and password reset via SendGrid email.
+A full-stack web application for Robinson Mall featuring:
+- **Performance Dashboard**: Real-time KPI tracking (Total Claims, Redemption Rate, etc.) and data visualization with **Recharts**.
+- **Automated Notification System**: Database-persistent notifications triggered automatically by system events (New Claims, New Customers).
+- **Role-based Dashboards**: Tailored experiences for Admin, Manager, Staff, and Customer.
+- **User Management**: Authentication, profile management, and password reset via SendGrid.
 
 ## Tech Stack
 
 | Layer    | Technology                                                  |
 | -------- | ----------------------------------------------------------- |
-| Frontend | React 19, Vite, React Router v7, Axios, React Icons         |
+| Frontend | React 19, Vite, Recharts, React Router v7, Axios, Lucide/FontAwesome |
 | Backend  | Django 6, Django REST Framework, django-cors-headers         |
-| Database | SQLite (default)                                            |
+| Database | SQLite (with Django Signals for automation)                 |
 | Email    | SendGrid                                                    |
 
 ---

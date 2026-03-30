@@ -1,27 +1,65 @@
-import React, { createContext, useState, useCallback } from 'react';
+import React, { createContext, useState, useCallback, useEffect } from 'react';
+import axios from 'axios';
 
 const NotificationContext = createContext();
 
 export const NotificationProvider = ({ children }) => {
   const [notifications, setNotifications] = useState([]);
 
-  const addNotification = useCallback((notification) => {
-    setNotifications(prev => {
-      const newNotification = {
-        ...notification,
-        id: Date.now() + Math.random(),
-        timestamp: new Date(),
-      };
-      return [newNotification, ...prev];
-    });
+  const fetchNotifications = useCallback(async () => {
+    try {
+      const response = await axios.get('http://127.0.0.1:8000/api/notifications/');
+      setNotifications(response.data);
+    } catch (error) {
+      console.error('Error fetching notifications:', error);
+    }
   }, []);
 
-  const removeNotification = useCallback((id) => {
-    setNotifications(prev => prev.filter(n => n.id !== id));
+  useEffect(() => {
+    fetchNotifications();
+    // Poll for new notifications every 30 seconds
+    const interval = setInterval(fetchNotifications, 30000);
+    return () => clearInterval(interval);
+  }, [fetchNotifications]);
+
+  const addNotification = useCallback(async (notification) => {
+    try {
+      const response = await axios.post('http://127.0.0.1:8000/api/notifications/', {
+        ...notification,
+        notification_type: notification.type || 'info',
+      });
+      setNotifications(prev => [response.data, ...prev]);
+    } catch (error) {
+      console.error('Error adding notification:', error);
+    }
+  }, []);
+
+  const removeNotification = useCallback(async (id) => {
+    try {
+      await axios.delete(`http://127.0.0.1:8000/api/notifications/${id}/`);
+      setNotifications(prev => prev.filter(n => n.id !== id));
+    } catch (error) {
+      console.error('Error removing notification:', error);
+    }
+  }, []);
+
+  const markAllAsRead = useCallback(async () => {
+    try {
+      await axios.post('http://127.0.0.1:8000/api/notifications/mark_all_as_read/');
+      fetchNotifications();
+    } catch (error) {
+      console.error('Error marking all as read:', error);
+    }
   }, []);
 
   return (
-    <NotificationContext.Provider value={{ notifications, addNotification, removeNotification }}>
+    <NotificationContext.Provider value={{ 
+      notifications, 
+      addNotification, 
+      removeNotification, 
+      fetchNotifications,
+      markAllAsRead 
+    }}>
       {children}
     </NotificationContext.Provider>
   );

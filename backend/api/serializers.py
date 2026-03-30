@@ -1,5 +1,10 @@
 from rest_framework import serializers
-from .models import User, Voucher, Campaign, Store, Claim
+from .models import User, Voucher, Campaign, Store, Claim, Notification
+
+class NotificationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Notification
+        fields = '__all__'
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:

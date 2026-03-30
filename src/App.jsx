@@ -19,6 +19,7 @@ import CustomerDashboard from './pages/customer/CustomerDashboard';
 import ForgotPassword from './pages/ForgotPassword';
 import PasswordReset from './pages/PasswordReset';
 import PrivacyPolicy from './pages/PrivacyPolicy';
+import Notifications from './pages/admin/Notifications';
 import './styles/App.css'
 
 function App() {
@@ -69,6 +70,7 @@ function App() {
             <Route path="users" element={<Users />} />
             <Route path="reports" element={<Reports />} />
             <Route path="settings" element={<Settings />} />
+            <Route path="notifications" element={<Notifications />} />
             <Route index element={<Navigate to="dashboard" />} />
           </Route>
 

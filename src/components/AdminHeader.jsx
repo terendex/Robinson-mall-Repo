@@ -125,10 +125,6 @@ const AdminHeader = ({ toggleSidebar, user, isSidebarOpen }) => {
         </div>
         
         <div className="admin-header-right">
-          <div className="header-icon-btn">
-            <i className="fa-solid fa-envelope"></i>
-            <span className="notification-dot"></span>
-          </div>
           <div className="header-icon-btn" onClick={() => navigate('/privacy-policy')}>
             <i className="fa-solid fa-question-circle"></i>
           </div>
@@ -143,25 +139,31 @@ const AdminHeader = ({ toggleSidebar, user, isSidebarOpen }) => {
               <div className="notification-dropdown">
                 <div className="notification-dropdown-header">
                   <span>Notifications</span>
-                  <button className="close-btn" onClick={closeNotificationDropdown}>
-                    <i className="fa-solid fa-xmark"></i>
-                  </button>
                 </div>
-                {notifications.length > 0 ? (
-                  notifications.map((notification) => (
-                    <div key={notification.id} className="notification-item">
-                      <i className={`fa-solid ${notification.icon}`}></i>
-                      <p><b>{notification.title}</b> {notification.message}</p>
-                      <button className="dismiss-btn" onClick={() => removeNotification(notification.id)}>
-                        <i className="fa-solid fa-xmark"></i>
-                      </button>
+                <div className="notification-list">
+                  {notifications.length > 0 ? (
+                    notifications.map((notification) => (
+                      <div key={notification.id} className="notification-item" onClick={() => navigate('/admin/notifications')}>
+                        <div className="notification-item-main">
+                          <div className="notification-item-title-row">
+                            <span className="notification-item-title">{notification.title || 'Notification'}</span>
+                            <span className="notification-item-time">
+                              {new Date(notification.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            </span>
+                          </div>
+                          <p className="notification-item-message">{notification.message}</p>
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="notification-empty">
+                      <p>No new notifications.</p>
                     </div>
-                  ))
-                ) : (
-                  <div className="notification-item">
-                    <p>No new notifications.</p>
-                  </div>
-                )}
+                  )}
+                </div>
+                <div className="notification-dropdown-footer" onClick={() => navigate('/admin/notifications')}>
+                  <span>View all notifications</span>
+                </div>
               </div>
             )}
           </div>

@@ -14,8 +14,8 @@ from django.contrib.auth import authenticate, login
 from django.db.models import Sum, Count
 from django.utils import timezone
 from datetime import datetime, timedelta
-from .models import User, Voucher, Campaign, Store, Claim
-from .serializers import UserSerializer, VoucherSerializer, CampaignSerializer, StoreSerializer, ClaimSerializer
+from .models import User, Voucher, Campaign, Store, Claim, Notification
+from .serializers import UserSerializer, VoucherSerializer, CampaignSerializer, StoreSerializer, ClaimSerializer, NotificationSerializer
 
 
 class UserViewSet(viewsets.ModelViewSet):
@@ -147,6 +147,18 @@ class ClaimViewSet(viewsets.ModelViewSet):
         if status:
             queryset = queryset.filter(status=status)
         return queryset.order_by('-created_at')
+
+class NotificationViewSet(viewsets.ModelViewSet):
+    queryset = Notification.objects.all()
+    serializer_class = NotificationSerializer
+
+    def get_queryset(self):
+        return Notification.objects.all().order_by('-created_at')
+
+    @action(detail=False, methods=['post'])
+    def mark_all_as_read(self, request):
+        Notification.objects.filter(is_read=False).update(is_read=True)
+        return Response({'status': 'all notifications marked as read'})
 
 class DashboardStatsView(views.APIView):
     def get(self, request):
