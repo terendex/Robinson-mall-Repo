@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import axios from 'axios';
 import VoucherModal from '../../components/VoucherModal';
 import '../../styles/Vouchers.css';
@@ -11,9 +11,18 @@ const Vouchers = () => {
   const [showModal, setShowModal] = useState(false);
   const [voucherToEdit, setVoucherToEdit] = useState(null);
   const [activeActions, setActiveActions] = useState(null);
+  const actionsRef = useRef(null);
 
   useEffect(() => {
     fetchVouchers();
+    
+    const handleClickOutside = (event) => {
+      if (actionsRef.current && !actionsRef.current.contains(event.target)) {
+        setActiveActions(null);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   const fetchVouchers = async () => {
@@ -161,7 +170,10 @@ const Vouchers = () => {
                       </span>
                     </td>
                     <td style={{ textAlign: 'center' }}>
-                      <div style={{ position: 'relative', display: 'inline-block' }}>
+                      <div 
+                        style={{ position: 'relative', display: 'inline-block' }} 
+                        ref={activeActions === voucher.id ? actionsRef : null}
+                      >
                         <button 
                           className="triple-dot-btn" 
                           onClick={() => setActiveActions(activeActions === voucher.id ? null : voucher.id)}

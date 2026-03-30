@@ -44,7 +44,7 @@ const VoucherModal = ({ show, onClose, onSave, voucherToEdit }) => {
 
   return (
     <div className="modal-overlay">
-      <div className="modal-content user-modal">
+      <div className="modal-content">
         <div className="modal-header">
           <h2>{voucherToEdit ? 'Edit Voucher' : 'Add New Voucher'}</h2>
           <button className="close-x" onClick={onClose}>&times;</button>
@@ -82,8 +82,8 @@ const VoucherModal = ({ show, onClose, onSave, voucherToEdit }) => {
               <option value="Electronics">Electronics</option>
             </select>
           </div>
-          <div className="form-row" style={{ display: 'flex', gap: '15px' }}>
-            <div className="form-group" style={{ flex: 1 }}>
+          <div className="form-row">
+            <div className="form-group">
               <label>Discount (%)</label>
               <input
                 type="number"
@@ -96,7 +96,7 @@ const VoucherModal = ({ show, onClose, onSave, voucherToEdit }) => {
                 required
               />
             </div>
-            <div className="form-group" style={{ flex: 1 }}>
+            <div className="form-group">
               <label>Usage Limit</label>
               <input
                 type="number"

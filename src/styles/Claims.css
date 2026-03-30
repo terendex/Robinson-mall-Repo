@@ -1,0 +1,361 @@
+.claims-page {
+  padding: 24px;
+  background-color: #f8f9fa;
+  min-height: calc(100vh - 80px);
+}
+
+.claims-container {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding: 24px;
+}
+
+.claims-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.claims-header h1 {
+  font-size: 28px;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin: 0;
+}
+
+.new-claim-btn {
+  background-color: #c62828;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.new-claim-btn:hover {
+  background-color: #b71c1c;
+}
+
+.claim-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+  margin-bottom: 32px;
+}
+
+.claim-stat-card {
+  background: white;
+  padding: 24px;
+  border-radius: 16px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.stat-title {
+  font-size: 14px;
+  color: #757575;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  margin-bottom: 12px;
+  text-transform: uppercase;
+}
+
+.stat-value {
+  font-size: 36px;
+  font-weight: 700;
+  color: #1a1a1a;
+}
+
+.claim-table-section {
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  padding: 24px;
+}
+
+.claim-table-controls {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.claim-search-wrapper {
+  flex: 1;
+  position: relative;
+}
+
+.claim-search-wrapper i {
+  position: absolute;
+  left: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #bdbdbd;
+}
+
+.claim-search-wrapper input {
+  width: 100%;
+  padding: 12px 12px 12px 48px;
+  border: 1px solid #eeeeee;
+  border-radius: 12px;
+  background-color: #f5f5f5;
+  font-size: 14px;
+  transition: all 0.2s;
+}
+
+.claim-search-wrapper input:focus {
+  outline: none;
+  background-color: white;
+  border-color: #bdbdbd;
+}
+
+.filter-dropdown-container {
+  position: relative;
+}
+
+.filter-button {
+  padding: 12px 16px;
+  background-color: #f5f5f5;
+  border: 1px solid #eeeeee;
+  border-radius: 12px;
+  color: #757575;
+  font-size: 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 140px;
+}
+
+.filter-button.active {
+  background-color: #eeeeee;
+  border-color: #bdbdbd;
+}
+
+.filter-dropdown-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  padding: 12px;
+  z-index: 100;
+  min-width: 180px;
+}
+
+.filter-option {
+  padding: 8px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 14px;
+  color: #424242;
+  transition: background-color 0.2s;
+}
+
+.filter-option:hover {
+  background-color: #f5f5f5;
+}
+
+.filter-option input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+}
+
+.claim-table-wrapper {
+  overflow-x: auto;
+  min-height: 400px; /* Prevent action menu clipping */
+  padding-bottom: 50px; /* Extra room for the menu */
+}
+
+.claims-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.claims-table th {
+  text-align: left;
+  padding: 16px;
+  color: #757575;
+  font-size: 13px;
+  font-weight: 600;
+  border-bottom: 1px solid #eeeeee;
+}
+
+.claims-table td {
+  padding: 16px;
+  border-bottom: 1px solid #eeeeee;
+  vertical-align: middle;
+}
+
+.customer-cell {
+  display: flex;
+  flex-direction: column;
+}
+
+.customer-name {
+  font-weight: 600;
+  color: #212121;
+}
+
+.customer-phone {
+  font-size: 12px;
+  color: #757575;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 2px;
+}
+
+.voucher-cell {
+  display: flex;
+  flex-direction: column;
+}
+
+.voucher-title {
+  font-weight: 600;
+  color: #212121;
+}
+
+.voucher-code {
+  font-size: 11px;
+  color: #757575;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.store-name {
+  color: #616161;
+  font-size: 14px;
+}
+
+.receipt-no {
+  color: #616161;
+  font-family: monospace;
+  font-size: 13px;
+}
+
+.amount-cell {
+  font-weight: 600;
+  color: #212121;
+}
+
+.date-cell {
+  font-size: 12px;
+  color: #757575;
+  line-height: 1.4;
+}
+
+.status-badge {
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 700;
+  text-align: center;
+  display: inline-block;
+  min-width: 80px;
+}
+
+.status-badge.approved {
+  background-color: #e8f5e9;
+  color: #2e7d32;
+}
+
+.status-badge.pending {
+  background-color: #fff9c4;
+  color: #fbc02d;
+}
+
+.status-badge.rejected {
+  background-color: #ffebee;
+  color: #c62828;
+}
+
+/* Green fill for approved as seen in image */
+.status-badge.approved-filled {
+  background-color: #4caf50;
+  color: white;
+}
+
+.actions-cell {
+  position: relative;
+  text-align: right;
+}
+
+.action-dot-btn {
+  background: none;
+  border: none;
+  color: #bdbdbd;
+  cursor: pointer;
+  padding: 8px;
+  font-size: 18px;
+  transition: color 0.2s;
+}
+
+.action-dot-btn:hover {
+  color: #757575;
+}
+
+.action-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  padding: 8px;
+  z-index: 100;
+  min-width: 200px;
+  text-align: left;
+}
+
+.action-item {
+  width: 100%;
+  padding: 10px 12px;
+  border: none;
+  background: none;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  color: #424242;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.action-item:hover {
+  background-color: #f5f5f5;
+}
+
+.action-item i {
+  width: 16px;
+  color: #757575;
+}
+
+.action-divider {
+  height: 1px;
+  background-color: #eeeeee;
+  margin: 4px 0;
+}
+
+.action-item.approve {
+  color: #2e7d32;
+}
+
+.action-item.reject {
+  color: #c62828;
+}
+
+.loading-wrap {
+  display: flex;
+  justify-content: center;
+  padding: 40px;
+}
