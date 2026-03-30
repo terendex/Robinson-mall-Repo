@@ -7,7 +7,8 @@ const Header = () => {
   const location = useLocation();
   const navigate = useNavigate();
 
-  if (location.pathname.startsWith('/admin')) {
+  const dashboardPaths = ['/admin', '/manager', '/staff', '/customer'];
+  if (dashboardPaths.some(path => location.pathname.startsWith(path))) {
     return null;
   }
 

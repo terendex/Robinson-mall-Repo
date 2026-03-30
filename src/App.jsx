@@ -13,7 +13,15 @@ import Transactions from './pages/admin/Transactions';
 import Users from './pages/admin/Users';
 import Reports from './pages/admin/Reports';
 import Settings from './pages/admin/Settings';
+import ManagerLayout from './pages/manager/ManagerLayout';
 import ManagerDashboard from './pages/manager/ManagerDashboard';
+import ManagerVouchers from './pages/manager/ManagerVouchers';
+import ManagerCampaigns from './pages/manager/ManagerCampaigns';
+import ManagerClaims from './pages/manager/ManagerClaims';
+import ManagerTransactions from './pages/manager/ManagerTransactions';
+import ManagerReports from './pages/manager/ManagerReports';
+import ManagerSettings from './pages/manager/ManagerSettings';
+
 import StaffDashboard from './pages/staff/StaffDashboard';
 import CustomerDashboard from './pages/customer/CustomerDashboard';
 import ForgotPassword from './pages/ForgotPassword';
@@ -74,7 +82,18 @@ function App() {
             <Route index element={<Navigate to="dashboard" />} />
           </Route>
 
-          <Route path="/manager" element={user && user.role === 'manager' ? <ManagerDashboard /> : <Navigate to="/login" />} />
+          {/* Manager Routes */}
+          <Route path="/manager" element={user && user.role === 'manager' ? <ManagerLayout user={user} /> : <Navigate to="/login" />}>
+            <Route path="dashboard" element={<ManagerDashboard />} />
+            <Route path="vouchers" element={<ManagerVouchers />} />
+            <Route path="campaigns" element={<ManagerCampaigns />} />
+            <Route path="claims" element={<ManagerClaims />} />
+            <Route path="transactions" element={<ManagerTransactions />} />
+            <Route path="reports" element={<ManagerReports />} />
+            <Route path="settings" element={<ManagerSettings />} />
+            <Route path="notifications" element={<Notifications />} />
+            <Route index element={<Navigate to="dashboard" />} />
+          </Route>
           <Route path="/staff" element={user && user.role === 'staff' ? <StaffDashboard /> : <Navigate to="/login" />} />
           <Route path="/customer" element={user && user.role === 'customer' ? <CustomerDashboard /> : <Navigate to="/login" />} />
         </Routes>

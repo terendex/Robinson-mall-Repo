@@ -16,15 +16,18 @@ const AdminHeader = ({ toggleSidebar, user, isSidebarOpen }) => {
   const profileDropdownRef = useRef(null);
   const { notifications, removeNotification } = useContext(NotificationContext);
 
-  const adminPages = [
-    { name: 'Dashboard', path: '/admin/dashboard', icon: 'fa-table-cells-large' },
-    { name: 'Vouchers', path: '/admin/vouchers', icon: 'fa-ticket-simple' },
-    { name: 'Campaigns', path: '/admin/campaigns', icon: 'fa-tag' },
-    { name: 'Claims', path: '/admin/claims', icon: 'fa-gift' },
-    { name: 'Transactions', path: '/admin/transactions', icon: 'fa-clock-rotate-left' },
-    { name: 'Users', path: '/admin/users', icon: 'fa-user-group' },
-    { name: 'Reports', path: '/admin/reports', icon: 'fa-chart-simple' },
-    { name: 'Settings', path: '/admin/settings', icon: 'fa-gear' },
+  const role = user?.role || 'admin';
+  const pathPrefix = `/${role}`;
+
+  const availablePages = [
+    { name: 'Dashboard', path: `${pathPrefix}/dashboard`, icon: 'fa-table-cells-large' },
+    { name: 'Vouchers', path: `${pathPrefix}/vouchers`, icon: 'fa-ticket-simple' },
+    { name: 'Campaigns', path: `${pathPrefix}/campaigns`, icon: 'fa-tag' },
+    { name: 'Claims', path: `${pathPrefix}/claims`, icon: 'fa-gift' },
+    { name: 'Transactions', path: `${pathPrefix}/transactions`, icon: 'fa-clock-rotate-left' },
+    ...(role === 'admin' ? [{ name: 'Users', path: `${pathPrefix}/users`, icon: 'fa-user-group' }] : []),
+    { name: 'Reports', path: `${pathPrefix}/reports`, icon: 'fa-chart-simple' },
+    { name: 'Settings', path: `${pathPrefix}/settings`, icon: 'fa-gear' },
   ];
 
   useEffect(() => {
@@ -32,13 +35,13 @@ const AdminHeader = ({ toggleSidebar, user, isSidebarOpen }) => {
       setFilteredPages([]);
       setShowDropdown(false);
     } else {
-      const results = adminPages.filter(page =>
+      const results = availablePages.filter(page =>
         page.name.toLowerCase().includes(searchQuery.toLowerCase())
       );
       setFilteredPages(results);
       setShowDropdown(true);
     }
-  }, [searchQuery]);
+  }, [searchQuery, role]);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -143,7 +146,7 @@ const AdminHeader = ({ toggleSidebar, user, isSidebarOpen }) => {
                 <div className="notification-list">
                   {notifications.length > 0 ? (
                     notifications.map((notification) => (
-                      <div key={notification.id} className="notification-item" onClick={() => navigate('/admin/notifications')}>
+                      <div key={notification.id} className="notification-item" onClick={() => navigate(`${pathPrefix}/notifications`)}>
                         <div className="notification-item-main">
                           <div className="notification-item-title-row">
                             <span className="notification-item-title">{notification.title || 'Notification'}</span>
@@ -161,7 +164,7 @@ const AdminHeader = ({ toggleSidebar, user, isSidebarOpen }) => {
                     </div>
                   )}
                 </div>
-                <div className="notification-dropdown-footer" onClick={() => navigate('/admin/notifications')}>
+                <div className="notification-dropdown-footer" onClick={() => navigate(`${pathPrefix}/notifications`)}>
                   <span>View all notifications</span>
                 </div>
               </div>
@@ -177,7 +180,7 @@ const AdminHeader = ({ toggleSidebar, user, isSidebarOpen }) => {
             </div>
             {isProfileDropdownOpen && (
                 <div className="profile-dropdown">
-                    <div className="profile-dropdown-item" onClick={() => navigate('/admin/settings')}>
+                    <div className="profile-dropdown-item" onClick={() => navigate(`${pathPrefix}/settings`)}>
                         <i className="fa-solid fa-gear"></i>
                         <span>Settings</span>
                     </div>

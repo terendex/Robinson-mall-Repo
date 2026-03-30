@@ -11,6 +11,34 @@
   margin-left: 290px; /* Revert to match 290px sidebar */
 }
 
+.view-details-btn-new {
+  padding: 8px 16px;
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  color: #c50000;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+}
+
+.view-details-btn-new:hover {
+  background-color: #f8fafc;
+  border-color: #cbd5e1;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.view-details-btn-new i {
+  font-size: 14px;
+}
+
 @media (max-width: 1024px) {
   .admin-layout-main.sidebar-open {
     margin-left: 290px;

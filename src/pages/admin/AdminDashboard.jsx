@@ -21,7 +21,7 @@ const AdminDashboard = () => {
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const response = await axios.get('http://localhost:8000/api/dashboard-stats/');
+        const response = await axios.get('http://127.0.0.1:8000/api/dashboard-stats/');
         setStats(response.data);
         setLoading(false);
       } catch (err) {

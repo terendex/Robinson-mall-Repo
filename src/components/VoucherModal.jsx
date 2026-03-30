@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import '../styles/Modal.css';
 
-const VoucherModal = ({ show, onClose, onSave, voucherToEdit }) => {
+const VoucherModal = ({ show, onClose, onSave, voucherToEdit, readOnly }) => {
   const [formData, setFormData] = useState({
     name: '',
     code: '',
@@ -46,7 +46,7 @@ const VoucherModal = ({ show, onClose, onSave, voucherToEdit }) => {
     <div className="modal-overlay">
       <div className="modal-content">
         <div className="modal-header">
-          <h2>{voucherToEdit ? 'Edit Voucher' : 'Add New Voucher'}</h2>
+          <h2>{readOnly ? 'Voucher Details' : (voucherToEdit ? 'Edit Voucher' : 'Add New Voucher')}</h2>
           <button className="close-x" onClick={onClose}>&times;</button>
         </div>
         <form onSubmit={handleSubmit}>
@@ -59,6 +59,7 @@ const VoucherModal = ({ show, onClose, onSave, voucherToEdit }) => {
               onChange={handleChange}
               placeholder="e.g. 20% Off Fashion"
               required
+              disabled={readOnly}
             />
           </div>
           <div className="form-group">
@@ -70,11 +71,12 @@ const VoucherModal = ({ show, onClose, onSave, voucherToEdit }) => {
               onChange={handleChange}
               placeholder="e.g. DISCOUNT20"
               required
+              disabled={readOnly}
             />
           </div>
           <div className="form-group">
             <label>Voucher Type</label>
-            <select name="voucher_type" value={formData.voucher_type} onChange={handleChange}>
+            <select name="voucher_type" value={formData.voucher_type} onChange={handleChange} disabled={readOnly}>
               <option value="Fashion">Fashion</option>
               <option value="Food & Beverage">Food & Beverage</option>
               <option value="Entertainment">Entertainment</option>
@@ -94,6 +96,7 @@ const VoucherModal = ({ show, onClose, onSave, voucherToEdit }) => {
                 min="0"
                 max="100"
                 required
+                disabled={readOnly}
               />
             </div>
             <div className="form-group">
@@ -105,13 +108,16 @@ const VoucherModal = ({ show, onClose, onSave, voucherToEdit }) => {
                 onChange={handleChange}
                 placeholder="1000"
                 required
+                disabled={readOnly}
               />
             </div>
           </div>
-          <div className="modal-actions">
-            <button type="button" onClick={onClose} className="cancel-inner-btn">Cancel</button>
-            <button type="submit" className="save-btn">{voucherToEdit ? 'Save Changes' : 'Create Voucher'}</button>
-          </div>
+          {!readOnly && (
+            <div className="modal-actions">
+              <button type="button" onClick={onClose} className="cancel-inner-btn">Cancel</button>
+              <button type="submit" className="save-btn">{voucherToEdit ? 'Save Changes' : 'Create Voucher'}</button>
+            </div>
+          )}
         </form>
       </div>
     </div>
