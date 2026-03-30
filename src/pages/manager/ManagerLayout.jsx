@@ -3,7 +3,7 @@ import { Outlet } from 'react-router-dom';
 import SideNav from '../../components/SideNav';
 import AdminHeader from '../../components/AdminHeader';
 import { NotificationProvider } from '../../context/NotificationContext';
-import '../../styles/AdminLayout.css';
+import '../../css/AdminLayout.css';
 
 const ManagerLayout = ({ user }) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);

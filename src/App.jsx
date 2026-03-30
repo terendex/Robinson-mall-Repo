@@ -22,13 +22,15 @@ import ManagerTransactions from './pages/manager/ManagerTransactions';
 import ManagerReports from './pages/manager/ManagerReports';
 import ManagerSettings from './pages/manager/ManagerSettings';
 
+import ManagerNotifications from './pages/manager/ManagerNotifications';
+
 import StaffDashboard from './pages/staff/StaffDashboard';
 import CustomerDashboard from './pages/customer/CustomerDashboard';
 import ForgotPassword from './pages/ForgotPassword';
 import PasswordReset from './pages/PasswordReset';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import Notifications from './pages/admin/Notifications';
-import './styles/App.css'
+import "./css/App.css"
 
 function App() {
   const [user, setUser] = useState(null);
@@ -91,7 +93,7 @@ function App() {
             <Route path="transactions" element={<ManagerTransactions />} />
             <Route path="reports" element={<ManagerReports />} />
             <Route path="settings" element={<ManagerSettings />} />
-            <Route path="notifications" element={<Notifications />} />
+            <Route path="notifications" element={<ManagerNotifications />} />
             <Route index element={<Navigate to="dashboard" />} />
           </Route>
           <Route path="/staff" element={user && user.role === 'staff' ? <StaffDashboard /> : <Navigate to="/login" />} />

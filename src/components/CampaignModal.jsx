@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import '../styles/Modal.css';
+import '../css/Modal.css';
 
 const CampaignModal = ({ show, onClose, onSave, campaignToEdit }) => {
   const [vouchers, setVouchers] = useState([]);

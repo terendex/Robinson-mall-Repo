@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import axios from 'axios';
 import VoucherModal from '../../components/VoucherModal';
-import '../../styles/Vouchers.css';
+import '../../css/Vouchers.css';
 
 const ManagerVouchers = () => {
   const [vouchers, setVouchers] = useState([]);
@@ -10,9 +10,20 @@ const ManagerVouchers = () => {
   const [statusFilter, setStatusFilter] = useState('All');
   const [showModal, setShowModal] = useState(false);
   const [selectedVoucher, setSelectedVoucher] = useState(null);
+  
+  const [isStatusDropdownOpen, setIsStatusDropdownOpen] = useState(false);
+  const statusFilterRef = useRef(null);
 
   useEffect(() => {
     fetchVouchers();
+
+    const handleClickOutside = (event) => {
+      if (statusFilterRef.current && !statusFilterRef.current.contains(event.target)) {
+        setIsStatusDropdownOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   const fetchVouchers = async () => {
@@ -50,26 +61,42 @@ const ManagerVouchers = () => {
           <h1>Vouchers</h1>
         </div>
 
-        <div className="vouchers-controls">
-          <div className="search-wrapper">
-            <i className="fa-solid fa-magnifying-glass"></i>
-            <input 
-              type="text" 
-              placeholder="Search vouchers" 
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-          </div>
-          <div className="filter-wrapper">
-            <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
-              <option value="All">All Status</option>
-              <option value="Active">Active</option>
-              <option value="Inactive">Inactive</option>
-            </select>
-          </div>
-        </div>
-
         <div className="vouchers-list-section">
+          <div className="vouchers-controls">
+            <div className="search-wrapper">
+              <i className="fa-solid fa-magnifying-glass"></i>
+              <input 
+                type="text" 
+                placeholder="Search vouchers" 
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </div>
+            <div className="filter-dropdown-container" ref={statusFilterRef}>
+              <button 
+                className={`filter-button ${isStatusDropdownOpen ? 'active' : ''}`}
+                onClick={() => setIsStatusDropdownOpen(!isStatusDropdownOpen)}
+              >
+                <i className="fa-solid fa-filter"></i> {statusFilter === 'All' ? 'All Status' : statusFilter}
+              </button>
+              {isStatusDropdownOpen && (
+                <div className="filter-dropdown-menu">
+                  {['All', 'Active', 'Inactive'].map(val => (
+                    <div 
+                      key={val} 
+                      className="filter-option"
+                      onClick={() => { setStatusFilter(val); setIsStatusDropdownOpen(false); }}
+                    >
+                      {val === statusFilter && <i className="fa-solid fa-check"></i>}
+                      <span style={{ marginLeft: val === statusFilter ? 0 : 28 }}>{val === 'All' ? 'All Status' : val}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="vouchers-table-wrapper">
           {loading ? (
             <div className="loading-container">
               <div className="loader"></div>
@@ -124,6 +151,7 @@ const ManagerVouchers = () => {
               </tbody>
             </table>
           )}
+          </div>
         </div>
       </div>
       <VoucherModal 

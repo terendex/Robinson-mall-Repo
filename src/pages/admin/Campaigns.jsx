@@ -3,7 +3,7 @@ import axios from 'axios';
 import CampaignModal from '../../components/CampaignModal';
 import CampaignDetailsModal from '../../components/CampaignDetailsModal';
 import NotificationContext from '../../context/NotificationContext';
-import '../../styles/Campaigns.css';
+import '../../css/Campaigns.css';
 
 const Campaigns = () => {
   const [campaigns, setCampaigns] = useState([]);

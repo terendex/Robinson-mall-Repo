@@ -1,6 +1,6 @@
 import React from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import '../styles/Header.css';
+import '../css/Header.css';
 import robinsonsLogo from '../assets/Robinson_logo.png';
 
 const Header = () => {

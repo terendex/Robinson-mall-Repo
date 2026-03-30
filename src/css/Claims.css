@@ -25,21 +25,23 @@
 }
 
 .new-claim-btn {
-  background-color: #c62828;
+  background-color: #c50000;
   color: white;
   border: none;
-  padding: 10px 20px;
+  padding: 12px 24px;
   border-radius: 8px;
+  font-size: 14px;
   font-weight: 600;
   display: flex;
   align-items: center;
   gap: 8px;
   cursor: pointer;
   transition: background-color 0.2s;
+  box-shadow: 0 4px 12px rgba(197, 0, 0, 0.2);
 }
 
 .new-claim-btn:hover {
-  background-color: #b71c1c;
+  background-color: #a00000;
 }
 
 .claim-stats {
@@ -98,6 +100,7 @@
 }
 
 .claim-search-wrapper input {
+  box-sizing: border-box;
   width: 100%;
   padding: 12px 12px 12px 48px;
   border: 1px solid #eeeeee;

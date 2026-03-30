@@ -1,5 +1,5 @@
 import React from 'react';
-import '../styles/Modal.css';
+import '../css/Modal.css';
 
 const CampaignDetailsModal = ({ show, onClose, campaign }) => {
   if (!show || !campaign) return null;

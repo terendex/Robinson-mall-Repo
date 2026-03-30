@@ -1,5 +1,5 @@
 import React from 'react';
-import '../styles/Modal.css';
+import '../css/Modal.css';
 
 const ClaimDetailsModal = ({ show, onClose, claim }) => {
   if (!show || !claim) return null;

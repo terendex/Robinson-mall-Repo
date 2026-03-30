@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
-import '../styles/AdminHeader.css';
+import '../css/AdminHeader.css';
 import robinsonsLogo from '../assets/Robinson_logo.png';
 import NotificationContext from '../context/NotificationContext';
 

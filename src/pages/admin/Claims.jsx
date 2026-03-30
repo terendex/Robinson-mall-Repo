@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import axios from 'axios';
-import '../../styles/Claims.css';
+import '../../css/Claims.css';
 
 const Claims = () => {
   const [claims, setClaims] = useState([]);

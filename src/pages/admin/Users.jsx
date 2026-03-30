@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import axios from 'axios';
 import UserModal from '../../components/UserModal';
 import ResetPasswordModal from '../../components/ResetPasswordModal';
-import '../../styles/Users.css';
+import '../../css/Users.css';
 
 const Users = () => {
   const [users, setUsers] = useState([]);

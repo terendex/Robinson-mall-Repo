@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import '../styles/SideNav.css';
+import '../css/SideNav.css';
 import robinsonsLogo from '../assets/Robinson_logo.png';
 
 const SideNav = ({ user, isOpen, closeSidebar }) => {

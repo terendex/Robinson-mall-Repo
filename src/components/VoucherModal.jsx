@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import '../styles/Modal.css';
+import '../css/Modal.css';
 
 const VoucherModal = ({ show, onClose, onSave, voucherToEdit, readOnly }) => {
   const [formData, setFormData] = useState({

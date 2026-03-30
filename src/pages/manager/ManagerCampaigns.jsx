@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import axios from 'axios';
 import CampaignDetailsModal from '../../components/CampaignDetailsModal';
-import '../../styles/Campaigns.css';
+import '../../css/Campaigns.css';
 
 const ManagerCampaigns = () => {
   const [campaigns, setCampaigns] = useState([]);

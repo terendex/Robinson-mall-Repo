@@ -11,7 +11,7 @@ import {
   Legend,
   Cell
 } from 'recharts';
-import './AdminDashboard.css';
+import "../../css/AdminDashboard.css";
 
 const AdminDashboard = () => {
   const [stats, setStats] = useState(null);

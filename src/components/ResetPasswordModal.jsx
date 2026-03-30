@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import '../styles/Modal.css';
+import '../css/Modal.css';
 
 const ResetPasswordModal = ({ show, user, onClose, onSave }) => {
   const [password, setPassword] = useState('');
