@@ -11,6 +11,9 @@ from rest_framework import viewsets, status, views
 from rest_framework.response import Response
 from rest_framework.decorators import action
 from django.contrib.auth import authenticate, login
+from django.db.models import Sum, Count
+from django.utils import timezone
+from datetime import datetime, timedelta
 from .models import User, Voucher, Campaign, Store, Claim
 from .serializers import UserSerializer, VoucherSerializer, CampaignSerializer, StoreSerializer, ClaimSerializer
 
@@ -144,3 +147,53 @@ class ClaimViewSet(viewsets.ModelViewSet):
         if status:
             queryset = queryset.filter(status=status)
         return queryset.order_by('-created_at')
+
+class DashboardStatsView(views.APIView):
+    def get(self, request):
+        today = timezone.localtime().date()
+        total_claims = Claim.objects.count()
+        approved_claims = Claim.objects.filter(status='Approved').count()
+        redemption_rate = round((approved_claims / total_claims * 100), 1) if total_claims > 0 else 0
+        active_campaigns_count = Campaign.objects.filter(status='Active').count()
+        voucher_value_sum = Claim.objects.filter(status='Approved').aggregate(Sum('amount'))['amount__sum'] or 0
+
+        # Activity Overview: 6 months
+        monthly_stats = []
+        for i in range(5, -1, -1):
+            # Calculate the first day of the month i months ago
+            target_date = today - timedelta(days=30 * i)
+            month_start = target_date.replace(day=1)
+            # Find the last day of that month
+            if month_start.month == 12:
+                next_month = month_start.replace(year=month_start.year + 1, month=1)
+            else:
+                next_month = month_start.replace(month=month_start.month + 1)
+            
+            month_claims = Claim.objects.filter(created_at__gte=month_start, created_at__lt=next_month).count()
+            month_redemptions = Claim.objects.filter(created_at__gte=month_start, created_at__lt=next_month, status='Approved').count()
+            
+            monthly_stats.append({
+                'month': month_start.strftime('%b %Y'),
+                'claims': month_claims,
+                'redemptions': month_redemptions
+            })
+
+        # Campaign Distribution
+        active_campaigns = Campaign.objects.filter(status='Active')
+        campaign_distribution = []
+        for campaign in active_campaigns:
+            claims_count = Claim.objects.filter(voucher=campaign.voucher).count()
+            if claims_count > 0:
+                campaign_distribution.append({
+                    'name': campaign.name,
+                    'count': claims_count
+                })
+
+        return Response({
+            'total_claims': total_claims,
+            'redemption_rate': redemption_rate,
+            'active_campaigns': active_campaigns_count,
+            'voucher_value': float(voucher_value_sum),
+            'monthly_stats': monthly_stats,
+            'campaign_distribution': campaign_distribution
+        })

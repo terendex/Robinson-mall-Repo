@@ -1,6 +1,9 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from .views import UserViewSet, PasswordResetRequestView, PasswordResetView, VoucherViewSet, CampaignViewSet, StoreViewSet, ClaimViewSet
+from .views import (
+    UserViewSet, PasswordResetRequestView, PasswordResetView, 
+    VoucherViewSet, CampaignViewSet, StoreViewSet, ClaimViewSet, DashboardStatsView
+)
 
 router = DefaultRouter()
 router.register(r'users', UserViewSet, basename='user')
@@ -12,5 +15,6 @@ router.register(r'claims', ClaimViewSet, basename='claim')
 urlpatterns = [
     path('users/password-reset-request/', PasswordResetRequestView.as_view(), name='password-reset-request'),
     path('users/password-reset/<str:token>/', PasswordResetView.as_view(), name='password-reset'),
+    path('dashboard-stats/', DashboardStatsView.as_view(), name='dashboard-stats'),
     path('', include(router.urls)),
 ]
