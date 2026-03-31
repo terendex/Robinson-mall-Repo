@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import '../styles/PrivacyPolicy.css';
+import '../css/PrivacyPolicy.css';
 import Header from '../components/Header';
 
 const PrivacyPolicy = () => {

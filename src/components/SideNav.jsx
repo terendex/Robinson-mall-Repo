@@ -1,9 +1,12 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import '../styles/SideNav.css';
+import '../css/SideNav.css';
 import robinsonsLogo from '../assets/Robinson_logo.png';
 
 const SideNav = ({ user, isOpen, closeSidebar }) => {
+  const role = user?.role || 'admin';
+  const pathPrefix = `/${role}`;
+
   // Build display name from user data
   const displayName = user
     ? (user.first_name && user.last_name
@@ -19,6 +22,17 @@ const SideNav = ({ user, isOpen, closeSidebar }) => {
     }
   };
 
+  const navLinks = [
+    ...(role !== 'staff' ? [{ to: `${pathPrefix}/dashboard`, icon: 'fa-table-cells-large', label: 'Dashboard' }] : []),
+    { to: `${pathPrefix}/vouchers`, icon: 'fa-ticket-simple', label: 'Vouchers' },
+    { to: `${pathPrefix}/campaigns`, icon: 'fa-tag', label: 'Campaigns' },
+    { to: `${pathPrefix}/claims`, icon: 'fa-gift', label: 'Claims' },
+    { to: `${pathPrefix}/transactions`, icon: 'fa-clock-rotate-left', label: 'Transactions' },
+    ...(role === 'admin' ? [{ to: `${pathPrefix}/users`, icon: 'fa-user-group', label: 'Users' }] : []),
+    ...(role !== 'staff' ? [{ to: `${pathPrefix}/reports`, icon: 'fa-chart-simple', label: 'Reports' }] : []),
+    { to: `${pathPrefix}/settings`, icon: 'fa-gear', label: 'Settings' },
+  ];
+
   return (
     <>
       {/* Dark overlay behind sidebar on mobile */}
@@ -26,14 +40,13 @@ const SideNav = ({ user, isOpen, closeSidebar }) => {
 
       <div className={`sidenav${isOpen ? ' open' : ''}`}>
         <ul className="nav-links">
-          <li><NavLink to="/admin/dashboard" onClick={handleNavLinkClick}><i className="fa-solid fa-table-cells-large"></i> Dashboard</NavLink></li>
-          <li><NavLink to="/admin/vouchers" onClick={handleNavLinkClick}><i className="fa-solid fa-ticket-simple"></i> Vouchers</NavLink></li>
-          <li><NavLink to="/admin/campaigns" onClick={handleNavLinkClick}><i className="fa-solid fa-tag"></i> Campaigns</NavLink></li>
-          <li><NavLink to="/admin/claims" onClick={handleNavLinkClick}><i className="fa-solid fa-gift"></i> Claims</NavLink></li>
-          <li><NavLink to="/admin/transactions" onClick={handleNavLinkClick}><i className="fa-solid fa-clock-rotate-left"></i> Transactions</NavLink></li>
-          <li><NavLink to="/admin/users" onClick={handleNavLinkClick}><i className="fa-solid fa-user-group"></i> Users</NavLink></li>
-          <li><NavLink to="/admin/reports" onClick={handleNavLinkClick}><i className="fa-solid fa-chart-simple"></i> Reports</NavLink></li>
-          <li><NavLink to="/admin/settings" onClick={handleNavLinkClick}><i className="fa-solid fa-gear"></i> Settings</NavLink></li>
+          {navLinks.map((link) => (
+            <li key={link.to}>
+              <NavLink to={link.to} onClick={handleNavLinkClick}>
+                <i className={`fa-solid ${link.icon}`}></i> {link.label}
+              </NavLink>
+            </li>
+          ))}
         </ul>
         <div className="admin-user">
           <div className="admin-icon"><i className="fa-solid fa-user-circle"></i></div>

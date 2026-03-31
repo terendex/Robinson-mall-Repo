@@ -1,13 +1,14 @@
 import React from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import '../styles/Header.css';
+import '../css/Header.css';
 import robinsonsLogo from '../assets/Robinson_logo.png';
 
 const Header = () => {
   const location = useLocation();
   const navigate = useNavigate();
 
-  if (location.pathname.startsWith('/admin')) {
+  const dashboardPaths = ['/admin', '/manager', '/staff', '/customer'];
+  if (dashboardPaths.some(path => location.pathname.startsWith(path))) {
     return null;
   }
 

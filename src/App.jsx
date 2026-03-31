@@ -13,13 +13,30 @@ import Transactions from './pages/admin/Transactions';
 import Users from './pages/admin/Users';
 import Reports from './pages/admin/Reports';
 import Settings from './pages/admin/Settings';
+import ManagerLayout from './pages/manager/ManagerLayout';
 import ManagerDashboard from './pages/manager/ManagerDashboard';
-import StaffDashboard from './pages/staff/StaffDashboard';
+import ManagerVouchers from './pages/manager/ManagerVouchers';
+import ManagerCampaigns from './pages/manager/ManagerCampaigns';
+import ManagerClaims from './pages/manager/ManagerClaims';
+import ManagerTransactions from './pages/manager/ManagerTransactions';
+import ManagerReports from './pages/manager/ManagerReports';
+import ManagerSettings from './pages/manager/ManagerSettings';
+
+import ManagerNotifications from './pages/manager/ManagerNotifications';
+
+import StaffLayout from './pages/staff/StaffLayout';
+import StaffVouchers from './pages/staff/StaffVouchers';
+import StaffCampaigns from './pages/staff/StaffCampaigns';
+import StaffClaims from './pages/staff/StaffClaims';
+import StaffTransactions from './pages/staff/StaffTransactions';
+import StaffSettings from './pages/staff/StaffSettings';
+import StaffNotifications from './pages/staff/StaffNotifications';
 import CustomerDashboard from './pages/customer/CustomerDashboard';
 import ForgotPassword from './pages/ForgotPassword';
 import PasswordReset from './pages/PasswordReset';
 import PrivacyPolicy from './pages/PrivacyPolicy';
-import './styles/App.css'
+import Notifications from './pages/admin/Notifications';
+import "./css/App.css"
 
 function App() {
   const [user, setUser] = useState(null);
@@ -43,6 +60,8 @@ function App() {
 
   const handleLogout = () => {
     setUser(null);
+    localStorage.removeItem('rememberedEmail');
+    localStorage.removeItem('rememberedPassword');
   };
 
   return (
@@ -67,11 +86,32 @@ function App() {
             <Route path="users" element={<Users />} />
             <Route path="reports" element={<Reports />} />
             <Route path="settings" element={<Settings />} />
+            <Route path="notifications" element={<Notifications />} />
             <Route index element={<Navigate to="dashboard" />} />
           </Route>
 
-          <Route path="/manager" element={user && user.role === 'manager' ? <ManagerDashboard /> : <Navigate to="/login" />} />
-          <Route path="/staff" element={user && user.role === 'staff' ? <StaffDashboard /> : <Navigate to="/login" />} />
+          {/* Manager Routes */}
+          <Route path="/manager" element={user && user.role === 'manager' ? <ManagerLayout user={user} /> : <Navigate to="/login" />}>
+            <Route path="dashboard" element={<ManagerDashboard />} />
+            <Route path="vouchers" element={<ManagerVouchers />} />
+            <Route path="campaigns" element={<ManagerCampaigns />} />
+            <Route path="claims" element={<ManagerClaims />} />
+            <Route path="transactions" element={<ManagerTransactions />} />
+            <Route path="reports" element={<ManagerReports />} />
+            <Route path="settings" element={<ManagerSettings />} />
+            <Route path="notifications" element={<ManagerNotifications />} />
+            <Route index element={<Navigate to="dashboard" />} />
+          </Route>
+          {/* Staff Routes */}
+          <Route path="/staff" element={user && user.role === 'staff' ? <StaffLayout user={user} /> : <Navigate to="/login" />}>
+            <Route path="vouchers" element={<StaffVouchers />} />
+            <Route path="campaigns" element={<StaffCampaigns />} />
+            <Route path="claims" element={<StaffClaims />} />
+            <Route path="transactions" element={<StaffTransactions />} />
+            <Route path="settings" element={<StaffSettings />} />
+            <Route path="notifications" element={<StaffNotifications />} />
+            <Route index element={<Navigate to="vouchers" />} />
+          </Route>
           <Route path="/customer" element={user && user.role === 'customer' ? <CustomerDashboard /> : <Navigate to="/login" />} />
         </Routes>
       </div>

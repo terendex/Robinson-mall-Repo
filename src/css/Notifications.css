@@ -1,0 +1,139 @@
+.notifications-page {
+    padding: 2rem;
+    background-color: #f8fafc;
+    min-height: 100vh;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+.notifications-header {
+    margin-bottom: 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.notifications-header h1 {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #0f172a;
+    margin: 0;
+}
+
+.clear-all-btn {
+    padding: 0.5rem 1rem;
+    background-color: #ef4444;
+    color: white;
+    border: none;
+    border-radius: 0.5rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.clear-all-btn:hover {
+    background-color: #dc2626;
+}
+
+.notifications-container {
+    background: white;
+    border-radius: 1rem;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    border: 1px solid #e2e8f0;
+    overflow: hidden;
+}
+
+.notification-full-item {
+    display: flex;
+    padding: 1.5rem 2rem;
+    border-bottom: 1px solid #f1f5f9;
+    transition: background-color 0.2s;
+}
+
+.notification-full-item:hover {
+    background-color: #f8fafc;
+}
+
+.notification-full-item:last-child {
+    border-bottom: none;
+}
+
+.notification-icon-wrapper {
+    width: 48px;
+    height: 48px;
+    background-color: #fee2e2;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 1.5rem;
+    flex-shrink: 0;
+}
+
+.notification-icon-wrapper i {
+    color: #ef4444;
+    font-size: 1.25rem;
+}
+
+.notification-full-content {
+    flex-grow: 1;
+}
+
+.notification-full-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 0.5rem;
+}
+
+.notification-full-title {
+    font-size: 1.125rem;
+    font-weight: 700;
+    color: #0f172a;
+}
+
+.notification-full-time {
+    font-size: 0.875rem;
+    color: #64748b;
+}
+
+.notification-full-message {
+    font-size: 1rem;
+    color: #475569;
+    line-height: 1.5;
+    margin: 0;
+}
+
+.notification-full-actions {
+    margin-left: 1.5rem;
+    display: flex;
+    align-items: center;
+}
+
+.notification-delete-btn {
+    background: none;
+    border: none;
+    color: #94a3b8;
+    cursor: pointer;
+    padding: 0.5rem;
+    transition: color 0.2s;
+}
+
+.notification-delete-btn:hover {
+    color: #ef4444;
+}
+
+.notifications-empty-state {
+    padding: 4rem 2rem;
+    text-align: center;
+}
+
+.notifications-empty-state i {
+    font-size: 3rem;
+    color: #e2e8f0;
+    margin-bottom: 1rem;
+}
+
+.notifications-empty-state p {
+    color: #64748b;
+    font-size: 1.125rem;
+}

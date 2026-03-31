@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import "../styles/Log.css";
+import "../css/Log.css";
 import { FaEye, FaEyeSlash } from 'react-icons/fa';
 
 export default function Log({ onLogin }) {

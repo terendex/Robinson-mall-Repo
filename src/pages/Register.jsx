@@ -5,7 +5,7 @@ import DatePicker from 'react-datepicker';
 import { FaEye, FaEyeSlash } from 'react-icons/fa';
 import Modal from '../components/Modal'; // Import the Modal component
 import 'react-datepicker/dist/react-datepicker.css';
-import '../styles/Register.css';
+import '../css/Register.css';
 
 const Register = () => {
   const [firstName, setFirstName] = useState('');

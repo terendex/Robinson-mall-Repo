@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import '../styles/Modal.css';
+import '../css/Modal.css';
 
 const UserModal = ({ show, onClose, onSave, userToEdit }) => {
   const [formData, setFormData] = useState({
@@ -45,14 +45,14 @@ const UserModal = ({ show, onClose, onSave, userToEdit }) => {
 
   return (
     <div className="modal-overlay">
-      <div className="modal-content user-modal">
+      <div className="modal-content">
         <div className="modal-header">
           <h2>{userToEdit ? 'Edit User' : 'Add New User'}</h2>
           <button className="close-x" onClick={onClose}>&times;</button>
         </div>
         <form onSubmit={handleSubmit}>
-          <div className="form-row" style={{ display: 'flex', gap: '15px' }}>
-            <div className="form-group" style={{ flex: 1 }}>
+          <div className="form-row">
+            <div className="form-group">
               <label>First Name</label>
               <input
                 type="text"
@@ -62,7 +62,7 @@ const UserModal = ({ show, onClose, onSave, userToEdit }) => {
                 placeholder="First name"
               />
             </div>
-            <div className="form-group" style={{ flex: 1 }}>
+            <div className="form-group">
               <label>Last Name</label>
               <input
                 type="text"

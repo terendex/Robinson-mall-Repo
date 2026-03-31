@@ -3,7 +3,7 @@ import axios from 'axios';
 import CampaignModal from '../../components/CampaignModal';
 import CampaignDetailsModal from '../../components/CampaignDetailsModal';
 import NotificationContext from '../../context/NotificationContext';
-import '../../styles/Campaigns.css';
+import '../../css/Campaigns.css';
 
 const Campaigns = () => {
   const [campaigns, setCampaigns] = useState([]);
@@ -24,6 +24,7 @@ const Campaigns = () => {
   const [selectedCampaignForDetails, setSelectedCampaignForDetails] = useState(null);
   
   const statusFilterRef = useRef(null);
+  const actionsRef = useRef(null);
   const { addNotification } = useContext(NotificationContext);
   
   useEffect(() => {
@@ -34,6 +35,9 @@ const Campaigns = () => {
     const handleClickOutside = (event) => {
       if (statusFilterRef.current && !statusFilterRef.current.contains(event.target)) {
         setIsStatusDropdownOpen(false);
+      }
+      if (actionsRef.current && !actionsRef.current.contains(event.target)) {
+        setActiveActions(null);
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
@@ -268,7 +272,7 @@ const Campaigns = () => {
                           {campaign.status}
                         </span>
                       </td>
-                      <td className="actions-cell">
+                      <td className="actions-cell" ref={activeActions === campaign.id ? actionsRef : null}>
                         <button 
                           className="table-action-dot"
                           onClick={() => setActiveActions(activeActions === campaign.id ? null : campaign.id)}

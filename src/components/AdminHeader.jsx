@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useRef, useContext } from 'react';
+import React, { useState, useEffect, useRef, useContext, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import '../styles/AdminHeader.css';
+import '../css/AdminHeader.css';
 import robinsonsLogo from '../assets/Robinson_logo.png';
 import NotificationContext from '../context/NotificationContext';
 
@@ -16,29 +16,42 @@ const AdminHeader = ({ toggleSidebar, user, isSidebarOpen }) => {
   const profileDropdownRef = useRef(null);
   const { notifications, removeNotification } = useContext(NotificationContext);
 
-  const adminPages = [
-    { name: 'Dashboard', path: '/admin/dashboard', icon: 'fa-table-cells-large' },
-    { name: 'Vouchers', path: '/admin/vouchers', icon: 'fa-ticket-simple' },
-    { name: 'Campaigns', path: '/admin/campaigns', icon: 'fa-tag' },
-    { name: 'Claims', path: '/admin/claims', icon: 'fa-gift' },
-    { name: 'Transactions', path: '/admin/transactions', icon: 'fa-clock-rotate-left' },
-    { name: 'Users', path: '/admin/users', icon: 'fa-user-group' },
-    { name: 'Reports', path: '/admin/reports', icon: 'fa-chart-simple' },
-    { name: 'Settings', path: '/admin/settings', icon: 'fa-gear' },
+  const role = user?.role || 'admin';
+  const pathPrefix = `/${role}`;
+
+  const availablePages = [
+    ...(role !== 'staff' ? [{ name: 'Dashboard', path: `${pathPrefix}/dashboard`, icon: 'fa-table-cells-large' }] : []),
+    { name: 'Vouchers', path: `${pathPrefix}/vouchers`, icon: 'fa-ticket-simple' },
+    { name: 'Campaigns', path: `${pathPrefix}/campaigns`, icon: 'fa-tag' },
+    { name: 'Claims', path: `${pathPrefix}/claims`, icon: 'fa-gift' },
+    { name: 'Transactions', path: `${pathPrefix}/transactions`, icon: 'fa-clock-rotate-left' },
+    ...(role === 'admin' ? [{ name: 'Users', path: `${pathPrefix}/users`, icon: 'fa-user-group' }] : []),
+    ...(role !== 'staff' ? [{ name: 'Reports', path: `${pathPrefix}/reports`, icon: 'fa-chart-simple' }] : []),
+    { name: 'Settings', path: `${pathPrefix}/settings`, icon: 'fa-gear' },
   ];
+
+  const filteredNotifications = useMemo(() => {
+    if (role !== 'staff') return notifications;
+    const keywords = ['voucher', 'campaign', 'claim', 'transaction'];
+    return notifications.filter(n => {
+      const msg = (n.message || '').toLowerCase();
+      const title = (n.title || '').toLowerCase();
+      return keywords.some(k => msg.includes(k) || title.includes(k));
+    });
+  }, [notifications, role]);
 
   useEffect(() => {
     if (searchQuery.trim() === '') {
       setFilteredPages([]);
       setShowDropdown(false);
     } else {
-      const results = adminPages.filter(page =>
+      const results = availablePages.filter(page =>
         page.name.toLowerCase().includes(searchQuery.toLowerCase())
       );
       setFilteredPages(results);
       setShowDropdown(true);
     }
-  }, [searchQuery]);
+  }, [searchQuery, role]);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -125,43 +138,45 @@ const AdminHeader = ({ toggleSidebar, user, isSidebarOpen }) => {
         </div>
         
         <div className="admin-header-right">
-          <div className="header-icon-btn">
-            <i className="fa-solid fa-envelope"></i>
-            <span className="notification-dot"></span>
-          </div>
           <div className="header-icon-btn" onClick={() => navigate('/privacy-policy')}>
             <i className="fa-solid fa-question-circle"></i>
           </div>
           <div className="header-icon-btn" ref={notificationDropdownRef}>
             <button className="notification-button" onClick={toggleNotificationDropdown}>
               <i className="fa-solid fa-bell"></i>
-              {notifications.length > 0 && (
-                <span className="notification-badge">{notifications.length}</span>
+              {filteredNotifications.length > 0 && (
+                <span className="notification-badge">{filteredNotifications.length}</span>
               )}
             </button>
             {isNotificationDropdownOpen && (
               <div className="notification-dropdown">
                 <div className="notification-dropdown-header">
                   <span>Notifications</span>
-                  <button className="close-btn" onClick={closeNotificationDropdown}>
-                    <i className="fa-solid fa-xmark"></i>
-                  </button>
                 </div>
-                {notifications.length > 0 ? (
-                  notifications.map((notification) => (
-                    <div key={notification.id} className="notification-item">
-                      <i className={`fa-solid ${notification.icon}`}></i>
-                      <p><b>{notification.title}</b> {notification.message}</p>
-                      <button className="dismiss-btn" onClick={() => removeNotification(notification.id)}>
-                        <i className="fa-solid fa-xmark"></i>
-                      </button>
+                <div className="notification-list">
+                  {filteredNotifications.length > 0 ? (
+                    filteredNotifications.map((notification) => (
+                      <div key={notification.id} className="notification-item" onClick={() => navigate(`${pathPrefix}/notifications`)}>
+                        <div className="notification-item-main">
+                          <div className="notification-item-title-row">
+                            <span className="notification-item-title">{notification.title || 'Notification'}</span>
+                            <span className="notification-item-time">
+                              {new Date(notification.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            </span>
+                          </div>
+                          <p className="notification-item-message">{notification.message}</p>
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="notification-empty">
+                      <p>No new notifications.</p>
                     </div>
-                  ))
-                ) : (
-                  <div className="notification-item">
-                    <p>No new notifications.</p>
-                  </div>
-                )}
+                  )}
+                </div>
+                <div className="notification-dropdown-footer" onClick={() => navigate(`${pathPrefix}/notifications`)}>
+                  <span>View all notifications</span>
+                </div>
               </div>
             )}
           </div>
@@ -175,7 +190,7 @@ const AdminHeader = ({ toggleSidebar, user, isSidebarOpen }) => {
             </div>
             {isProfileDropdownOpen && (
                 <div className="profile-dropdown">
-                    <div className="profile-dropdown-item" onClick={() => navigate('/admin/settings')}>
+                    <div className="profile-dropdown-item" onClick={() => navigate(`${pathPrefix}/settings`)}>
                         <i className="fa-solid fa-gear"></i>
                         <span>Settings</span>
                     </div>

@@ -23,6 +23,7 @@
   border: none;
   padding: 12px 24px;
   border-radius: 8px;
+  font-size: 14px;
   font-weight: 600;
   cursor: pointer;
   display: flex;
@@ -74,6 +75,8 @@
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
   overflow-x: auto;
   padding: 24px;
+  min-height: 400px; /* Prevent action menu clipping */
+  padding-bottom: 80px; /* Extra room for actions */
 }
 
 .user-list-header {
@@ -81,49 +84,57 @@
 }
 
 .user-search-pills {
-  display: flex;
-  align-items: center;
-  background-color: #f1f4f9;
-  border-radius: 25px;
-  padding: 10px 20px;
-  width: 350px;
-  box-sizing: border-box;
+  flex: 1;
+  position: relative;
+  background: transparent;
+  padding: 0;
+  width: auto;
 }
 
 .user-search-pills i {
-  color: #777;
-  margin-right: 12px;
+  position: absolute;
+  left: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #bdbdbd;
 }
 
 .user-search-pills input {
-  background: none;
-  border: none;
-  outline: none;
+  box-sizing: border-box;
   width: 100%;
+  padding: 12px 12px 12px 48px;
+  border: 1px solid #eeeeee;
+  border-radius: 12px;
+  background-color: #f5f5f5;
   font-size: 14px;
-  color: #333;
+  transition: all 0.2s;
+  outline: none;
+}
+
+.user-search-pills input:focus {
+  background-color: white;
+  border-color: #bdbdbd;
 }
 
 /* Table Styles */
 .users-table {
   width: 100%;
   border-collapse: collapse;
-  table-layout: fixed;
-  min-width: 800px;
 }
 
 .users-table th {
-  padding: 15px;
-  color: #666;
+  text-align: left;
+  padding: 16px;
+  color: #757575;
+  font-size: 13px;
   font-weight: 600;
-  font-size: 14px;
-  border-bottom: 2px solid #f1f4f9;
-  white-space: nowrap;
+  border-bottom: 1px solid #eeeeee;
+  background-color: transparent;
 }
 
 .users-table td {
-  padding: 16px 15px;
-  border-bottom: 1px solid #f9f9f9;
+  padding: 16px;
+  border-bottom: 1px solid #eeeeee;
   vertical-align: middle;
   white-space: nowrap;
 }

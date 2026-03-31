@@ -1,42 +1,44 @@
 from rest_framework import serializers
-from .models import User, Voucher, Campaign
+from .models import User, Voucher, Campaign, Store, Claim, Notification
+
+class NotificationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Notification
+        fields = '__all__'
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        # We can now rely on the fields provided by the AbstractUser model.
-        # The password will be handled automatically.
-        fields = ('id', 'username', 'email', 'role', 'password', 'first_name', 'last_name', 'is_active')
+        fields = ('id', 'username', 'email', 'role', 'password', 'first_name', 'last_name', 'phone_number', 'is_active')
         extra_kwargs = {
             'password': {'write_only': True},
         }
 
     def create(self, validated_data):
-        # Use the create_user method to handle password hashing.
         user = User.objects.create_user(
             username=validated_data['username'],
             email=validated_data['email'],
             password=validated_data['password'],
-            role=validated_data.get('role', 'customer'),  # Default to 'customer' if not provided
+            role=validated_data.get('role', 'customer'),
             first_name=validated_data.get('first_name', ''),
-            last_name=validated_data.get('last_name', '')
+            last_name=validated_data.get('last_name', ''),
+            phone_number=validated_data.get('phone_number', '')
         )
         return user
 
     def update(self, instance, validated_data):
-        # Extract password if present
         password = validated_data.pop('password', None)
-        
-        # Update other fields
         for attr, value in validated_data.items():
             setattr(instance, attr, value)
-        
-        # Hash password if provided
         if password:
             instance.set_password(password)
-            
         instance.save()
         return instance
+
+class StoreSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Store
+        fields = '__all__'
 
 class VoucherSerializer(serializers.ModelSerializer):
     class Meta:
@@ -50,4 +52,15 @@ class CampaignSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Campaign
+        fields = '__all__'
+
+class ClaimSerializer(serializers.ModelSerializer):
+    user_name = serializers.ReadOnlyField(source='user.get_full_name')
+    user_phone = serializers.ReadOnlyField(source='user.phone_number')
+    voucher_name = serializers.ReadOnlyField(source='voucher.name')
+    voucher_code = serializers.ReadOnlyField(source='voucher.code')
+    store_name = serializers.ReadOnlyField(source='store.name')
+
+    class Meta:
+        model = Claim
         fields = '__all__'
