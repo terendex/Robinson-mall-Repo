@@ -5,7 +5,7 @@ import AdminHeader from '../../components/AdminHeader';
 import { NotificationProvider } from '../../context/NotificationContext';
 import '../../css/AdminLayout.css';
 
-const AdminLayout = ({ user }) => {
+const CustomerLayout = ({ user }) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
   const toggleSidebar = () => setIsSidebarOpen((prev) => !prev);
@@ -13,7 +13,7 @@ const AdminLayout = ({ user }) => {
 
   return (
     <NotificationProvider user={user}>
-      <div className="admin-layout">
+      <div className="admin-layout customer-layout">
         <AdminHeader toggleSidebar={toggleSidebar} user={user} isSidebarOpen={isSidebarOpen} />
         <SideNav 
           user={user} 
@@ -28,4 +28,4 @@ const AdminLayout = ({ user }) => {
   );
 };
 
-export default AdminLayout;
+export default CustomerLayout;

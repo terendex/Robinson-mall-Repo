@@ -31,7 +31,14 @@ import StaffClaims from './pages/staff/StaffClaims';
 import StaffTransactions from './pages/staff/StaffTransactions';
 import StaffSettings from './pages/staff/StaffSettings';
 import StaffNotifications from './pages/staff/StaffNotifications';
+import CustomerLayout from './pages/customer/CustomerLayout';
 import CustomerDashboard from './pages/customer/CustomerDashboard';
+import CustomerVouchers from './pages/customer/CustomerVouchers';
+import CustomerCampaigns from './pages/customer/CustomerCampaigns';
+import CustomerClaims from './pages/customer/CustomerClaims';
+import CustomerTransactions from './pages/customer/CustomerTransactions';
+import CustomerSettings from './pages/customer/CustomerSettings';
+import CustomerNotifications from './pages/customer/CustomerNotifications';
 import ForgotPassword from './pages/ForgotPassword';
 import PasswordReset from './pages/PasswordReset';
 import PrivacyPolicy from './pages/PrivacyPolicy';
@@ -112,7 +119,17 @@ function App() {
             <Route path="notifications" element={<StaffNotifications />} />
             <Route index element={<Navigate to="vouchers" />} />
           </Route>
-          <Route path="/customer" element={user && user.role === 'customer' ? <CustomerDashboard /> : <Navigate to="/login" />} />
+          {/* Customer Routes */}
+          <Route path="/customer" element={user && user.role === 'customer' ? <CustomerLayout user={user} /> : <Navigate to="/login" />}>
+            <Route path="dashboard" element={<CustomerDashboard user={user} />} />
+            <Route path="vouchers" element={<CustomerVouchers user={user} />} />
+            <Route path="campaigns" element={<CustomerCampaigns user={user} />} />
+            <Route path="claims" element={<CustomerClaims user={user} />} />
+            <Route path="transactions" element={<CustomerTransactions />} />
+            <Route path="settings" element={<CustomerSettings user={user} />} />
+            <Route path="notifications" element={<CustomerNotifications user={user} />} />
+            <Route index element={<Navigate to="dashboard" />} />
+          </Route>
         </Routes>
       </div>
     </Router>

@@ -144,8 +144,13 @@ class ClaimViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         queryset = Claim.objects.all()
         status = self.request.query_params.get('status')
+        user_id = self.request.query_params.get('user_id')
+        
         if status:
             queryset = queryset.filter(status=status)
+        if user_id:
+            queryset = queryset.filter(user_id=user_id)
+            
         return queryset.order_by('-created_at')
 
 class NotificationViewSet(viewsets.ModelViewSet):
@@ -153,6 +158,11 @@ class NotificationViewSet(viewsets.ModelViewSet):
     serializer_class = NotificationSerializer
 
     def get_queryset(self):
+        user_id = self.request.query_params.get('user_id')
+        if user_id:
+            # Return global notifications (user=None) OR user's specific notifications
+            from django.db.models import Q
+            return Notification.objects.filter(Q(user_id=user_id) | Q(user__isnull=True)).order_by('-created_at')
         return Notification.objects.all().order_by('-created_at')
 
     @action(detail=False, methods=['post'])

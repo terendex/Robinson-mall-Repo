@@ -3,17 +3,18 @@ import axios from 'axios';
 
 const NotificationContext = createContext();
 
-export const NotificationProvider = ({ children }) => {
+export const NotificationProvider = ({ children, user }) => {
   const [notifications, setNotifications] = useState([]);
 
   const fetchNotifications = useCallback(async () => {
     try {
-      const response = await axios.get('http://127.0.0.1:8000/api/notifications/');
+      const url = user ? `http://127.0.0.1:8000/api/notifications/?user_id=${user.id}` : 'http://127.0.0.1:8000/api/notifications/';
+      const response = await axios.get(url);
       setNotifications(response.data);
     } catch (error) {
       console.error('Error fetching notifications:', error);
     }
-  }, []);
+  }, [user]);
 
   useEffect(() => {
     fetchNotifications();

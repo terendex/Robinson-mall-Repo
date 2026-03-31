@@ -12,7 +12,7 @@ const StaffLayout = ({ user }) => {
   const closeSidebar = () => setIsSidebarOpen(false);
 
   return (
-    <NotificationProvider>
+    <NotificationProvider user={user}>
       <div className="admin-layout">
         <AdminHeader toggleSidebar={toggleSidebar} user={user} isSidebarOpen={isSidebarOpen} />
         <SideNav 

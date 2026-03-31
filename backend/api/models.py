@@ -86,6 +86,7 @@ class Claim(models.Model):
         return f"Claim {self.receipt_no} - {self.status}"
 
 class Notification(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='notifications', null=True, blank=True)
     NOTIFICATION_TYPES = (
         ('info', 'Info'),
         ('success', 'Success'),
@@ -104,10 +105,18 @@ class Notification(models.Model):
 @receiver(post_save, sender=Claim)
 def create_claim_notification(sender, instance, created, **kwargs):
     if created:
+        # Notify Admins/Managers
         Notification.objects.create(
-            title="New Claim",
+            title="New Claim submitted",
             message=f"Customer '{instance.user.first_name} {instance.user.last_name}' submitted a ₱{instance.amount} claim. Requires manual review.",
             notification_type='info'
+        )
+        # Notify the Customer who claimed it
+        Notification.objects.create(
+            user=instance.user,
+            title="Claim Received",
+            message=f"Your claim for {instance.voucher.name} has been received and is currently pending review.",
+            notification_type='success'
         )
 
 @receiver(post_save, sender=User)
