@@ -24,7 +24,13 @@ import ManagerSettings from './pages/manager/ManagerSettings';
 
 import ManagerNotifications from './pages/manager/ManagerNotifications';
 
-import StaffDashboard from './pages/staff/StaffDashboard';
+import StaffLayout from './pages/staff/StaffLayout';
+import StaffVouchers from './pages/staff/StaffVouchers';
+import StaffCampaigns from './pages/staff/StaffCampaigns';
+import StaffClaims from './pages/staff/StaffClaims';
+import StaffTransactions from './pages/staff/StaffTransactions';
+import StaffSettings from './pages/staff/StaffSettings';
+import StaffNotifications from './pages/staff/StaffNotifications';
 import CustomerDashboard from './pages/customer/CustomerDashboard';
 import ForgotPassword from './pages/ForgotPassword';
 import PasswordReset from './pages/PasswordReset';
@@ -96,7 +102,16 @@ function App() {
             <Route path="notifications" element={<ManagerNotifications />} />
             <Route index element={<Navigate to="dashboard" />} />
           </Route>
-          <Route path="/staff" element={user && user.role === 'staff' ? <StaffDashboard /> : <Navigate to="/login" />} />
+          {/* Staff Routes */}
+          <Route path="/staff" element={user && user.role === 'staff' ? <StaffLayout user={user} /> : <Navigate to="/login" />}>
+            <Route path="vouchers" element={<StaffVouchers />} />
+            <Route path="campaigns" element={<StaffCampaigns />} />
+            <Route path="claims" element={<StaffClaims />} />
+            <Route path="transactions" element={<StaffTransactions />} />
+            <Route path="settings" element={<StaffSettings />} />
+            <Route path="notifications" element={<StaffNotifications />} />
+            <Route index element={<Navigate to="vouchers" />} />
+          </Route>
           <Route path="/customer" element={user && user.role === 'customer' ? <CustomerDashboard /> : <Navigate to="/login" />} />
         </Routes>
       </div>

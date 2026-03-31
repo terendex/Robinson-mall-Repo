@@ -163,6 +163,11 @@
   white-space: normal;
 }
 
+.vouchers-table th:nth-child(n+2):nth-child(-n+5),
+.vouchers-table td:nth-child(n+2):nth-child(-n+5) {
+  text-align: center;
+}
+
 .voucher-info-cell {
   display: flex;
   flex-direction: column;
@@ -204,6 +209,7 @@
   font-weight: 600;
   margin-bottom: 8px;
   display: block;
+  text-align: center;
 }
 
 .progress-bar-container {

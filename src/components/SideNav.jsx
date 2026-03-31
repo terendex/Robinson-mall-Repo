@@ -23,13 +23,13 @@ const SideNav = ({ user, isOpen, closeSidebar }) => {
   };
 
   const navLinks = [
-    { to: `${pathPrefix}/dashboard`, icon: 'fa-table-cells-large', label: 'Dashboard' },
+    ...(role !== 'staff' ? [{ to: `${pathPrefix}/dashboard`, icon: 'fa-table-cells-large', label: 'Dashboard' }] : []),
     { to: `${pathPrefix}/vouchers`, icon: 'fa-ticket-simple', label: 'Vouchers' },
     { to: `${pathPrefix}/campaigns`, icon: 'fa-tag', label: 'Campaigns' },
     { to: `${pathPrefix}/claims`, icon: 'fa-gift', label: 'Claims' },
     { to: `${pathPrefix}/transactions`, icon: 'fa-clock-rotate-left', label: 'Transactions' },
     ...(role === 'admin' ? [{ to: `${pathPrefix}/users`, icon: 'fa-user-group', label: 'Users' }] : []),
-    { to: `${pathPrefix}/reports`, icon: 'fa-chart-simple', label: 'Reports' },
+    ...(role !== 'staff' ? [{ to: `${pathPrefix}/reports`, icon: 'fa-chart-simple', label: 'Reports' }] : []),
     { to: `${pathPrefix}/settings`, icon: 'fa-gear', label: 'Settings' },
   ];
 

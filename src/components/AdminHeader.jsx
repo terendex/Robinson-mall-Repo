@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useContext } from 'react';
+import React, { useState, useEffect, useRef, useContext, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../css/AdminHeader.css';
 import robinsonsLogo from '../assets/Robinson_logo.png';
@@ -20,15 +20,25 @@ const AdminHeader = ({ toggleSidebar, user, isSidebarOpen }) => {
   const pathPrefix = `/${role}`;
 
   const availablePages = [
-    { name: 'Dashboard', path: `${pathPrefix}/dashboard`, icon: 'fa-table-cells-large' },
+    ...(role !== 'staff' ? [{ name: 'Dashboard', path: `${pathPrefix}/dashboard`, icon: 'fa-table-cells-large' }] : []),
     { name: 'Vouchers', path: `${pathPrefix}/vouchers`, icon: 'fa-ticket-simple' },
     { name: 'Campaigns', path: `${pathPrefix}/campaigns`, icon: 'fa-tag' },
     { name: 'Claims', path: `${pathPrefix}/claims`, icon: 'fa-gift' },
     { name: 'Transactions', path: `${pathPrefix}/transactions`, icon: 'fa-clock-rotate-left' },
     ...(role === 'admin' ? [{ name: 'Users', path: `${pathPrefix}/users`, icon: 'fa-user-group' }] : []),
-    { name: 'Reports', path: `${pathPrefix}/reports`, icon: 'fa-chart-simple' },
+    ...(role !== 'staff' ? [{ name: 'Reports', path: `${pathPrefix}/reports`, icon: 'fa-chart-simple' }] : []),
     { name: 'Settings', path: `${pathPrefix}/settings`, icon: 'fa-gear' },
   ];
+
+  const filteredNotifications = useMemo(() => {
+    if (role !== 'staff') return notifications;
+    const keywords = ['voucher', 'campaign', 'claim', 'transaction'];
+    return notifications.filter(n => {
+      const msg = (n.message || '').toLowerCase();
+      const title = (n.title || '').toLowerCase();
+      return keywords.some(k => msg.includes(k) || title.includes(k));
+    });
+  }, [notifications, role]);
 
   useEffect(() => {
     if (searchQuery.trim() === '') {
@@ -134,8 +144,8 @@ const AdminHeader = ({ toggleSidebar, user, isSidebarOpen }) => {
           <div className="header-icon-btn" ref={notificationDropdownRef}>
             <button className="notification-button" onClick={toggleNotificationDropdown}>
               <i className="fa-solid fa-bell"></i>
-              {notifications.length > 0 && (
-                <span className="notification-badge">{notifications.length}</span>
+              {filteredNotifications.length > 0 && (
+                <span className="notification-badge">{filteredNotifications.length}</span>
               )}
             </button>
             {isNotificationDropdownOpen && (
@@ -144,8 +154,8 @@ const AdminHeader = ({ toggleSidebar, user, isSidebarOpen }) => {
                   <span>Notifications</span>
                 </div>
                 <div className="notification-list">
-                  {notifications.length > 0 ? (
-                    notifications.map((notification) => (
+                  {filteredNotifications.length > 0 ? (
+                    filteredNotifications.map((notification) => (
                       <div key={notification.id} className="notification-item" onClick={() => navigate(`${pathPrefix}/notifications`)}>
                         <div className="notification-item-main">
                           <div className="notification-item-title-row">
