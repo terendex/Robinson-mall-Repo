@@ -45,6 +45,19 @@ import PrivacyPolicy from './pages/PrivacyPolicy';
 import Notifications from './pages/admin/Notifications';
 import "./css/App.css"
 
+axios.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('accessToken');
+    if (token) {
+      config.headers['Authorization'] = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
+
 function App() {
   const [user, setUser] = useState(null);
 
@@ -57,6 +70,8 @@ function App() {
       const userData = response.data;
       if (userData) {
         setUser(userData);
+        localStorage.setItem('accessToken', userData.access);
+        localStorage.setItem('refreshToken', userData.refresh);
         return userData;
       }
     } catch (error) {
@@ -69,6 +84,8 @@ function App() {
     setUser(null);
     localStorage.removeItem('rememberedEmail');
     localStorage.removeItem('rememberedPassword');
+    localStorage.removeItem('accessToken');
+    localStorage.removeItem('refreshToken');
   };
 
   return (

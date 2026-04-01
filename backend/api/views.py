@@ -10,6 +10,8 @@ from django.utils.http import urlsafe_base64_encode
 from rest_framework import viewsets, status, views
 from rest_framework.response import Response
 from rest_framework.decorators import action
+from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth import authenticate, login
 from django.db.models import Sum, Count
 from django.utils import timezone
@@ -22,7 +24,7 @@ class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
 
-    @action(detail=False, methods=['post'])
+    @action(detail=False, methods=['post'], permission_classes=[AllowAny])
     def register(self, request):
         serializer = self.get_serializer(data=request.data)
         if serializer.is_valid():
@@ -30,13 +32,14 @@ class UserViewSet(viewsets.ModelViewSet):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    @action(detail=False, methods=['post'])
+    @action(detail=False, methods=['post'], permission_classes=[AllowAny])
     def login(self, request):
         identifier = request.data.get('identifier')
         password = request.data.get('password')
         user = authenticate(request, username=identifier, password=password)
         if user is not None:
             login(request, user)
+            refresh = RefreshToken.for_user(user)
             return Response({
                 'id': user.id,
                 'role': user.role,
@@ -44,11 +47,15 @@ class UserViewSet(viewsets.ModelViewSet):
                 'username': user.username,
                 'first_name': user.first_name,
                 'last_name': user.last_name,
+                'access': str(refresh.access_token),
+                'refresh': str(refresh),
             }, status=status.HTTP_200_OK)
         return Response({'error': 'Invalid credentials'}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class PasswordResetRequestView(views.APIView):
+    permission_classes = [AllowAny]
+
     def post(self, request):
         email = request.data.get('email')
         if not email:
@@ -88,6 +95,8 @@ class PasswordResetRequestView(views.APIView):
 
 
 class PasswordResetView(views.APIView):
+    permission_classes = [AllowAny]
+
     def post(self, request, token):
         password = request.data.get('password')
         if not password:
