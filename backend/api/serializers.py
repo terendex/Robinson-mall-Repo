@@ -10,7 +10,7 @@ class UserSerializer(serializers.ModelSerializer):
     """Serializer for User ensuring secure password hashing on creation and update."""
     class Meta:
         model = User
-        fields = ('id', 'username', 'email', 'role', 'password', 'first_name', 'last_name', 'phone_number', 'is_active')
+        fields = ('id', 'username', 'email', 'role', 'password', 'first_name', 'last_name', 'phone_number', 'birthday', 'is_active')
         extra_kwargs = {
             'password': {'write_only': True},
         }
@@ -23,7 +23,8 @@ class UserSerializer(serializers.ModelSerializer):
             role=validated_data.get('role', 'customer'),
             first_name=validated_data.get('first_name', ''),
             last_name=validated_data.get('last_name', ''),
-            phone_number=validated_data.get('phone_number', '')
+            phone_number=validated_data.get('phone_number', ''),
+            birthday=validated_data.get('birthday', None)
         )
         return user
 

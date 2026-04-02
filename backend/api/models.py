@@ -16,6 +16,7 @@ class User(AbstractUser):
     )
     role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='customer')
     phone_number = models.CharField(max_length=15, blank=True, null=True, default='')
+    birthday = models.DateField(blank=True, null=True)
     password_reset_token = models.CharField(max_length=100, blank=True, null=True)
 
     def __str__(self):
