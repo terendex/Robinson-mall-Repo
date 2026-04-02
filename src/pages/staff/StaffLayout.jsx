@@ -5,6 +5,10 @@ import AdminHeader from '../../components/AdminHeader';
 import { NotificationProvider } from '../../context/NotificationContext';
 import '../../css/AdminLayout.css';
 
+/**
+ * StaffLayout Component
+ * Handles the UI and data logic for the StaffLayout module.
+ */
 const StaffLayout = ({ user }) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 

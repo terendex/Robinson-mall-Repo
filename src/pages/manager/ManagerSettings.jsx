@@ -1,5 +1,9 @@
 import React from 'react';
 
+/**
+ * ManagerSettings Component
+ * Handles the UI and data logic for the ManagerSettings module.
+ */
 const ManagerSettings = () => {
   return (
     <div className="placeholder-page" style={{ padding: '40px', textAlign: 'center' }}>

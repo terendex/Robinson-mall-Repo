@@ -1,6 +1,10 @@
 import React from 'react';
 import SideNav from '../../components/SideNav';
 
+/**
+ * Settings Component
+ * Handles the UI and data logic for the Settings module.
+ */
 const Settings = () => {
   return (
     <div style={{ display: 'flex' }}>

@@ -7,6 +7,10 @@ import Modal from '../components/Modal'; // Import the Modal component
 import 'react-datepicker/dist/react-datepicker.css';
 import '../css/Register.css';
 
+/**
+ * Register Component
+ * Handles the UI and data logic for the Register module.
+ */
 const Register = () => {
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');

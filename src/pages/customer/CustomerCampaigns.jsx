@@ -2,6 +2,10 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import '../../css/Customer.css';
 
+/**
+ * CustomerCampaigns Component
+ * Handles the UI and data logic for the CustomerCampaigns module.
+ */
 const CustomerCampaigns = ({ user }) => {
   const [campaigns, setCampaigns] = useState([]);
   const [loading, setLoading] = useState(true);

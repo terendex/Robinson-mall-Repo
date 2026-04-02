@@ -9,6 +9,10 @@ const typeConfig = {
   info:    { icon: 'fa-circle-info',    color: '#1d4ed8', bg: '#eff6ff', border: '#3b82f6' },
 };
 
+/**
+ * CustomerNotifications Component
+ * Handles the UI and data logic for the CustomerNotifications module.
+ */
 const CustomerNotifications = ({ user }) => {
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);

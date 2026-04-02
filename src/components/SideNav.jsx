@@ -3,6 +3,10 @@ import { NavLink } from 'react-router-dom';
 import '../css/SideNav.css';
 import robinsonsLogo from '../assets/Robinson_logo.png';
 
+/**
+ * SideNav Component
+ * Handles the UI and data logic for the SideNav module.
+ */
 const SideNav = ({ user, isOpen, closeSidebar }) => {
   const role = user?.role || 'admin';
   const pathPrefix = `/${role}`;

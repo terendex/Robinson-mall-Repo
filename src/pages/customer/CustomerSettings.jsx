@@ -1,6 +1,10 @@
 import React from 'react';
 import '../../css/Customer.css';
 
+/**
+ * CustomerSettings Component
+ * Handles the UI and data logic for the CustomerSettings module.
+ */
 const CustomerSettings = ({ user }) => {
   return (
     <div className="customer-settings">

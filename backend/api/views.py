@@ -21,6 +21,10 @@ from .serializers import UserSerializer, VoucherSerializer, CampaignSerializer, 
 
 
 class UserViewSet(viewsets.ModelViewSet):
+    """
+    API endpoint that allows users to be viewed, created or managed.
+    Includes custom actions for public registration and login.
+    """
     queryset = User.objects.all()
     serializer_class = UserSerializer
 
@@ -34,6 +38,7 @@ class UserViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['post'], permission_classes=[AllowAny])
     def login(self, request):
+        """Authenticates user credentials and issues a JWT token payload."""
         identifier = request.data.get('identifier')
         password = request.data.get('password')
         user = authenticate(request, username=identifier, password=password)
@@ -54,6 +59,9 @@ class UserViewSet(viewsets.ModelViewSet):
 
 
 class PasswordResetRequestView(views.APIView):
+    """
+    Handles generation of a password reset token and dispatches the reset email.
+    """
     permission_classes = [AllowAny]
 
     def post(self, request):
@@ -119,9 +127,11 @@ class VoucherViewSet(viewsets.ModelViewSet):
     serializer_class = VoucherSerializer
 
 
-from django.utils import timezone
-
 class CampaignViewSet(viewsets.ModelViewSet):
+    """
+    Provides CRUD for campaigns while dynamically overriding get_queryset 
+    to automatically progress Scheduled -> Active -> Completed based on dates.
+    """
     queryset = Campaign.objects.all()
     serializer_class = CampaignSerializer
 
@@ -147,6 +157,9 @@ class StoreViewSet(viewsets.ModelViewSet):
     serializer_class = StoreSerializer
 
 class ClaimViewSet(viewsets.ModelViewSet):
+    """
+    Provides CRUD operations for claims and supports URL param filtering by status or user_id.
+    """
     queryset = Claim.objects.all()
     serializer_class = ClaimSerializer
 
@@ -180,6 +193,12 @@ class NotificationViewSet(viewsets.ModelViewSet):
         return Response({'status': 'all notifications marked as read'})
 
 class DashboardStatsView(views.APIView):
+    """
+    Generates aggregated metrics for the dashboard charts including:
+    - Redemption Rates and Voucher values
+    - 6-month Historical Data Arrays
+    - Current Active Campaign Totals
+    """
     def get(self, request):
         today = timezone.localtime().date()
         total_claims = Claim.objects.count()

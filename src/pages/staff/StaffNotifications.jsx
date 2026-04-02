@@ -2,6 +2,10 @@ import React, { useContext, useMemo } from 'react';
 import NotificationContext from '../../context/NotificationContext';
 import '../../css/Notifications.css';
 
+/**
+ * StaffNotifications Component
+ * Handles the UI and data logic for the StaffNotifications module.
+ */
 const StaffNotifications = () => {
   const { notifications, removeNotification, markAllAsRead } = useContext(NotificationContext);
 

@@ -1,6 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import '../css/Modal.css';
 
+/**
+ * UserModal Component
+ * Handles the UI and data logic for the UserModal module.
+ */
 const UserModal = ({ show, onClose, onSave, userToEdit }) => {
   const [formData, setFormData] = useState({
     username: '',

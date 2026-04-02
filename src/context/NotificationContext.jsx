@@ -1,6 +1,10 @@
 import React, { createContext, useState, useCallback, useEffect } from 'react';
 import axios from 'axios';
 
+/**
+ * NotificationContext Component
+ * Handles the UI and data logic for the NotificationContext module.
+ */
 const NotificationContext = createContext();
 
 export const NotificationProvider = ({ children, user }) => {

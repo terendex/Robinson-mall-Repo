@@ -2,6 +2,10 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import '../css/Modal.css';
 
+/**
+ * CampaignModal Component
+ * Handles the UI and data logic for the CampaignModal module.
+ */
 const CampaignModal = ({ show, onClose, onSave, campaignToEdit }) => {
   const [vouchers, setVouchers] = useState([]);
   const [formData, setFormData] = useState({

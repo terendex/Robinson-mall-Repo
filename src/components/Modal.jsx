@@ -1,6 +1,10 @@
 import React from 'react';
 import '../css/Modal.css';
 
+/**
+ * Modal Component
+ * Handles the UI and data logic for the Modal module.
+ */
 const Modal = ({ show, onClose, title, message }) => {
   if (!show) {
     return null;

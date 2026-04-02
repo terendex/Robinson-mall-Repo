@@ -2,6 +2,10 @@ import React, { useEffect } from 'react';
 import '../css/PrivacyPolicy.css';
 import Header from '../components/Header';
 
+/**
+ * PrivacyPolicy Component
+ * Handles the UI and data logic for the PrivacyPolicy module.
+ */
 const PrivacyPolicy = () => {
   useEffect(() => {
     window.scrollTo(0, 0);

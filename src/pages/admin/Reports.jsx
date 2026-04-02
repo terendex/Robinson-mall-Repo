@@ -1,6 +1,10 @@
 import React from 'react';
 import SideNav from '../../components/SideNav';
 
+/**
+ * Reports Component
+ * Handles the UI and data logic for the Reports module.
+ */
 const Reports = () => {
   return (
     <div style={{ display: 'flex' }}>

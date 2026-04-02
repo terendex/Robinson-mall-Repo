@@ -7,6 +7,7 @@ class NotificationSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class UserSerializer(serializers.ModelSerializer):
+    """Serializer for User ensuring secure password hashing on creation and update."""
     class Meta:
         model = User
         fields = ('id', 'username', 'email', 'role', 'password', 'first_name', 'last_name', 'phone_number', 'is_active')
@@ -46,6 +47,7 @@ class VoucherSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class CampaignSerializer(serializers.ModelSerializer):
+    """Serializer exposing deeply nested voucher fields for frontend convenience."""
     voucher_name = serializers.ReadOnlyField(source='voucher.name')
     voucher_code = serializers.ReadOnlyField(source='voucher.code')
     voucher_discount = serializers.ReadOnlyField(source='voucher.discount_percentage')

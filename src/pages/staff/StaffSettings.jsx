@@ -1,5 +1,9 @@
 import React from 'react';
 
+/**
+ * StaffSettings Component
+ * Handles the UI and data logic for the StaffSettings module.
+ */
 const StaffSettings = () => {
   return (
     <div className="placeholder-page" style={{ padding: '40px', textAlign: 'center' }}>

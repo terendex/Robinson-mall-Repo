@@ -2,6 +2,10 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import '../../css/Customer.css';
 
+/**
+ * CustomerVouchers Component
+ * Handles the UI and data logic for the CustomerVouchers module.
+ */
 const CustomerVouchers = ({ user }) => {
   const [vouchers, setVouchers] = useState([]);
   const [loading, setLoading] = useState(true);

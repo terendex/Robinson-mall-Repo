@@ -1,6 +1,10 @@
 import React from 'react';
 import '../css/Modal.css';
 
+/**
+ * ClaimDetailsModal Component
+ * Handles the UI and data logic for the ClaimDetailsModal module.
+ */
 const ClaimDetailsModal = ({ show, onClose, claim }) => {
   if (!show || !claim) return null;
 

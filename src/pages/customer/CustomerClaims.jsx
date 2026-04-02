@@ -8,6 +8,10 @@ const statusIcons = {
   Rejected: 'fa-circle-xmark',
 };
 
+/**
+ * CustomerClaims Component
+ * Handles the UI and data logic for the CustomerClaims module.
+ */
 const CustomerClaims = ({ user }) => {
   const [claims, setClaims] = useState([]);
   const [loading, setLoading] = useState(true);

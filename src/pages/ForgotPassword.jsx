@@ -3,6 +3,10 @@ import { Link } from 'react-router-dom';
 import axios from 'axios';
 import '../css/ForgotPassword.css';
 
+/**
+ * ForgotPassword Component
+ * Handles the UI and data logic for the ForgotPassword module.
+ */
 const ForgotPassword = () => {
   const [email, setEmail] = useState('');
   const [message, setMessage] = useState('');

@@ -45,10 +45,15 @@ import PrivacyPolicy from './pages/PrivacyPolicy';
 import Notifications from './pages/admin/Notifications';
 import "./css/App.css"
 
+/**
+ * Global Axios Interceptor
+ * Automatically attaches the stored JWT Access Token to all outgoing requests.
+ * By design, it skips attaching tokens on login/register endpoints to prevent old tokens from triggering a 401.
+ */
 axios.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('accessToken');
-    if (token) {
+    if (token && !config.url.includes('/login/') && !config.url.includes('/register/')) {
       config.headers['Authorization'] = `Bearer ${token}`;
     }
     return config;
@@ -58,9 +63,16 @@ axios.interceptors.request.use(
   }
 );
 
+/**
+ * Main App Component
+ * Serves as the primary orchestrator for Router functionality and global user state.
+ */
 function App() {
   const [user, setUser] = useState(null);
 
+  /**
+   * Authenticates the user with the backend, stores their JWT payload, and sets their global active state.
+   */
   const handleLogin = async (identifier, password) => {
     try {
       const response = await axios.post('http://127.0.0.1:8000/api/users/login/', {
@@ -80,6 +92,9 @@ function App() {
     }
   };
 
+  /**
+   * Purges the user state and destroys token cache, effectively ending the active session.
+   */
   const handleLogout = () => {
     setUser(null);
     localStorage.removeItem('rememberedEmail');

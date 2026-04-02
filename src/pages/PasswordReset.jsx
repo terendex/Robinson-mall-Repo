@@ -3,6 +3,10 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
 import '../css/PasswordReset.css';
 
+/**
+ * PasswordReset Component
+ * Handles the UI and data logic for the PasswordReset module.
+ */
 const PasswordReset = () => {
   const { token } = useParams();
   const [password, setPassword] = useState('');

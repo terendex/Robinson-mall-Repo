@@ -2,6 +2,10 @@ import React, { useContext } from 'react';
 import NotificationContext from '../../context/NotificationContext';
 import "../../css/Notifications.css";
 
+/**
+ * Notifications Component
+ * Handles the UI and data logic for the Notifications module.
+ */
 const Notifications = () => {
   const { notifications, removeNotification } = useContext(NotificationContext);
 

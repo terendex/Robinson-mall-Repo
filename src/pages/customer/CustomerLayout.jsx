@@ -5,6 +5,10 @@ import AdminHeader from '../../components/AdminHeader';
 import { NotificationProvider } from '../../context/NotificationContext';
 import '../../css/AdminLayout.css';
 
+/**
+ * CustomerLayout Component
+ * Handles the UI and data logic for the CustomerLayout module.
+ */
 const CustomerLayout = ({ user }) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 

@@ -1,6 +1,10 @@
 import React from 'react';
 import '../../css/Customer.css';
 
+/**
+ * CustomerTransactions Component
+ * Handles the UI and data logic for the CustomerTransactions module.
+ */
 const CustomerTransactions = () => {
   return (
     <div className="customer-transactions">

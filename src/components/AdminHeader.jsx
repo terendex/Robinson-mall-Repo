@@ -5,6 +5,10 @@ import robinsonsLogo from '../assets/Robinson_logo.png';
 import redROB from '../assets/redROB.png';
 import NotificationContext from '../context/NotificationContext';
 
+/**
+ * AdminHeader Component
+ * Handles the UI and data logic for the AdminHeader module.
+ */
 const AdminHeader = ({ toggleSidebar, user, isSidebarOpen }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [filteredPages, setFilteredPages] = useState([]);

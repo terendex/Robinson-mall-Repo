@@ -3,6 +3,11 @@ import { Link, useNavigate } from "react-router-dom";
 import "../css/Log.css";
 import { FaEye, FaEyeSlash } from 'react-icons/fa';
 
+/**
+ * Log Component (Login Page)
+ * Provides the user interface for authentication. Reads/writes to local storage for "Remember Me"
+ * and passes credentials back to the root handler via `onLogin`.
+ */
 export default function Log({ onLogin }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -11,6 +16,10 @@ export default function Log({ onLogin }) {
   const [error, setError] = useState("");
   const navigate = useNavigate();
 
+  /**
+   * Effect Hook: On mount, checks if "Remember Me" credentials exist in LocalStorage.
+   * Modifies state to auto-fill the login form if found.
+   */
   useEffect(() => {
     const rememberedEmail = localStorage.getItem('rememberedEmail');
     const rememberedPassword = localStorage.getItem('rememberedPassword');
@@ -21,6 +30,11 @@ export default function Log({ onLogin }) {
     }
   }, []);
 
+  /**
+   * Submits the populated state credentials to the parent `onLogin` property.
+   * If successful, saves credentials if "Remember Me" is checked, and routes the user 
+   * to their respective role-based dashboard.
+   */
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");

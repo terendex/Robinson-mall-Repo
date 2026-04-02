@@ -3,6 +3,10 @@ import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import '../../css/Customer.css';
 
+/**
+ * CustomerDashboard Component
+ * Handles the UI and data logic for the CustomerDashboard module.
+ */
 const CustomerDashboard = ({ user }) => {
   const [stats, setStats] = useState({
     activeCampaigns: 0,

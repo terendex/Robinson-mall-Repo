@@ -1,6 +1,10 @@
 import React, { useState } from 'react';
 import '../css/Modal.css';
 
+/**
+ * ResetPasswordModal Component
+ * Handles the UI and data logic for the ResetPasswordModal module.
+ */
 const ResetPasswordModal = ({ show, user, onClose, onSave }) => {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
