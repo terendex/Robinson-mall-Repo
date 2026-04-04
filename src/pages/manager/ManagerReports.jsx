@@ -1,5 +1,9 @@
 import React from 'react';
 
+/**
+ * ManagerReports Component
+ * Handles the UI and data logic for the ManagerReports module.
+ */
 const ManagerReports = () => {
   return (
     <div className="placeholder-page" style={{ padding: '40px', textAlign: 'center' }}>

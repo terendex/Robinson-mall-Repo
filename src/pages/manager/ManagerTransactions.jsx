@@ -1,5 +1,9 @@
 import React from 'react';
 
+/**
+ * ManagerTransactions Component
+ * Handles the UI and data logic for the ManagerTransactions module.
+ */
 const ManagerTransactions = () => {
   return (
     <div className="placeholder-page" style={{ padding: '40px', textAlign: 'center' }}>

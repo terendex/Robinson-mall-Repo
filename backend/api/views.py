@@ -10,6 +10,8 @@ from django.utils.http import urlsafe_base64_encode
 from rest_framework import viewsets, status, views
 from rest_framework.response import Response
 from rest_framework.decorators import action
+from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth import authenticate, login
 from django.db.models import Sum, Count
 from django.utils import timezone
@@ -19,10 +21,14 @@ from .serializers import UserSerializer, VoucherSerializer, CampaignSerializer, 
 
 
 class UserViewSet(viewsets.ModelViewSet):
+    """
+    API endpoint that allows users to be viewed, created or managed.
+    Includes custom actions for public registration and login.
+    """
     queryset = User.objects.all()
     serializer_class = UserSerializer
 
-    @action(detail=False, methods=['post'])
+    @action(detail=False, methods=['post'], permission_classes=[AllowAny])
     def register(self, request):
         serializer = self.get_serializer(data=request.data)
         if serializer.is_valid():
@@ -30,13 +36,15 @@ class UserViewSet(viewsets.ModelViewSet):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    @action(detail=False, methods=['post'])
+    @action(detail=False, methods=['post'], permission_classes=[AllowAny])
     def login(self, request):
+        """Authenticates user credentials and issues a JWT token payload."""
         identifier = request.data.get('identifier')
         password = request.data.get('password')
         user = authenticate(request, username=identifier, password=password)
         if user is not None:
             login(request, user)
+            refresh = RefreshToken.for_user(user)
             return Response({
                 'id': user.id,
                 'role': user.role,
@@ -44,11 +52,18 @@ class UserViewSet(viewsets.ModelViewSet):
                 'username': user.username,
                 'first_name': user.first_name,
                 'last_name': user.last_name,
+                'access': str(refresh.access_token),
+                'refresh': str(refresh),
             }, status=status.HTTP_200_OK)
         return Response({'error': 'Invalid credentials'}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class PasswordResetRequestView(views.APIView):
+    """
+    Handles generation of a password reset token and dispatches the reset email.
+    """
+    permission_classes = [AllowAny]
+
     def post(self, request):
         email = request.data.get('email')
         if not email:
@@ -88,6 +103,8 @@ class PasswordResetRequestView(views.APIView):
 
 
 class PasswordResetView(views.APIView):
+    permission_classes = [AllowAny]
+
     def post(self, request, token):
         password = request.data.get('password')
         if not password:
@@ -110,9 +127,11 @@ class VoucherViewSet(viewsets.ModelViewSet):
     serializer_class = VoucherSerializer
 
 
-from django.utils import timezone
-
 class CampaignViewSet(viewsets.ModelViewSet):
+    """
+    Provides CRUD for campaigns while dynamically overriding get_queryset 
+    to automatically progress Scheduled -> Active -> Completed based on dates.
+    """
     queryset = Campaign.objects.all()
     serializer_class = CampaignSerializer
 
@@ -138,14 +157,22 @@ class StoreViewSet(viewsets.ModelViewSet):
     serializer_class = StoreSerializer
 
 class ClaimViewSet(viewsets.ModelViewSet):
+    """
+    Provides CRUD operations for claims and supports URL param filtering by status or user_id.
+    """
     queryset = Claim.objects.all()
     serializer_class = ClaimSerializer
 
     def get_queryset(self):
         queryset = Claim.objects.all()
         status = self.request.query_params.get('status')
+        user_id = self.request.query_params.get('user_id')
+        
         if status:
             queryset = queryset.filter(status=status)
+        if user_id:
+            queryset = queryset.filter(user_id=user_id)
+            
         return queryset.order_by('-created_at')
 
 class NotificationViewSet(viewsets.ModelViewSet):
@@ -153,6 +180,11 @@ class NotificationViewSet(viewsets.ModelViewSet):
     serializer_class = NotificationSerializer
 
     def get_queryset(self):
+        user_id = self.request.query_params.get('user_id')
+        if user_id:
+            # Return global notifications (user=None) OR user's specific notifications
+            from django.db.models import Q
+            return Notification.objects.filter(Q(user_id=user_id) | Q(user__isnull=True)).order_by('-created_at')
         return Notification.objects.all().order_by('-created_at')
 
     @action(detail=False, methods=['post'])
@@ -161,6 +193,12 @@ class NotificationViewSet(viewsets.ModelViewSet):
         return Response({'status': 'all notifications marked as read'})
 
 class DashboardStatsView(views.APIView):
+    """
+    Generates aggregated metrics for the dashboard charts including:
+    - Redemption Rates and Voucher values
+    - 6-month Historical Data Arrays
+    - Current Active Campaign Totals
+    """
     def get(self, request):
         today = timezone.localtime().date()
         total_claims = Claim.objects.count()

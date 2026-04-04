@@ -3,6 +3,10 @@ import axios from 'axios';
 import VoucherModal from '../../components/VoucherModal';
 import '../../css/Vouchers.css';
 
+/**
+ * ManagerVouchers Component
+ * Handles the UI and data logic for the ManagerVouchers module.
+ */
 const ManagerVouchers = () => {
   const [vouchers, setVouchers] = useState([]);
   const [loading, setLoading] = useState(true);

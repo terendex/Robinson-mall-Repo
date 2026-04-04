@@ -3,6 +3,10 @@ import axios from 'axios';
 import ClaimDetailsModal from '../../components/ClaimDetailsModal';
 import '../../css/Claims.css';
 
+/**
+ * ManagerClaims Component
+ * Handles the UI and data logic for the ManagerClaims module.
+ */
 const ManagerClaims = () => {
   const [claims, setClaims] = useState([]);
   const [loading, setLoading] = useState(true);

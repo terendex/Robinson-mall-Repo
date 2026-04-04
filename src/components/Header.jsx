@@ -3,6 +3,10 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import '../css/Header.css';
 import robinsonsLogo from '../assets/Robinson_logo.png';
 
+/**
+ * Header Component
+ * Handles the UI and data logic for the Header module.
+ */
 const Header = () => {
   const location = useLocation();
   const navigate = useNavigate();

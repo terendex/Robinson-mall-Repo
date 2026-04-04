@@ -31,16 +31,48 @@ import StaffClaims from './pages/staff/StaffClaims';
 import StaffTransactions from './pages/staff/StaffTransactions';
 import StaffSettings from './pages/staff/StaffSettings';
 import StaffNotifications from './pages/staff/StaffNotifications';
+import CustomerLayout from './pages/customer/CustomerLayout';
 import CustomerDashboard from './pages/customer/CustomerDashboard';
+import CustomerVouchers from './pages/customer/CustomerVouchers';
+import CustomerCampaigns from './pages/customer/CustomerCampaigns';
+import CustomerClaims from './pages/customer/CustomerClaims';
+import CustomerTransactions from './pages/customer/CustomerTransactions';
+import CustomerSettings from './pages/customer/CustomerSettings';
+import CustomerNotifications from './pages/customer/CustomerNotifications';
 import ForgotPassword from './pages/ForgotPassword';
 import PasswordReset from './pages/PasswordReset';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import Notifications from './pages/admin/Notifications';
 import "./css/App.css"
 
+/**
+ * Global Axios Interceptor
+ * Automatically attaches the stored JWT Access Token to all outgoing requests.
+ * By design, it skips attaching tokens on login/register endpoints to prevent old tokens from triggering a 401.
+ */
+axios.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('accessToken');
+    if (token && !config.url.includes('/login/') && !config.url.includes('/register/')) {
+      config.headers['Authorization'] = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
+
+/**
+ * Main App Component
+ * Serves as the primary orchestrator for Router functionality and global user state.
+ */
 function App() {
   const [user, setUser] = useState(null);
 
+  /**
+   * Authenticates the user with the backend, stores their JWT payload, and sets their global active state.
+   */
   const handleLogin = async (identifier, password) => {
     try {
       const response = await axios.post('http://127.0.0.1:8000/api/users/login/', {
@@ -50,6 +82,8 @@ function App() {
       const userData = response.data;
       if (userData) {
         setUser(userData);
+        localStorage.setItem('accessToken', userData.access);
+        localStorage.setItem('refreshToken', userData.refresh);
         return userData;
       }
     } catch (error) {
@@ -58,10 +92,15 @@ function App() {
     }
   };
 
+  /**
+   * Purges the user state and destroys token cache, effectively ending the active session.
+   */
   const handleLogout = () => {
     setUser(null);
     localStorage.removeItem('rememberedEmail');
     localStorage.removeItem('rememberedPassword');
+    localStorage.removeItem('accessToken');
+    localStorage.removeItem('refreshToken');
   };
 
   return (
@@ -112,7 +151,17 @@ function App() {
             <Route path="notifications" element={<StaffNotifications />} />
             <Route index element={<Navigate to="vouchers" />} />
           </Route>
-          <Route path="/customer" element={user && user.role === 'customer' ? <CustomerDashboard /> : <Navigate to="/login" />} />
+          {/* Customer Routes */}
+          <Route path="/customer" element={user && user.role === 'customer' ? <CustomerLayout user={user} /> : <Navigate to="/login" />}>
+            <Route path="dashboard" element={<CustomerDashboard user={user} />} />
+            <Route path="vouchers" element={<CustomerVouchers user={user} />} />
+            <Route path="campaigns" element={<CustomerCampaigns user={user} />} />
+            <Route path="claims" element={<CustomerClaims user={user} />} />
+            <Route path="transactions" element={<CustomerTransactions />} />
+            <Route path="settings" element={<CustomerSettings user={user} />} />
+            <Route path="notifications" element={<CustomerNotifications user={user} />} />
+            <Route index element={<Navigate to="dashboard" />} />
+          </Route>
         </Routes>
       </div>
     </Router>

@@ -13,11 +13,20 @@ import {
 } from 'recharts';
 import "../../css/AdminDashboard.css";
 
+/**
+ * AdminDashboard Component
+ * Renders the top-level analytical view for Admins. Uses Recharts to visually represent 
+ * total claims, active campaigns, and redemption trends over the past 6 months.
+ */
 const AdminDashboard = () => {
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  /**
+   * Effect Hook: On mount, fetches the aggregated dashboard statistics 
+   * directly from the Django backend dashboard-stats endpoint.
+   */
   useEffect(() => {
     const fetchStats = async () => {
       try {

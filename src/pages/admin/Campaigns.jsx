@@ -5,6 +5,10 @@ import CampaignDetailsModal from '../../components/CampaignDetailsModal';
 import NotificationContext from '../../context/NotificationContext';
 import '../../css/Campaigns.css';
 
+/**
+ * Campaigns Component
+ * Handles the UI and data logic for the Campaigns module.
+ */
 const Campaigns = () => {
   const [campaigns, setCampaigns] = useState([]);
   const [loading, setLoading] = useState(true);

@@ -2,6 +2,10 @@ import React, { useContext, useState, useMemo } from 'react';
 import NotificationContext from '../../context/NotificationContext';
 import '../../css/Notifications.css';
 
+/**
+ * ManagerNotifications Component
+ * Handles the UI and data logic for the ManagerNotifications module.
+ */
 const ManagerNotifications = () => {
   const { notifications, removeNotification, markAllAsRead } = useContext(NotificationContext);
   const [activeTab, setActiveTab] = useState('all');

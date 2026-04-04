@@ -1,5 +1,9 @@
 import React from 'react';
 
+/**
+ * StaffTransactions Component
+ * Handles the UI and data logic for the StaffTransactions module.
+ */
 const StaffTransactions = () => {
   return (
     <div className="transactions-page" style={{ padding: '2rem' }}>

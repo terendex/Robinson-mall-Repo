@@ -1,6 +1,10 @@
 import React from 'react';
 import '../css/Modal.css';
 
+/**
+ * CampaignDetailsModal Component
+ * Handles the UI and data logic for the CampaignDetailsModal module.
+ */
 const CampaignDetailsModal = ({ show, onClose, campaign }) => {
   if (!show || !campaign) return null;
 

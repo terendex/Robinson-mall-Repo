@@ -43,6 +43,11 @@ Install the frontend dependencies from the project root:
 npm install
 ```
 
+If you ever need to manually install the specific libraries used in this project (like for charts and routing), run:
+```bash
+npm install recharts react-router-dom axios react-icons react-datepicker
+```
+
 ---
 
 ### 3. Backend Setup
@@ -68,7 +73,7 @@ Activate it:
 #### b) Install Python dependencies
 
 ```bash
-pip install django djangorestframework django-cors-headers python-dotenv django-sendgrid-v5
+pip install django djangorestframework django-cors-headers python-dotenv django-sendgrid-v5 djangorestframework-simplejwt
 ```
 
 #### c) Configure environment variables

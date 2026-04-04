@@ -2,8 +2,13 @@ import React, { useState, useEffect, useRef, useContext, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../css/AdminHeader.css';
 import robinsonsLogo from '../assets/Robinson_logo.png';
+import redROB from '../assets/redROB.png';
 import NotificationContext from '../context/NotificationContext';
 
+/**
+ * AdminHeader Component
+ * Handles the UI and data logic for the AdminHeader module.
+ */
 const AdminHeader = ({ toggleSidebar, user, isSidebarOpen }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [filteredPages, setFilteredPages] = useState([]);
@@ -21,12 +26,12 @@ const AdminHeader = ({ toggleSidebar, user, isSidebarOpen }) => {
 
   const availablePages = [
     ...(role !== 'staff' ? [{ name: 'Dashboard', path: `${pathPrefix}/dashboard`, icon: 'fa-table-cells-large' }] : []),
-    { name: 'Vouchers', path: `${pathPrefix}/vouchers`, icon: 'fa-ticket-simple' },
-    { name: 'Campaigns', path: `${pathPrefix}/campaigns`, icon: 'fa-tag' },
-    { name: 'Claims', path: `${pathPrefix}/claims`, icon: 'fa-gift' },
+    { name: role === 'customer' ? 'My Vouchers' : 'Vouchers', path: `${pathPrefix}/vouchers`, icon: 'fa-ticket-simple' },
+    { name: role === 'customer' ? 'Active Campaigns' : 'Campaigns', path: `${pathPrefix}/campaigns`, icon: 'fa-tag' },
+    { name: role === 'customer' ? 'My Claims' : 'Claims', path: `${pathPrefix}/claims`, icon: 'fa-gift' },
     { name: 'Transactions', path: `${pathPrefix}/transactions`, icon: 'fa-clock-rotate-left' },
     ...(role === 'admin' ? [{ name: 'Users', path: `${pathPrefix}/users`, icon: 'fa-user-group' }] : []),
-    ...(role !== 'staff' ? [{ name: 'Reports', path: `${pathPrefix}/reports`, icon: 'fa-chart-simple' }] : []),
+    ...(role !== 'staff' && role !== 'customer' ? [{ name: 'Reports', path: `${pathPrefix}/reports`, icon: 'fa-chart-simple' }] : []),
     { name: 'Settings', path: `${pathPrefix}/settings`, icon: 'fa-gear' },
   ];
 
@@ -95,8 +100,8 @@ const AdminHeader = ({ toggleSidebar, user, isSidebarOpen }) => {
 
   return (
     <header className="admin-header">
-      <div className="admin-logo-section">
-        <img src={robinsonsLogo} alt="Robinsons" className="admin-header-logo" />
+      <div className={`admin-logo-section${!isSidebarOpen ? ' sidebar-closed' : ''}`}>
+        <img src={isSidebarOpen ? robinsonsLogo : redROB} alt="Robinsons" className={`admin-header-logo${!isSidebarOpen ? ' red-logo' : ''}`} />
       </div>
       
       <div className="admin-header-main">

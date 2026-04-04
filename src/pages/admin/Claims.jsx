@@ -2,6 +2,10 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import axios from 'axios';
 import '../../css/Claims.css';
 
+/**
+ * Claims Component
+ * Handles the UI and data logic for the Claims module.
+ */
 const Claims = () => {
   const [claims, setClaims] = useState([]);
   const [loading, setLoading] = useState(true);

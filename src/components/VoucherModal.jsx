@@ -1,6 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import '../css/Modal.css';
 
+/**
+ * VoucherModal Component
+ * Handles the UI and data logic for the VoucherModal module.
+ */
 const VoucherModal = ({ show, onClose, onSave, voucherToEdit, readOnly }) => {
   const [formData, setFormData] = useState({
     name: '',

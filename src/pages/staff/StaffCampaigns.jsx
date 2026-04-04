@@ -3,6 +3,10 @@ import axios from 'axios';
 import CampaignDetailsModal from '../../components/CampaignDetailsModal';
 import '../../css/Campaigns.css';
 
+/**
+ * StaffCampaigns Component
+ * Handles the UI and data logic for the StaffCampaigns module.
+ */
 const StaffCampaigns = () => {
   const [campaigns, setCampaigns] = useState([]);
   const [loading, setLoading] = useState(true);

@@ -4,6 +4,10 @@ import UserModal from '../../components/UserModal';
 import ResetPasswordModal from '../../components/ResetPasswordModal';
 import '../../css/Users.css';
 
+/**
+ * Users Component
+ * Handles the UI and data logic for the Users module.
+ */
 const Users = () => {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);

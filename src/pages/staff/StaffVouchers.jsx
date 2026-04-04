@@ -3,6 +3,10 @@ import axios from 'axios';
 import VoucherModal from '../../components/VoucherModal';
 import '../../css/Vouchers.css';
 
+/**
+ * StaffVouchers Component
+ * Handles the UI and data logic for the StaffVouchers module.
+ */
 const StaffVouchers = () => {
   const [vouchers, setVouchers] = useState([]);
   const [loading, setLoading] = useState(true);

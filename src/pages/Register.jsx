@@ -7,6 +7,10 @@ import Modal from '../components/Modal'; // Import the Modal component
 import 'react-datepicker/dist/react-datepicker.css';
 import '../css/Register.css';
 
+/**
+ * Register Component
+ * Handles the UI and data logic for the Register module.
+ */
 const Register = () => {
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
@@ -54,7 +58,7 @@ const Register = () => {
         birthday: birthday ? birthday.toISOString().split('T')[0] : null,
         password: password,
         role: 'customer',
-        username: `${firstName}${lastName}`,
+        username: `${firstName.replace(/\s+/g, '')}${lastName.replace(/\s+/g, '')}`,
       });
 
       if (response.status === 201) {
@@ -109,20 +113,61 @@ const Register = () => {
                 onChange={(e) => setEmail(e.target.value)}
               />
             </div>
-            <div className="form-group">
+            <div className="form-group birthday-group">
               <label>Birthday</label>
-              <DatePicker
-                ref={datepickerRef}
-                selected={birthday}
-                onChange={(date) => setBirthday(date)}
-                placeholderText="mm/dd/yyyy"
-                showYearDropdown
-                showMonthDropdown
-                dropdownMode="select"
-                yearDropdownItemNumber={100}
-                scrollableYearDropdown
-              />
-              <i className="fa-regular fa-calendar" onClick={openDatePicker}></i>
+              <div className="datepicker-container">
+                <DatePicker
+                  ref={datepickerRef}
+                  selected={birthday}
+                  onChange={(date) => setBirthday(date)}
+                  placeholderText="mm/dd/yyyy"
+                  showYearDropdown={false} // Using custom header instead
+                  showMonthDropdown={false}
+                  maxDate={new Date()}
+                  renderCustomHeader={({
+                    date,
+                    changeYear,
+                    changeMonth,
+                    decreaseMonth,
+                    increaseMonth,
+                    prevMonthButtonDisabled,
+                    nextMonthButtonDisabled,
+                  }) => (
+                    <div className="custom-datepicker-header">
+                      <button onClick={decreaseMonth} disabled={prevMonthButtonDisabled} type="button">
+                        {"<"}
+                      </button>
+                      <select
+                        value={date.getFullYear()}
+                        onChange={({ target: { value } }) => changeYear(value)}
+                      >
+                        {Array.from({ length: 101 }, (_, i) => new Date().getFullYear() - i).map((year) => (
+                          <option key={year} value={year}>
+                            {year}
+                          </option>
+                        ))}
+                      </select>
+                      <select
+                        value={new Intl.DateTimeFormat('en-US', { month: 'long' }).format(date)}
+                        onChange={({ target: { value } }) => changeMonth(new Date(Date.parse(value + " 1, 2012")).getMonth())}
+                      >
+                        {[
+                          "January", "February", "March", "April", "May", "June",
+                          "July", "August", "September", "October", "November", "December"
+                        ].map((month) => (
+                          <option key={month} value={month}>
+                            {month}
+                          </option>
+                        ))}
+                      </select>
+                      <button onClick={increaseMonth} disabled={nextMonthButtonDisabled} type="button">
+                        {">"}
+                      </button>
+                    </div>
+                  )}
+                />
+                <i className="fa-regular fa-calendar" onClick={openDatePicker}></i>
+              </div>
             </div>
             <div className="form-group">
               <label>Password *</label>

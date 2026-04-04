@@ -3,6 +3,10 @@ import axios from 'axios';
 import ClaimDetailsModal from '../../components/ClaimDetailsModal';
 import '../../css/Claims.css';
 
+/**
+ * StaffClaims Component
+ * Handles the UI and data logic for the StaffClaims module.
+ */
 const StaffClaims = () => {
   const [claims, setClaims] = useState([]);
   const [loading, setLoading] = useState(true);

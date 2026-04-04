@@ -6,8 +6,10 @@
   position: fixed;
   top: 0;
   left: 0;
-  z-index: 1005; /* Above sidebar overlay */
-  box-shadow: 0 1px 15px rgba(0, 0, 0, 0.08); /* Crisp and bright */
+  z-index: 1005;
+  /* Above sidebar overlay */
+  box-shadow: 0 1px 15px rgba(0, 0, 0, 0.08);
+  /* Crisp and bright */
 }
 
 .admin-logo-section {
@@ -18,15 +20,27 @@
   align-items: center;
   justify-content: flex-start;
   height: 100%;
-  padding: 0 0 0 32px; /* Logo alignment */
+  padding: 0 0 0 24px;
+  /* Slightly less padding to allow logo more space */
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   box-sizing: border-box;
+  transition: background-color 0.3s ease;
+}
+
+.admin-logo-section.sidebar-closed {
+  background-color: #ffffff;
 }
 
 .admin-header-logo {
   height: 48px;
-  max-width: 100%;
+  max-width: 90%;
   object-fit: contain;
+  transition: all 0.3s ease;
+}
+
+.admin-header-logo.red-logo {
+  height: 53px;
+  padding-left: 0;
 }
 
 .admin-header-main {
@@ -85,13 +99,16 @@
 .header-search-container {
   display: flex;
   align-items: center;
-  background-color: #f1f4f9; /* Soft light gray */
+  background-color: #f1f4f9;
+  /* Soft light gray */
   border: none;
-  border-radius: 25px; /* Pill shape */
+  border-radius: 25px;
+  /* Pill shape */
   padding: 8px 18px;
   width: 320px;
   margin-left: 10px;
-  position: relative; /* Anchor for search dropdown */
+  position: relative;
+  /* Anchor for search dropdown */
 }
 
 .header-search-container i {
@@ -121,7 +138,8 @@
   width: 100%;
   background-color: #ffffff;
   border-radius: 12px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.12); /* Brighter, softer shadow */
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.12);
+  /* Brighter, softer shadow */
   margin-top: 10px;
   max-height: 350px;
   overflow-y: auto;
@@ -144,8 +162,15 @@
 }
 
 @keyframes dropdownFadeIn {
-  from { opacity: 0; transform: translateY(-10px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .search-result-item {
@@ -162,7 +187,8 @@
 .search-result-item:hover {
   background-color: #f5f5f5;
   color: #c50000;
-  padding-left: 24px; /* Subtle slide effect on hover */
+  padding-left: 24px;
+  /* Subtle slide effect on hover */
 }
 
 .search-result-item i {
@@ -409,27 +435,31 @@
 
 @media (max-width: 768px) {
   .admin-logo-section {
-    display: none; 
+    display: none;
   }
-  
+
   .admin-header-main {
     padding: 0 10px;
   }
 
   .admin-header-left {
     gap: 8px;
-    flex-grow: 1; /* Allow left section to expand and take more scroll space */
+    flex-grow: 1;
+    /* Allow left section to expand and take more scroll space */
   }
 
   .header-search-container {
-    width: 200px; /* Increased from 160px */
+    width: 200px;
+    /* Increased from 160px */
     padding: 6px 10px;
-    flex-grow: 1; /* Allow it to take up available space */
-    max-width: 240px; 
+    flex-grow: 1;
+    /* Allow it to take up available space */
+    max-width: 240px;
   }
 
   .search-results-dropdown {
-    min-width: 260px; /* Make results readable even if input is narrow */
+    min-width: 260px;
+    /* Make results readable even if input is narrow */
     left: 0;
     width: auto;
   }
@@ -451,6 +481,7 @@
 
 @media (max-width: 480px) {
   .admin-logo-section {
-    display: none; /* Hide logo box on very small screens to fit search/icons */
+    display: none;
+    /* Hide logo box on very small screens to fit search/icons */
   }
 }

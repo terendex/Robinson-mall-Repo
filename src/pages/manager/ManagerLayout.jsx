@@ -5,6 +5,10 @@ import AdminHeader from '../../components/AdminHeader';
 import { NotificationProvider } from '../../context/NotificationContext';
 import '../../css/AdminLayout.css';
 
+/**
+ * ManagerLayout Component
+ * Handles the UI and data logic for the ManagerLayout module.
+ */
 const ManagerLayout = ({ user }) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
@@ -12,7 +16,7 @@ const ManagerLayout = ({ user }) => {
   const closeSidebar = () => setIsSidebarOpen(false);
 
   return (
-    <NotificationProvider>
+    <NotificationProvider user={user}>
       <div className="admin-layout">
         <AdminHeader toggleSidebar={toggleSidebar} user={user} isSidebarOpen={isSidebarOpen} />
         <SideNav 

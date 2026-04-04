@@ -13,6 +13,10 @@ import {
 } from 'recharts';
 import '../../css/AdminDashboard.css';
 
+/**
+ * ManagerDashboard Component
+ * Handles the UI and data logic for the ManagerDashboard module.
+ */
 const ManagerDashboard = () => {
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
