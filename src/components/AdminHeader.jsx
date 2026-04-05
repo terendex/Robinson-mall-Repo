@@ -9,7 +9,7 @@ import NotificationContext from '../context/NotificationContext';
  * AdminHeader Component
  * Handles the UI and data logic for the AdminHeader module.
  */
-const AdminHeader = ({ toggleSidebar, user, isSidebarOpen }) => {
+const AdminHeader = ({ toggleSidebar, user, isSidebarOpen, onLogout }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [filteredPages, setFilteredPages] = useState([]);
   const [showDropdown, setShowDropdown] = useState(false);
@@ -93,8 +93,9 @@ const AdminHeader = ({ toggleSidebar, user, isSidebarOpen }) => {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('rememberedEmail');
-    localStorage.removeItem('rememberedPassword');
+    if (onLogout) {
+      onLogout();
+    }
     navigate('/login');
   };
 

@@ -68,7 +68,10 @@ axios.interceptors.request.use(
  * Serves as the primary orchestrator for Router functionality and global user state.
  */
 function App() {
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState(() => {
+    const savedUser = localStorage.getItem('user');
+    return savedUser ? JSON.parse(savedUser) : null;
+  });
 
   /**
    * Authenticates the user with the backend, stores their JWT payload, and sets their global active state.
@@ -82,6 +85,7 @@ function App() {
       const userData = response.data;
       if (userData) {
         setUser(userData);
+        localStorage.setItem('user', JSON.stringify(userData));
         localStorage.setItem('accessToken', userData.access);
         localStorage.setItem('refreshToken', userData.refresh);
         return userData;
@@ -97,8 +101,7 @@ function App() {
    */
   const handleLogout = () => {
     setUser(null);
-    localStorage.removeItem('rememberedEmail');
-    localStorage.removeItem('rememberedPassword');
+    localStorage.removeItem('user');
     localStorage.removeItem('accessToken');
     localStorage.removeItem('refreshToken');
   };
@@ -116,7 +119,7 @@ function App() {
           <Route path="/privacy-policy" element={<PrivacyPolicy />} />
 
           {/* Admin Routes */}
-          <Route path="/admin" element={user && user.role === 'admin' ? <AdminLayout user={user} /> : <Navigate to="/login" />}>
+          <Route path="/admin" element={user && user.role === 'admin' ? <AdminLayout user={user} onLogout={handleLogout} /> : <Navigate to="/login" />}>
             <Route path="dashboard" element={<AdminDashboard />} />
             <Route path="vouchers" element={<Vouchers />} />
             <Route path="campaigns" element={<Campaigns />} />
@@ -130,7 +133,7 @@ function App() {
           </Route>
 
           {/* Manager Routes */}
-          <Route path="/manager" element={user && user.role === 'manager' ? <ManagerLayout user={user} /> : <Navigate to="/login" />}>
+          <Route path="/manager" element={user && user.role === 'manager' ? <ManagerLayout user={user} onLogout={handleLogout} /> : <Navigate to="/login" />}>
             <Route path="dashboard" element={<ManagerDashboard />} />
             <Route path="vouchers" element={<ManagerVouchers />} />
             <Route path="campaigns" element={<ManagerCampaigns />} />
@@ -142,7 +145,7 @@ function App() {
             <Route index element={<Navigate to="dashboard" />} />
           </Route>
           {/* Staff Routes */}
-          <Route path="/staff" element={user && user.role === 'staff' ? <StaffLayout user={user} /> : <Navigate to="/login" />}>
+          <Route path="/staff" element={user && user.role === 'staff' ? <StaffLayout user={user} onLogout={handleLogout} /> : <Navigate to="/login" />}>
             <Route path="vouchers" element={<StaffVouchers />} />
             <Route path="campaigns" element={<StaffCampaigns />} />
             <Route path="claims" element={<StaffClaims />} />
@@ -152,7 +155,7 @@ function App() {
             <Route index element={<Navigate to="vouchers" />} />
           </Route>
           {/* Customer Routes */}
-          <Route path="/customer" element={user && user.role === 'customer' ? <CustomerLayout user={user} /> : <Navigate to="/login" />}>
+          <Route path="/customer" element={user && user.role === 'customer' ? <CustomerLayout user={user} onLogout={handleLogout} /> : <Navigate to="/login" />}>
             <Route path="dashboard" element={<CustomerDashboard user={user} />} />
             <Route path="vouchers" element={<CustomerVouchers user={user} />} />
             <Route path="campaigns" element={<CustomerCampaigns user={user} />} />

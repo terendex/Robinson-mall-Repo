@@ -9,7 +9,7 @@ import '../../css/AdminLayout.css';
  * CustomerLayout Component
  * Handles the UI and data logic for the CustomerLayout module.
  */
-const CustomerLayout = ({ user }) => {
+const CustomerLayout = ({ user, onLogout }) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
   const toggleSidebar = () => setIsSidebarOpen((prev) => !prev);
@@ -18,7 +18,7 @@ const CustomerLayout = ({ user }) => {
   return (
     <NotificationProvider user={user}>
       <div className="admin-layout customer-layout">
-        <AdminHeader toggleSidebar={toggleSidebar} user={user} isSidebarOpen={isSidebarOpen} />
+        <AdminHeader toggleSidebar={toggleSidebar} user={user} isSidebarOpen={isSidebarOpen} onLogout={onLogout} />
         <SideNav 
           user={user} 
           isOpen={isSidebarOpen} 

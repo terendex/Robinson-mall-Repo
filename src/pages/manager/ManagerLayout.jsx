@@ -9,7 +9,7 @@ import '../../css/AdminLayout.css';
  * ManagerLayout Component
  * Handles the UI and data logic for the ManagerLayout module.
  */
-const ManagerLayout = ({ user }) => {
+const ManagerLayout = ({ user, onLogout }) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
   const toggleSidebar = () => setIsSidebarOpen((prev) => !prev);
@@ -18,7 +18,7 @@ const ManagerLayout = ({ user }) => {
   return (
     <NotificationProvider user={user}>
       <div className="admin-layout">
-        <AdminHeader toggleSidebar={toggleSidebar} user={user} isSidebarOpen={isSidebarOpen} />
+        <AdminHeader toggleSidebar={toggleSidebar} user={user} isSidebarOpen={isSidebarOpen} onLogout={onLogout} />
         <SideNav 
           user={user} 
           isOpen={isSidebarOpen} 
