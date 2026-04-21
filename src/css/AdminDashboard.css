@@ -19,31 +19,31 @@
 
 .metrics-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-    gap: 1.5rem;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.25rem;
     margin-bottom: 2rem;
 }
 
 .metric-card {
-    background: white;
-    padding: 1.5rem;
-    border-radius: 1rem;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+    background: #ffffff;
     border: 1px solid #e2e8f0;
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    border-radius: 1rem;
+    padding: 1.5rem;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    transition: transform 0.2s, box-shadow 0.2s;
 }
 
 .metric-card:hover {
     transform: translateY(-2px);
-    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.08);
 }
 
 .metric-label {
-    font-size: 0.875rem;
+    font-size: 0.75rem;
     font-weight: 600;
-    color: #64748b;
+    letter-spacing: 0.05em;
     text-transform: uppercase;
-    letter-spacing: 0.025em;
+    color: #64748b;
     margin-bottom: 0.5rem;
 }
 

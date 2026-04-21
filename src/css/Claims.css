@@ -1,14 +1,14 @@
 .claims-page {
-  padding: 24px;
-  background-color: #f8f9fa;
-  min-height: calc(100vh - 80px);
+  padding: 2rem;
+  background-color: #f8fafc;
+  min-height: 100vh;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
 }
 
 .claims-container {
   display: flex;
   flex-direction: column;
-  gap: 24px;
-  padding: 24px;
+  gap: 2rem;
 }
 
 .claims-header {
@@ -46,31 +46,38 @@
 
 .claim-stats {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 24px;
-  margin-bottom: 32px;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.25rem;
+  margin-bottom: 2rem;
 }
 
 .claim-stat-card {
-  background: white;
-  padding: 24px;
-  border-radius: 16px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 1rem;
+  padding: 1.5rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.claim-stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.08);
 }
 
 .stat-title {
-  font-size: 14px;
-  color: #757575;
+  font-size: 0.75rem;
   font-weight: 600;
-  letter-spacing: 0.5px;
-  margin-bottom: 12px;
+  letter-spacing: 0.05em;
   text-transform: uppercase;
+  color: #64748b;
+  margin-bottom: 0.5rem;
 }
 
 .stat-value {
-  font-size: 36px;
+  font-size: 2rem;
   font-weight: 700;
-  color: #1a1a1a;
+  color: #0f172a;
 }
 
 .claim-table-section {

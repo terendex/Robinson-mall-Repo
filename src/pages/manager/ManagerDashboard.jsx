@@ -12,6 +12,7 @@ import {
   Cell
 } from 'recharts';
 import '../../css/AdminDashboard.css';
+import '../../css/Transactions.css';
 
 /**
  * ManagerDashboard Component
@@ -49,22 +50,22 @@ const ManagerDashboard = () => {
         <h1>Manager Overview</h1>
       </header>
 
-      <div className="metrics-grid">
-        <div className="metric-card">
-          <div className="metric-label">Total Claims</div>
-          <div className="metric-value">{stats.total_claims.toLocaleString()}</div>
+      <div className="txn-stats">
+        <div className="txn-stat-card">
+          <div className="stat-title">Total Claims</div>
+          <div className="stat-value">{stats.total_claims.toLocaleString()}</div>
         </div>
-        <div className="metric-card">
-          <div className="metric-label">Redemption Rate</div>
-          <div className="metric-value">{stats.redemption_rate}%</div>
+        <div className="txn-stat-card">
+          <div className="stat-title">Redemption Rate</div>
+          <div className="stat-value">{stats.redemption_rate}%</div>
         </div>
-        <div className="metric-card">
-          <div className="metric-label">Active Campaigns</div>
-          <div className="metric-value">{stats.active_campaigns}</div>
+        <div className="txn-stat-card">
+          <div className="stat-title">Active Campaigns</div>
+          <div className="stat-value">{stats.active_campaigns}</div>
         </div>
-        <div className="metric-card">
-          <div className="metric-label">Voucher Value</div>
-          <div className="metric-value">₱{stats.voucher_value.toLocaleString()}</div>
+        <div className="txn-stat-card">
+          <div className="stat-title">Voucher Value</div>
+          <div className="stat-value">₱{stats.voucher_value.toLocaleString()}</div>
         </div>
       </div>
 

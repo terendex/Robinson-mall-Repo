@@ -194,56 +194,135 @@ class NotificationViewSet(viewsets.ModelViewSet):
 
 class DashboardStatsView(views.APIView):
     """
-    Generates aggregated metrics for the dashboard charts including:
-    - Redemption Rates and Voucher values
-    - 6-month Historical Data Arrays
-    - Current Active Campaign Totals
+    Generates aggregated metrics for the redesigned dashboard including:
+    - Stat card summaries (active/scheduled campaigns, reach, claims today, vouchers)
+    - Active & Upcoming Campaigns list
+    - Claims Requiring Attention (Pending/Rejected)
+    - Top Campaigns by Reach
+    - Recent Activity timeline
     """
     def get(self, request):
         today = timezone.localtime().date()
+
+        # ── Core counts ──────────────────────────────────────────────
         total_claims = Claim.objects.count()
         approved_claims = Claim.objects.filter(status='Approved').count()
         redemption_rate = round((approved_claims / total_claims * 100), 1) if total_claims > 0 else 0
+
         active_campaigns_count = Campaign.objects.filter(status='Active').count()
+        scheduled_campaigns_count = Campaign.objects.filter(status='Scheduled').count()
+
+        total_reach = Campaign.objects.aggregate(Sum('reach'))['reach__sum'] or 0
+        claims_today = Claim.objects.filter(created_at__date=today).count()
+        claims_pending = Claim.objects.filter(status='Pending').count()
+
         voucher_value_sum = Claim.objects.filter(status='Approved').aggregate(Sum('amount'))['amount__sum'] or 0
 
-        # Activity Overview: 6 months
+        # ── Active & Upcoming Campaigns list ─────────────────────────
+        active_upcoming = Campaign.objects.filter(
+            status__in=['Active', 'Scheduled']
+        ).order_by('status', 'start_date')[:6]
+
+        active_upcoming_list = [
+            {
+                'id': c.id,
+                'name': c.name,
+                'status': c.status,
+                'start_date': str(c.start_date),
+                'end_date': str(c.end_date),
+            }
+            for c in active_upcoming
+        ]
+
+        # ── Claims Requiring Attention ────────────────────────────────
+        attention_claims = Claim.objects.filter(
+            status__in=['Pending', 'Rejected']
+        ).select_related('user', 'voucher').order_by('-created_at')[:5]
+
+        attention_list = [
+            {
+                'id': c.id,
+                'user_name': c.user.get_full_name() or c.user.username if c.user else 'Anonymous',
+                'voucher_name': c.voucher.name if c.voucher else '—',
+                'amount': float(c.amount or 0),
+                'status': c.status,
+            }
+            for c in attention_claims
+        ]
+
+        # ── Top Campaigns by Reach ────────────────────────────────────
+        top_campaigns = Campaign.objects.order_by('-reach')[:5]
+        top_campaigns_list = [
+            {
+                'name': c.name,
+                'reach': c.reach or 0,
+            }
+            for c in top_campaigns
+        ]
+
+        # ── Recent Activity (from Claims + Campaigns) ─────────────────
+        recent_claims = Claim.objects.select_related('user', 'voucher').order_by('-created_at')[:6]
+        recent_campaigns = Campaign.objects.order_by('-created_at')[:3]
+
+        activity = []
+        for c in recent_claims:
+            user_display = c.user.get_full_name() or c.user.username if c.user else 'Anonymous'
+            activity.append({
+                'type': 'claim',
+                'description': f'{user_display} claim {c.status.lower()}',
+                'timestamp': c.created_at.isoformat(),
+                'status': c.status,
+            })
+        for c in recent_campaigns:
+            activity.append({
+                'type': 'campaign',
+                'description': f'{c.name} campaign {c.status.lower()}',
+                'timestamp': c.created_at.isoformat(),
+                'status': c.status,
+            })
+        activity.sort(key=lambda x: x['timestamp'], reverse=True)
+        activity = activity[:8]
+
+        # ── 6-month historical stats (kept for compatibility) ─────────
         monthly_stats = []
         for i in range(5, -1, -1):
-            # Calculate the first day of the month i months ago
             target_date = today - timedelta(days=30 * i)
             month_start = target_date.replace(day=1)
-            # Find the last day of that month
             if month_start.month == 12:
                 next_month = month_start.replace(year=month_start.year + 1, month=1)
             else:
                 next_month = month_start.replace(month=month_start.month + 1)
-            
-            month_claims = Claim.objects.filter(created_at__gte=month_start, created_at__lt=next_month).count()
-            month_redemptions = Claim.objects.filter(created_at__gte=month_start, created_at__lt=next_month, status='Approved').count()
-            
+
+            month_claims = Claim.objects.filter(
+                created_at__gte=month_start, created_at__lt=next_month
+            ).count()
+            month_redemptions = Claim.objects.filter(
+                created_at__gte=month_start, created_at__lt=next_month, status='Approved'
+            ).count()
             monthly_stats.append({
                 'month': month_start.strftime('%b %Y'),
                 'claims': month_claims,
-                'redemptions': month_redemptions
+                'redemptions': month_redemptions,
             })
 
-        # Campaign Distribution
-        active_campaigns = Campaign.objects.filter(status='Active')
-        campaign_distribution = []
-        for campaign in active_campaigns:
-            claims_count = Claim.objects.filter(voucher=campaign.voucher).count()
-            if claims_count > 0:
-                campaign_distribution.append({
-                    'name': campaign.name,
-                    'count': claims_count
-                })
-
         return Response({
+            # Stat cards
             'total_claims': total_claims,
             'redemption_rate': redemption_rate,
             'active_campaigns': active_campaigns_count,
+            'scheduled_campaigns': scheduled_campaigns_count,
+            'total_reach': total_reach,
+            'claims_today': claims_today,
+            'claims_pending': claims_pending,
+            'vouchers_redeemed': approved_claims,
+            'vouchers_generated': total_claims,
             'voucher_value': float(voucher_value_sum),
+            # Lists
+            'active_upcoming_campaigns': active_upcoming_list,
+            'claims_requiring_attention': attention_list,
+            'top_campaigns_by_reach': top_campaigns_list,
+            'recent_activity': activity,
+            # Legacy chart data
             'monthly_stats': monthly_stats,
-            'campaign_distribution': campaign_distribution
         })
+
