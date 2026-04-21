@@ -4,6 +4,7 @@ import axios from 'axios';
 import Header from './components/Header';
 import Register from './pages/Register'
 import Log from './pages/Log'
+import IdleTimer from './components/IdleTimer';
 import AdminLayout from './pages/admin/AdminLayout';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import Vouchers from './pages/admin/Vouchers';
@@ -109,6 +110,7 @@ function App() {
   return (
     <Router>
       <div className="App">
+        {user && <IdleTimer onLogout={handleLogout} timeout={5 * 60 * 1000} />}
         <Header />
         <Routes>
           <Route path="/" element={user ? <Navigate to={`/${user.role}`} /> : <Log onLogin={handleLogin} />} />
