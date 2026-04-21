@@ -8,7 +8,7 @@ import '../css/PasswordReset.css';
  * Handles the UI and data logic for the PasswordReset module.
  */
 const PasswordReset = () => {
-  const { token } = useParams();
+  const { uidb64, token } = useParams();
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [message, setMessage] = useState('');
@@ -26,7 +26,7 @@ const PasswordReset = () => {
     }
 
     try {
-      const response = await axios.post(`http://localhost:8000/api/users/password-reset/${token}/`, { password });
+      const response = await axios.post(`${import.meta.env.VITE_API_URL}/api/users/password-reset/${uidb64}/${token}/`, { password });
       if (response.status === 200) {
         setMessage('Your password has been successfully reset. You can now log in with your new password.');
         setTimeout(() => navigate('/login'), 5000);

@@ -43,6 +43,9 @@ class StoreSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class VoucherSerializer(serializers.ModelSerializer):
+    discount_percentage = serializers.IntegerField(min_value=0, max_value=100)
+    usage_limit = serializers.IntegerField(min_value=1)
+
     class Meta:
         model = Voucher
         fields = '__all__'
@@ -52,6 +55,8 @@ class CampaignSerializer(serializers.ModelSerializer):
     voucher_name = serializers.ReadOnlyField(source='voucher.name')
     voucher_code = serializers.ReadOnlyField(source='voucher.code')
     voucher_discount = serializers.ReadOnlyField(source='voucher.discount_percentage')
+
+    budget = serializers.DecimalField(max_digits=10, decimal_places=2, min_value=0)
 
     class Meta:
         model = Campaign
@@ -63,6 +68,8 @@ class ClaimSerializer(serializers.ModelSerializer):
     voucher_name = serializers.ReadOnlyField(source='voucher.name')
     voucher_code = serializers.ReadOnlyField(source='voucher.code')
     store_name = serializers.ReadOnlyField(source='store.name')
+
+    amount = serializers.DecimalField(max_digits=10, decimal_places=2, min_value=0)
 
     class Meta:
         model = Claim

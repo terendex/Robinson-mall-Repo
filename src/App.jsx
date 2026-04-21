@@ -115,7 +115,7 @@ function App() {
           <Route path="/login" element={<Log onLogin={handleLogin} />} />
           <Route path="/register" element={<Register />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
-          <Route path="/password-reset/:token" element={<PasswordReset />} />
+          <Route path="/password-reset/:uidb64/:token" element={<PasswordReset />} />
           <Route path="/privacy-policy" element={<PrivacyPolicy />} />
 
           {/* Admin Routes */}

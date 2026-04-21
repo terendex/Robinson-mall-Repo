@@ -70,6 +70,7 @@ class PasswordResetRequestView(views.APIView):
     Handles generation of a password reset token and dispatches the reset email.
     """
     permission_classes = [AllowAny]
+    throttle_scope = 'password_reset'
 
     def post(self, request):
         email = request.data.get('email')
@@ -79,13 +80,15 @@ class PasswordResetRequestView(views.APIView):
         try:
             user = User.objects.get(email=email)
         except User.DoesNotExist:
+            # We return 200 OK to prevent email enumeration
             return Response({'detail': 'If a user with that email exists, a password reset link has been sent.'}, status=status.HTTP_200_OK)
 
-        token = secrets.token_urlsafe(32)
-        user.password_reset_token = token
-        user.save()
-
-        reset_link = f"http://localhost:5173/password-reset/{token}"
+        # Generate standard secure token and uid
+        token = default_token_generator.make_token(user)
+        uid = urlsafe_base64_encode(force_bytes(user.pk))
+        
+        # Link structure for the frontend
+        reset_link = f"{settings.FRONTEND_URL}/password-reset/{uid}/{token}/"
 
         try:
             send_mail(
@@ -95,15 +98,13 @@ class PasswordResetRequestView(views.APIView):
                 [email],
                 fail_silently=False,
             )
-        except smtplib.SMTPAuthenticationError as e:
+        except smtplib.SMTPAuthenticationError:
             return Response({
-                'detail': 'SMTP Authentication Error: Could not log in. Please check your email credentials in the environment variables.',
-                'error': str(e)
+                'detail': 'Email service is currently unavailable. Please try again later.'
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-        except Exception as e:
+        except Exception:
             return Response({
-                'detail': 'An unexpected error occurred while sending the email.',
-                'error': str(e)
+                'detail': 'An unexpected error occurred while sending the email.'
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         return Response({'detail': 'If a user with that email exists, a password reset link has been sent.'}, status=status.HTTP_200_OK)
@@ -111,19 +112,24 @@ class PasswordResetRequestView(views.APIView):
 
 class PasswordResetView(views.APIView):
     permission_classes = [AllowAny]
+    throttle_scope = 'password_reset'
 
-    def post(self, request, token):
+    def post(self, request, uidb64, token):
         password = request.data.get('password')
         if not password:
             return Response({'detail': 'New password is required.'}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
-            user = User.objects.get(password_reset_token=token)
-        except User.DoesNotExist:
-            return Response({'detail': 'Invalid or expired token.'}, status=status.HTTP_404_NOT_FOUND)
+            from django.utils.http import urlsafe_base64_decode
+            uid = urlsafe_base64_decode(uidb64).decode()
+            user = User.objects.get(pk=uid)
+        except (TypeError, ValueError, OverflowError, User.DoesNotExist):
+            return Response({'detail': 'Invalid or expired token link.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        if not default_token_generator.check_token(user, token):
+             return Response({'detail': 'Invalid or expired token.'}, status=status.HTTP_400_BAD_REQUEST)
 
         user.set_password(password)
-        user.password_reset_token = None
         user.save()
 
         return Response({'detail': 'Password has been reset successfully.'}, status=status.HTTP_200_OK)
