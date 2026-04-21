@@ -68,11 +68,15 @@ const AdminDashboard = () => {
 
   const getActivityDot = (type, statusVal) => {
     if (type === 'claim') {
-      if (statusVal === 'Approved') return '#22c55e';
-      if (statusVal === 'Pending')  return '#eab308';
-      if (statusVal === 'Rejected') return '#ef4444';
+      if (statusVal === 'Approved') return '#22c55e'; // Green
+      if (statusVal === 'Pending')  return '#eab308'; // Yellow
+      if (statusVal === 'Rejected') return '#ef4444'; // Red
     }
-    return '#3b82f6';
+    if (type === 'campaign') {
+      if (statusVal === 'Active') return '#22c55e';
+      if (statusVal === 'Scheduled') return '#0ea5e9'; // Teal/Blue
+    }
+    return '#94a3b8';
   };
 
   const maxReach = Math.max(
@@ -126,7 +130,7 @@ const AdminDashboard = () => {
                   <span className="dash-list-label">{c.name}</span>
                   <span
                     className={`txn-status-badge ${
-                      c.status === 'Active' ? 'redeemed' : 'pending'
+                      c.status === 'Active' ? 'active-badge' : 'scheduled-badge'
                     }`}
                   >
                     {c.status}
@@ -134,10 +138,9 @@ const AdminDashboard = () => {
                 </div>
               ))
             )}
-            {stats.active_upcoming_campaigns.length > 0 &&
-              stats.active_upcoming_campaigns.filter(c => c.status === 'Scheduled').length === 0 && (
-                <p className="dash-empty-sub">No other upcoming campaigns</p>
-              )}
+            {stats.active_upcoming_campaigns.length > 0 && (
+              <p className="dash-empty-sub">No other upcoming campaigns</p>
+            )}
           </div>
         </div>
 
