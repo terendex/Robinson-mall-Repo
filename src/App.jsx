@@ -59,7 +59,50 @@ axios.interceptors.request.use(
     }
     return config;
   },
-  (error) => {
+  (error) => Promise.reject(error)
+);
+
+/**
+ * Global Response Interceptor
+ * Handles 401 Unauthorized errors by attempting to refresh the token.
+ * If refresh succeeds, it retries the original request.
+ * If refresh fails, it clears local storage to end the session.
+ */
+axios.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    const originalRequest = error.config;
+    
+    // If error is 401 and we haven't retried yet
+    if (error.response?.status === 401 && !originalRequest._retry && !originalRequest.url.includes('/token/refresh/')) {
+      originalRequest._retry = true;
+      const refreshToken = localStorage.getItem('refreshToken');
+
+      if (refreshToken) {
+        try {
+          const response = await axios.post(`${import.meta.env.VITE_API_URL}/api/token/refresh/`, {
+            refresh: refreshToken,
+          });
+          
+          const { access } = response.data;
+          localStorage.setItem('accessToken', access);
+          
+          // Update the original request's header and retry
+          originalRequest.headers['Authorization'] = `Bearer ${access}`;
+          return axios(originalRequest);
+        } catch (refreshError) {
+          // Refresh failed, clear everything and force re-login
+          console.error("Session expired. Please log in again.");
+          localStorage.removeItem('user');
+          localStorage.removeItem('accessToken');
+          localStorage.removeItem('refreshToken');
+          window.location.href = '/login';
+        }
+      } else {
+        // No refresh token available
+        window.location.href = '/login';
+      }
+    }
     return Promise.reject(error);
   }
 );
