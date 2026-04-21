@@ -11,6 +11,7 @@ from rest_framework import viewsets, status, views
 from rest_framework.response import Response
 from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny, IsAuthenticated
+from .permissions import IsAdmin, IsManager, IsStaff, IsCustomer, IsOwnerOrStaff
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth import authenticate, login
 from django.db.models import Sum, Count
@@ -27,6 +28,12 @@ class UserViewSet(viewsets.ModelViewSet):
     """
     queryset = User.objects.all()
     serializer_class = UserSerializer
+    permission_classes = [IsAdmin]
+
+    def get_permissions(self):
+        if self.action in ['register', 'login']:
+            return [AllowAny()]
+        return super().get_permissions()
 
     @action(detail=False, methods=['post'], permission_classes=[AllowAny])
     def register(self, request):
@@ -125,6 +132,12 @@ class PasswordResetView(views.APIView):
 class VoucherViewSet(viewsets.ModelViewSet):
     queryset = Voucher.objects.all()
     serializer_class = VoucherSerializer
+    permission_classes = [IsStaff]
+
+    def get_permissions(self):
+        if self.action in ['list', 'retrieve']:
+            return [IsAuthenticated()]
+        return super().get_permissions()
 
 
 class CampaignViewSet(viewsets.ModelViewSet):
@@ -134,6 +147,12 @@ class CampaignViewSet(viewsets.ModelViewSet):
     """
     queryset = Campaign.objects.all()
     serializer_class = CampaignSerializer
+    permission_classes = [IsManager]
+
+    def get_permissions(self):
+        if self.action in ['list', 'retrieve']:
+            return [IsAuthenticated()]
+        return super().get_permissions()
 
     def get_queryset(self):
         today = timezone.localtime().date()
@@ -155,6 +174,12 @@ class CampaignViewSet(viewsets.ModelViewSet):
 class StoreViewSet(viewsets.ModelViewSet):
     queryset = Store.objects.all()
     serializer_class = StoreSerializer
+    permission_classes = [IsStaff]
+
+    def get_permissions(self):
+        if self.action in ['list', 'retrieve']:
+            return [IsAuthenticated()]
+        return super().get_permissions()
 
 class ClaimViewSet(viewsets.ModelViewSet):
     """
@@ -162,35 +187,46 @@ class ClaimViewSet(viewsets.ModelViewSet):
     """
     queryset = Claim.objects.all()
     serializer_class = ClaimSerializer
+    permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        queryset = Claim.objects.all()
-        status = self.request.query_params.get('status')
-        user_id = self.request.query_params.get('user_id')
-        
-        if status:
-            queryset = queryset.filter(status=status)
-        if user_id:
-            queryset = queryset.filter(user_id=user_id)
+        user = self.request.user
+        # Staff see everything
+        if user.role in ['admin', 'manager', 'staff']:
+            queryset = Claim.objects.all()
+            status_param = self.request.query_params.get('status')
+            user_id_param = self.request.query_params.get('user_id')
+            
+            if status_param:
+                queryset = queryset.filter(status=status_param)
+            if user_id_param:
+                queryset = queryset.filter(user_id=user_id_param)
+        else:
+            # Customers only see their own claims
+            queryset = Claim.objects.filter(user=user)
             
         return queryset.order_by('-created_at')
 
 class NotificationViewSet(viewsets.ModelViewSet):
     queryset = Notification.objects.all()
     serializer_class = NotificationSerializer
+    permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        user_id = self.request.query_params.get('user_id')
-        if user_id:
-            # Return global notifications (user=None) OR user's specific notifications
-            from django.db.models import Q
-            return Notification.objects.filter(Q(user_id=user_id) | Q(user__isnull=True)).order_by('-created_at')
-        return Notification.objects.all().order_by('-created_at')
+        user = self.request.user
+        from django.db.models import Q
+        # Users see their own targeted notifications OR global notifications (user=None)
+        return Notification.objects.filter(Q(user=user) | Q(user__isnull=True)).order_by('-created_at')
 
     @action(detail=False, methods=['post'])
     def mark_all_as_read(self, request):
-        Notification.objects.filter(is_read=False).update(is_read=True)
-        return Response({'status': 'all notifications marked as read'})
+        # ONLY mark notifications for the current user or global unread ones
+        from django.db.models import Q
+        Notification.objects.filter(
+            Q(user=request.user) | Q(user__isnull=True),
+            is_read=False
+        ).update(is_read=True)
+        return Response({'status': 'notifications marked as read for current user'})
 
 class DashboardStatsView(views.APIView):
     """
@@ -201,6 +237,8 @@ class DashboardStatsView(views.APIView):
     - Top Campaigns by Reach
     - Recent Activity timeline
     """
+    permission_classes = [IsManager]
+
     def get(self, request):
         today = timezone.localtime().date()
 

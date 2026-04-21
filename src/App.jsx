@@ -78,7 +78,7 @@ function App() {
    */
   const handleLogin = async (identifier, password) => {
     try {
-      const response = await axios.post('http://127.0.0.1:8000/api/users/login/', {
+      const response = await axios.post(`${import.meta.env.VITE_API_URL}/api/users/login/`, {
         identifier: identifier,
         password: password,
       });
