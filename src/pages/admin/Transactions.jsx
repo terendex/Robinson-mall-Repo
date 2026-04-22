@@ -6,6 +6,10 @@ import { exportCSV, exportExcel, buildTransactionRows } from '../../utils/export
 import '../../css/Transactions.css';
 
 const Transactions = () => {
+  // Get user from localStorage to determine role
+  const user = JSON.parse(localStorage.getItem('user') || '{}');
+  const isViewOnly = user.role === 'manager';
+
   const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -231,9 +235,11 @@ const Transactions = () => {
               )}
             </div>
 
-            <button className="new-transaction-btn" onClick={openNewModal}>
-              <i className="fa-solid fa-plus"></i> New Transaction
-            </button>
+            {!isViewOnly && (
+              <button className="new-transaction-btn" onClick={openNewModal}>
+                <i className="fa-solid fa-plus"></i> New Transaction
+              </button>
+            )}
           </div>
         </div>
 
@@ -425,12 +431,14 @@ const Transactions = () => {
                               >
                                 <i className="fa-regular fa-eye"></i> View Transaction Details
                               </button>
-                              <button
-                                className="txn-action-item"
-                                onClick={() => openEditModal(txn)}
-                              >
-                                <i className="fa-regular fa-pen-to-square"></i> Edit Transaction Details
-                              </button>
+                              {!isViewOnly && (
+                                <button
+                                  className="txn-action-item"
+                                  onClick={() => openEditModal(txn)}
+                                >
+                                  <i className="fa-regular fa-pen-to-square"></i> Edit Transaction Details
+                                </button>
+                              )}
                             </div>
                           )}
                         </td>

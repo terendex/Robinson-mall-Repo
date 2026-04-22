@@ -1,19 +1,12 @@
 import React from 'react';
+import Transactions from '../admin/Transactions';
 
 /**
  * ManagerTransactions Component
- * Handles the UI and data logic for the ManagerTransactions module.
+ * Reuses the Transactions component but with view-only logic enabled via role detection.
  */
 const ManagerTransactions = () => {
-    return (
-        <div className="placeholder-page" style={{ padding: '40px', textAlign: 'center' }}>
-            <h1>Transaction Management</h1>
-            <p>This module is currently under development.</p>
-            <div style={{ marginTop: '40px', fontSize: '100px', color: '#ef4444' }}>
-                <i className="fa-solid fa-clock-rotate-left"></i>
-            </div>
-        </div>
-    );
+  return <Transactions />;
 };
 
 export default ManagerTransactions;
