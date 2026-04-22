@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import axios from 'axios';
 import TransactionDetailsModal from '../../components/Transactiondetailsmodal';
 import TransactionModal from '../../components/Transactionmodal';
+import { exportCSV, exportExcel, buildTransactionRows } from '../../utils/exportUtils';
 import '../../css/Transactions.css';
 
 const Transactions = () => {
@@ -24,9 +25,13 @@ const Transactions = () => {
   // Row actions
   const [activeActions, setActiveActions] = useState(null);
 
-  const timeFilterRef = useRef(null);
+  // Export dropdown
+  const [isExportOpen, setIsExportOpen] = useState(false);
+
+  const timeFilterRef   = useRef(null);
   const amountFilterRef = useRef(null);
-  const actionsRef = useRef(null);
+  const actionsRef      = useRef(null);
+  const exportRef       = useRef(null);
 
   useEffect(() => {
     fetchTransactions();
@@ -40,6 +45,8 @@ const Transactions = () => {
         setIsAmountDropdownOpen(false);
       if (actionsRef.current && !actionsRef.current.contains(e.target))
         setActiveActions(null);
+      if (exportRef.current && !exportRef.current.contains(e.target))
+        setIsExportOpen(false);
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
@@ -59,17 +66,23 @@ const Transactions = () => {
 
   const handleSaveTransaction = async (formData) => {
     try {
+      // Separate receipt_image (local base64 preview) from API payload
+      const { receipt_image, ...apiPayload } = formData;
+
       if (transactionToEdit) {
         const response = await axios.patch(
           `http://127.0.0.1:8000/api/transactions/${transactionToEdit.id}/`,
-          formData
+          apiPayload
         );
+        // Merge receipt_image locally (not persisted to backend)
         setTransactions(transactions.map(t =>
-          t.id === transactionToEdit.id ? response.data : t
+          t.id === transactionToEdit.id
+            ? { ...response.data, receipt_image: receipt_image || t.receipt_image }
+            : t
         ));
       } else {
-        const response = await axios.post('http://127.0.0.1:8000/api/transactions/', formData);
-        setTransactions([...transactions, response.data]);
+        const response = await axios.post('http://127.0.0.1:8000/api/transactions/', apiPayload);
+        setTransactions([...transactions, { ...response.data, receipt_image }]);
       }
       setShowFormModal(false);
       setTransactionToEdit(null);
@@ -105,7 +118,8 @@ const Transactions = () => {
         (t.transaction_id || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
         (t.user_name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
         (t.store_name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (t.receipt_no || '').toLowerCase().includes(searchQuery.toLowerCase());
+        (t.receipt_no || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (t.amount?.toString() || '').includes(searchQuery);
 
       let matchesTime = true;
       if (timeFilter !== 'All Time' && t.created_at) {
@@ -126,12 +140,17 @@ const Transactions = () => {
     });
   }, [transactions, searchQuery, timeFilter, amountFilter]);
 
+  const formatAmount = (amount) => {
+    if (!amount && amount !== 0) return '—';
+    return `₱${Number(amount).toLocaleString('en-PH', { minimumFractionDigits: 2 })}`;
+  };
+
   // ── Stats ──
   const stats = useMemo(() => ({
-    totalQR:  transactions.length,
+    totalQR: transactions.length,
     redeemed: transactions.filter(t => t.status === 'Redeemed').length,
-    pending:  transactions.filter(t => t.status === 'Pending').length,
-    expired:  transactions.filter(t => t.status === 'Expired').length,
+    pending: transactions.filter(t => t.status === 'Pending').length,
+    expired: transactions.filter(t => t.status === 'Expired').length,
   }), [transactions]);
 
   const formatTimestamp = (dateString) => {
@@ -153,9 +172,9 @@ const Transactions = () => {
   const getStatusClass = (status) => {
     switch (status) {
       case 'Redeemed': return 'redeemed';
-      case 'Pending':  return 'pending';
-      case 'Expired':  return 'expired';
-      default:         return '';
+      case 'Pending': return 'pending';
+      case 'Expired': return 'expired';
+      default: return '';
     }
   };
 
@@ -167,9 +186,51 @@ const Transactions = () => {
         <div className="transactions-header">
           <h1>Transaction History</h1>
           <div className="txn-header-actions">
-            <button className="export-report-btn">
-              <i className="fa-solid fa-file-arrow-down"></i> Export Report
-            </button>
+
+            {/* Export dropdown */}
+            <div className="txn-export-wrap" ref={exportRef}>
+              <button
+                id="txn-export-btn"
+                className={`export-report-btn ${isExportOpen ? 'active' : ''}`}
+                onClick={() => setIsExportOpen(o => !o)}
+              >
+                <i className="fa-solid fa-file-arrow-down"></i>
+                Export
+                <i className="fa-solid fa-chevron-down" style={{ fontSize: '0.7rem', opacity: 0.6 }}></i>
+              </button>
+              {isExportOpen && (
+                <div className="txn-export-dropdown">
+                  <button
+                    className="txn-export-item"
+                    onClick={() => {
+                      exportCSV(
+                        buildTransactionRows(filteredTransactions),
+                        `transactions-${new Date().toISOString().slice(0,10)}.csv`
+                      );
+                      setIsExportOpen(false);
+                    }}
+                  >
+                    <i className="fa-solid fa-file-csv" style={{ color: '#22c55e' }}></i>
+                    Download as CSV
+                  </button>
+                  <button
+                    className="txn-export-item"
+                    onClick={() => {
+                      exportExcel(
+                        buildTransactionRows(filteredTransactions),
+                        'Transactions',
+                        `transactions-${new Date().toISOString().slice(0,10)}.xlsx`
+                      );
+                      setIsExportOpen(false);
+                    }}
+                  >
+                    <i className="fa-solid fa-file-excel" style={{ color: '#16a34a' }}></i>
+                    Download as Excel
+                  </button>
+                </div>
+              )}
+            </div>
+
             <button className="new-transaction-btn" onClick={openNewModal}>
               <i className="fa-solid fa-plus"></i> New Transaction
             </button>
@@ -273,6 +334,7 @@ const Transactions = () => {
                   <tr>
                     <th>Transaction ID</th>
                     <th>Customer</th>
+                    <th>Store / Amount</th>
                     <th>Voucher</th>
                     <th>Timestamp</th>
                     <th>Expiry Date</th>
@@ -297,7 +359,28 @@ const Transactions = () => {
 
                         {/* Customer */}
                         <td className="txn-customer-name">
-                          {txn.user_name || 'Anonymous'}
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                            {txn.receipt_image && (
+                              <i
+                                className="fa-solid fa-receipt"
+                                title="Receipt image attached"
+                                style={{ color: '#c50000', fontSize: '0.75rem' }}
+                              />
+                            )}
+                            {txn.user_name || 'Anonymous'}
+                          </div>
+                        </td>
+
+                        {/* Store / Amount */}
+                        <td>
+                          <div className="txn-voucher-cell">
+                            <span className="txn-voucher-name">{txn.store_name || '—'}</span>
+                            {txn.amount ? (
+                              <span style={{ fontSize: '0.75rem', color: '#c50000', fontWeight: 600 }}>
+                                {formatAmount(txn.amount)}
+                              </span>
+                            ) : null}
+                          </div>
                         </td>
 
                         {/* Voucher */}
@@ -355,7 +438,7 @@ const Transactions = () => {
                     ))
                   ) : (
                     <tr>
-                      <td colSpan="7" className="txn-empty-row">
+                      <td colSpan="8" className="txn-empty-row">
                         No transactions found matching your criteria.
                       </td>
                     </tr>
@@ -367,7 +450,6 @@ const Transactions = () => {
         </div>
       </div>
 
-      {/* ── Modals ── */}
       <TransactionDetailsModal
         show={showDetailsModal}
         onClose={() => { setShowDetailsModal(false); setSelectedTransaction(null); }}

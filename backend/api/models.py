@@ -102,6 +102,46 @@ class Claim(models.Model):
     def __str__(self):
         return f"Claim {self.receipt_no} - {self.status}"
 
+class Transaction(models.Model):
+    """
+    Records a single voucher redemption transaction entered by staff.
+    Acts as an audit log: stores de-normalised receipt data so it
+    remains readable even if the related Voucher is later modified.
+    """
+    STATUS_CHOICES = (
+        ('Redeemed', 'Redeemed'),
+        ('Pending',  'Pending'),
+        ('Expired',  'Expired'),
+    )
+
+    # Auto-generated unique transaction reference (TXN-XXXXXX)
+    transaction_id = models.CharField(max_length=20, unique=True, blank=True)
+
+    # De-normalised receipt fields (stored as plain text, not FKs)
+    receipt_no  = models.CharField(max_length=100, blank=True, default='')
+    user_name   = models.CharField(max_length=200, blank=True, default='')
+    store_name  = models.CharField(max_length=200, blank=True, default='')
+    voucher_name = models.CharField(max_length=200, blank=True, default='')
+    voucher_code = models.CharField(max_length=100, blank=True, default='')
+
+    amount      = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    expiry_date = models.DateField(null=True, blank=True)
+    status      = models.CharField(max_length=20, choices=STATUS_CHOICES, default='Redeemed')
+
+    created_at  = models.DateTimeField(auto_now_add=True)
+    updated_at  = models.DateTimeField(auto_now=True)
+
+    def save(self, *args, **kwargs):
+        """Auto-generate a short transaction_id on first save."""
+        if not self.transaction_id:
+            import uuid
+            self.transaction_id = 'TXN-' + uuid.uuid4().hex[:8].upper()
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"{self.transaction_id} — {self.user_name}"
+
+
 class Notification(models.Model):
     """
     System notifications for alerts (Global if user is null, or targeted).

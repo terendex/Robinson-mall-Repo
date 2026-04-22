@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import User, Voucher, Campaign, Store, Claim, Notification
+from .models import User, Voucher, Campaign, Store, Claim, Notification, Transaction
 
 class NotificationSerializer(serializers.ModelSerializer):
     class Meta:
@@ -74,3 +74,21 @@ class ClaimSerializer(serializers.ModelSerializer):
     class Meta:
         model = Claim
         fields = '__all__'
+
+
+class TransactionSerializer(serializers.ModelSerializer):
+    """
+    Serializer for the Transaction audit-log model.
+    Exposes a computed `transaction_id_short` (first 12 chars) for the
+    table view and the full `transaction_id` UUID for detail views.
+    """
+    transaction_id_short = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Transaction
+        fields = '__all__'
+        read_only_fields = ('transaction_id', 'created_at', 'updated_at')
+
+    def get_transaction_id_short(self, obj):
+        """Returns e.g. 'TXN-A1B2C3D4' — the full generated ID is already short."""
+        return obj.transaction_id

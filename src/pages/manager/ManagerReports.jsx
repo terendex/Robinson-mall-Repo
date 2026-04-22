@@ -1,19 +1,8 @@
-import React from 'react';
-
 /**
  * ManagerReports Component
- * Handles the UI and data logic for the ManagerReports module.
+ * Re-uses the same Reports page component as the admin view.
+ * Managers have access to the same analytics endpoints.
  */
-const ManagerReports = () => {
-  return (
-    <div className="placeholder-page" style={{ padding: '40px', textAlign: 'center' }}>
-      <h1>Report Generation</h1>
-      <p>Performance reports and data exported modules will be available here.</p>
-      <div style={{ marginTop: '40px', fontSize: '100px', color: '#ef4444' }}>
-        <i className="fa-solid fa-chart-simple"></i>
-      </div>
-    </div>
-  );
-};
+import Reports from '../admin/Reports';
 
-export default ManagerReports;
+export default Reports;

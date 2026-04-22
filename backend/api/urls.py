@@ -7,7 +7,7 @@ from rest_framework_simplejwt.views import (
 from .views import (
     UserViewSet, PasswordResetRequestView, PasswordResetView, 
     VoucherViewSet, CampaignViewSet, StoreViewSet, ClaimViewSet, DashboardStatsView,
-    NotificationViewSet
+    NotificationViewSet, TransactionViewSet
 )
 
 router = DefaultRouter()
@@ -17,6 +17,7 @@ router.register(r'campaigns', CampaignViewSet, basename='campaign')
 router.register(r'stores', StoreViewSet, basename='store')
 router.register(r'claims', ClaimViewSet, basename='claim')
 router.register(r'notifications', NotificationViewSet, basename='notification')
+router.register(r'transactions', TransactionViewSet, basename='transaction')
 
 urlpatterns = [
     path('token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),

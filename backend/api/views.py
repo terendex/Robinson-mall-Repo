@@ -17,8 +17,8 @@ from django.contrib.auth import authenticate, login
 from django.db.models import Sum, Count
 from django.utils import timezone
 from datetime import datetime, timedelta
-from .models import User, Voucher, Campaign, Store, Claim, Notification
-from .serializers import UserSerializer, VoucherSerializer, CampaignSerializer, StoreSerializer, ClaimSerializer, NotificationSerializer
+from .models import User, Voucher, Campaign, Store, Claim, Notification, Transaction
+from .serializers import UserSerializer, VoucherSerializer, CampaignSerializer, StoreSerializer, ClaimSerializer, NotificationSerializer, TransactionSerializer
 
 
 class UserViewSet(viewsets.ModelViewSet):
@@ -233,6 +233,39 @@ class NotificationViewSet(viewsets.ModelViewSet):
             is_read=False
         ).update(is_read=True)
         return Response({'status': 'notifications marked as read for current user'})
+
+class TransactionViewSet(viewsets.ModelViewSet):
+    """
+    CRUD endpoint for Transaction audit records.
+    - Staff/Manager/Admin: full read + write access.
+    - Customers: no access (403).
+    Supports optional query-param filters:
+      ?status=Redeemed  →  filter by status
+      ?search=keyword   →  filter by user_name, store_name, receipt_no or transaction_id
+    """
+    queryset = Transaction.objects.all().order_by('-created_at')
+    serializer_class = TransactionSerializer
+    permission_classes = [IsStaff]
+
+    def get_queryset(self):
+        qs = Transaction.objects.all().order_by('-created_at')
+
+        status_param = self.request.query_params.get('status')
+        if status_param:
+            qs = qs.filter(status=status_param)
+
+        search_param = self.request.query_params.get('search')
+        if search_param:
+            from django.db.models import Q
+            qs = qs.filter(
+                Q(user_name__icontains=search_param) |
+                Q(store_name__icontains=search_param) |
+                Q(receipt_no__icontains=search_param) |
+                Q(transaction_id__icontains=search_param)
+            )
+
+        return qs
+
 
 class DashboardStatsView(views.APIView):
     """

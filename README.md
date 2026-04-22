@@ -45,7 +45,7 @@ npm install
 
 If you ever need to manually install the specific libraries used in this project (like for charts and routing), run:
 ```bash
-npm install recharts react-router-dom axios react-icons react-datepicker
+npm install recharts react-router-dom axios@1.14.0 react-icons react-datepicker
 ```
 
 ---
