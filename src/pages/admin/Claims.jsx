@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import axios from 'axios';
 import '../../css/Claims.css';
+import '../../css/Transactions.css';
 
 /**
  * Claims Component
@@ -134,17 +135,17 @@ const Claims = () => {
           </button>
         </div>
 
-        <div className="claim-stats">
-          <div className="claim-stat-card">
-            <div className="stat-title">TOTAL CLAIMS</div>
+        <div className="txn-stats">
+          <div className="txn-stat-card">
+            <div className="stat-title">Total Claims</div>
             <div className="stat-value">{stats.total}</div>
           </div>
-          <div className="claim-stat-card">
-            <div className="stat-title">APPROVED CLAIMS</div>
+          <div className="txn-stat-card">
+            <div className="stat-title">Approved Claims</div>
             <div className="stat-value">{stats.approved}</div>
           </div>
-          <div className="claim-stat-card">
-            <div className="stat-title">PENDING REVIEW</div>
+          <div className="txn-stat-card">
+            <div className="stat-title">Pending Review</div>
             <div className="stat-value">{stats.pending}</div>
           </div>
         </div>

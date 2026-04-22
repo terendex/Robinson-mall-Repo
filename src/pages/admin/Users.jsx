@@ -3,6 +3,7 @@ import axios from 'axios';
 import UserModal from '../../components/UserModal';
 import ResetPasswordModal from '../../components/ResetPasswordModal';
 import '../../css/Users.css';
+import '../../css/Transactions.css';
 
 /**
  * Users Component
@@ -168,22 +169,22 @@ const Users = () => {
           </button>
         </div>
 
-        <div className="users-stats">
-          <div className="stat-card">
-            <p>Total Customers</p>
-            <h2>{stats.totalCustomers}</h2>
+        <div className="txn-stats">
+          <div className="txn-stat-card">
+            <div className="stat-title">Total Customers</div>
+            <div className="stat-value">{stats.totalCustomers}</div>
           </div>
-          <div className="stat-card">
-            <p>Staff Members</p>
-            <h2>{stats.staffMembers}</h2>
+          <div className="txn-stat-card">
+            <div className="stat-title">Staff Members</div>
+            <div className="stat-value">{stats.staffMembers}</div>
           </div>
-          <div className="stat-card">
-            <p>Store Managers</p>
-            <h2>{stats.storeManagers}</h2>
+          <div className="txn-stat-card">
+            <div className="stat-title">Store Managers</div>
+            <div className="stat-value">{stats.storeManagers}</div>
           </div>
-          <div className="stat-card">
-            <p>Active Now</p>
-            <h2>{stats.activeNow}</h2>
+          <div className="txn-stat-card">
+            <div className="stat-title">Active Now</div>
+            <div className="stat-value">{stats.activeNow}</div>
           </div>
         </div>
 

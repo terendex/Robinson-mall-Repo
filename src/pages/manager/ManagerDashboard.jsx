@@ -1,21 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  Legend,
-  Cell
-} from 'recharts';
 import '../../css/AdminDashboard.css';
+import '../../css/Transactions.css';
 
 /**
  * ManagerDashboard Component
- * Handles the UI and data logic for the ManagerDashboard module.
+ * Redesigned to match the Performance Dashboard aesthetic
+ * while maintaining manager-specific metrics.
  */
 const ManagerDashboard = () => {
   const [stats, setStats] = useState(null);
@@ -30,120 +21,199 @@ const ManagerDashboard = () => {
         setLoading(false);
       } catch (err) {
         console.error('Error fetching dashboard stats:', err);
-        setError('Failed to load dashboard data');
+        setError('Failed to load dashboard data.');
         setLoading(false);
       }
     };
-
     fetchStats();
   }, []);
 
-  if (loading) return <div className="dashboard-container">Loading...</div>;
-  if (error) return <div className="dashboard-container">{error}</div>;
+  if (loading) {
+    return (
+      <div className="dashboard-container">
+        <div className="txn-loading">
+          <i className="fa-solid fa-spinner fa-spin fa-2xl" style={{ color: '#bdbdbd' }}></i>
+        </div>
+      </div>
+    );
+  }
 
-  const COLORS = ['#ef4444', '#dc2626', '#b91c1c', '#991b1b', '#7f1d1d'];
+  if (error) {
+    return (
+      <div className="dashboard-container">
+        <div className="dash-error">{error}</div>
+      </div>
+    );
+  }
+
+  const formatTime = (isoString) => {
+    if (!isoString) return '';
+    const d = new Date(isoString);
+    const now = new Date();
+    const isToday = d.toDateString() === now.toDateString();
+    if (isToday) {
+      return `Today, ${d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+    }
+    return (
+      d.toLocaleDateString([], { month: 'short', day: 'numeric' }) +
+      ', ' +
+      d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    );
+  };
+
+  const getActivityDot = (type, statusVal) => {
+    if (type === 'claim') {
+      if (statusVal === 'Approved') return '#22c55e'; // Green
+      if (statusVal === 'Pending')  return '#eab308'; // Yellow
+      if (statusVal === 'Rejected') return '#ef4444'; // Red
+    }
+    if (type === 'campaign') {
+      if (statusVal === 'Active') return '#22c55e';
+      if (statusVal === 'Scheduled') return '#0ea5e9'; // Teal/Blue
+    }
+    return '#94a3b8';
+  };
+
+  const maxReach = Math.max(
+    ...(stats.top_campaigns_by_reach || []).map((c) => c.reach),
+    1
+  );
 
   return (
     <div className="dashboard-container">
+      {/* ── Header ── */}
       <header className="dashboard-header">
         <h1>Manager Overview</h1>
       </header>
 
-      <div className="metrics-grid">
-        <div className="metric-card">
-          <div className="metric-label">Total Claims</div>
-          <div className="metric-value">{stats.total_claims.toLocaleString()}</div>
+      {/* ── Stat Cards ── */}
+      <div className="txn-stats">
+        <div className="txn-stat-card">
+          <div className="stat-title">Active Campaigns</div>
+          <div className="stat-value">{stats.active_campaigns}</div>
+          <div className="dash-stat-sub">{stats.scheduled_campaigns} scheduled</div>
         </div>
-        <div className="metric-card">
-          <div className="metric-label">Redemption Rate</div>
-          <div className="metric-value">{stats.redemption_rate}%</div>
+        <div className="txn-stat-card">
+          <div className="stat-title">Total Claims</div>
+          <div className="stat-value">{Number(stats.total_claims).toLocaleString()}</div>
+          <div className="dash-stat-sub">across all locations</div>
         </div>
-        <div className="metric-card">
-          <div className="metric-label">Active Campaigns</div>
-          <div className="metric-value">{stats.active_campaigns}</div>
+        <div className="txn-stat-card">
+          <div className="stat-title">Redemption Rate</div>
+          <div className="stat-value">{stats.redemption_rate}%</div>
+          <div className="dash-stat-sub">{stats.vouchers_redeemed} successful redemptions</div>
         </div>
-        <div className="metric-card">
-          <div className="metric-label">Voucher Value</div>
-          <div className="metric-value">₱{stats.voucher_value.toLocaleString()}</div>
+        <div className="txn-stat-card">
+          <div className="stat-title">Voucher Value</div>
+          <div className="stat-value">₱{Number(stats.voucher_value).toLocaleString()}</div>
+          <div className="dash-stat-sub">of {stats.total_claims} generated claims</div>
         </div>
       </div>
 
-      <div className="charts-grid">
-        <div className="chart-card">
-          <h2 className="chart-title">Activity Overview</h2>
-          <p className="chart-subtitle">
-            Comparing voucher claims and successful redemptions over the last 6 months
-          </p>
-          <div style={{ width: '100%', height: 400 }}>
-            <ResponsiveContainer>
-              <BarChart
-                data={stats.monthly_stats}
-                margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
-              >
-                <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                <XAxis dataKey="month" axisLine={false} tickLine={false} />
-                <YAxis axisLine={false} tickLine={false} />
-                <Tooltip 
-                  cursor={{ fill: '#f8fafc' }}
-                  contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)' }}
-                />
-                <Legend iconType="circle" wrapperStyle={{ paddingTop: '20px' }} />
-                <Bar 
-                  dataKey="claims" 
-                  name="Claims" 
-                  fill="#ef4444" 
-                  radius={[4, 4, 0, 0]} 
-                  barSize={20}
-                />
-                <Bar 
-                  dataKey="redemptions" 
-                  name="Redemptions" 
-                  fill="#334155" 
-                  radius={[4, 4, 0, 0]} 
-                  barSize={20}
-                />
-              </BarChart>
-            </ResponsiveContainer>
+      {/* ── Row 2: Campaigns list + Claims attention ── */}
+      <div className="dash-grid-2">
+
+        {/* Active & Upcoming Campaigns */}
+        <div className="dash-card">
+          <h2 className="dash-card-title">Active &amp; Upcoming Campaigns</h2>
+          <div className="dash-list">
+            {stats.active_upcoming_campaigns.length === 0 ? (
+              <p className="dash-empty">No active or upcoming campaigns</p>
+            ) : (
+              stats.active_upcoming_campaigns.map((c) => (
+                <div key={c.id} className="dash-list-row">
+                  <span className="dash-list-label">{c.name}</span>
+                  <span
+                    className={`txn-status-badge ${
+                      c.status === 'Active' ? 'active-badge' : 'scheduled-badge'
+                    }`}
+                  >
+                    {c.status}
+                  </span>
+                </div>
+              ))
+            )}
+            {stats.active_upcoming_campaigns.length > 0 && (
+              <p className="dash-empty-sub">No other upcoming campaigns</p>
+            )}
           </div>
         </div>
 
-        <div className="chart-card">
-          <h2 className="chart-title">Campaign Distribution</h2>
-          <p className="chart-subtitle">
-            Volume share across top active campaigns
-          </p>
-          <div style={{ width: '100%', height: 400 }}>
-            <ResponsiveContainer>
-              <BarChart
-                data={stats.campaign_distribution}
-                layout="vertical"
-                margin={{ top: 5, right: 30, left: 40, bottom: 5 }}
-              >
-                <CartesianGrid strokeDasharray="3 3" horizontal={false} />
-                <XAxis type="number" hide />
-                <YAxis 
-                  dataKey="name" 
-                  type="category" 
-                  axisLine={false} 
-                  tickLine={false}
-                  width={100}
-                />
-                <Tooltip 
-                  cursor={{ fill: '#f8fafc' }}
-                  contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)' }}
-                />
-                <Bar 
-                  dataKey="count" 
-                  fill="#ef4444" 
-                  radius={[0, 4, 4, 0]} 
-                  barSize={30}
-                >
-                  {stats.campaign_distribution.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
+        {/* Claims Requiring Attention */}
+        <div className="dash-card">
+          <h2 className="dash-card-title">Claims Requiring Attention</h2>
+          <div className="dash-list">
+            {stats.claims_requiring_attention.length === 0 ? (
+              <p className="dash-empty">No claims require attention</p>
+            ) : (
+              stats.claims_requiring_attention.map((c) => (
+                <div key={c.id} className="dash-list-row">
+                  <div className="dash-claim-info">
+                    <span className="dash-list-label">{c.user_name}</span>
+                    <span className="dash-list-sub">
+                      {c.voucher_name} &bull; ₱{Number(c.amount).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                    </span>
+                  </div>
+                  <span
+                    className={`txn-status-badge ${
+                      c.status === 'Pending' ? 'pending' : 'expired'
+                    }`}
+                  >
+                    {c.status}
+                  </span>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* ── Row 3: Top Campaigns bar chart + Recent Activity ── */}
+      <div className="dash-grid-2">
+
+        {/* Top Campaigns by Reach */}
+        <div className="dash-card">
+          <h2 className="dash-card-title">Top Campaigns by Reach</h2>
+          <div className="dash-bar-list">
+            {stats.top_campaigns_by_reach.length === 0 ? (
+              <p className="dash-empty">No campaign data available</p>
+            ) : (
+              stats.top_campaigns_by_reach.map((c, i) => (
+                <div key={i} className="dash-bar-row">
+                  <span className="dash-bar-label" title={c.name}>{c.name}</span>
+                  <div className="dash-bar-track">
+                    <div
+                      className="dash-bar-fill"
+                      style={{ width: `${Math.round((c.reach / maxReach) * 100)}%` }}
+                    />
+                  </div>
+                  <span className="dash-bar-value">{Number(c.reach).toLocaleString()}</span>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+
+        {/* Recent Activity */}
+        <div className="dash-card">
+          <h2 className="dash-card-title">Recent Activity</h2>
+          <div className="dash-activity-list">
+            {stats.recent_activity.length === 0 ? (
+              <p className="dash-empty">No recent activity</p>
+            ) : (
+              stats.recent_activity.map((a, i) => (
+                <div key={i} className="dash-activity-row">
+                  <span
+                    className="dash-activity-dot"
+                    style={{ backgroundColor: getActivityDot(a.type, a.status) }}
+                  />
+                  <div className="dash-activity-info">
+                    <span className="dash-activity-desc">{a.description}</span>
+                    <span className="dash-activity-time">{formatTime(a.timestamp)}</span>
+                  </div>
+                </div>
+              ))
+            )}
           </div>
         </div>
       </div>

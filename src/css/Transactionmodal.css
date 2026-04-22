@@ -1,0 +1,152 @@
+/* ─────────────────────────────────────────────
+   TransactionModal — OCR-specific styles
+   ───────────────────────────────────────────── */
+
+/* ── Scan section sits between header and form ── */
+.ocr-scan-section {
+  padding: 0 1.5rem 0.25rem;
+}
+
+/* ── Primary scan button ── */
+.ocr-scan-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.75rem;
+  background: #fff5f5;
+  border: 1.5px dashed #c50000;
+  border-radius: 0.625rem;
+  color: #c50000;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.ocr-scan-btn:hover {
+  background: #fee2e2;
+}
+
+/* ── Scanning / error inline status ── */
+.ocr-status {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  padding: 0.75rem 1rem;
+  border-radius: 0.625rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.ocr-status.scanning {
+  background: #f0f9ff;
+  color: #0369a1;
+  border: 1px solid #bae6fd;
+}
+
+.ocr-status.error {
+  background: #fff5f5;
+  color: #b91c1c;
+  border: 1px solid #fecaca;
+}
+
+.ocr-retry-btn {
+  margin-left: auto;
+  padding: 0.3rem 0.75rem;
+  background: #c50000;
+  color: white;
+  border: none;
+  border-radius: 0.375rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+/* ── Success banner ── */
+.ocr-result-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 0.625rem;
+}
+
+.ocr-result-left {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-width: 0;
+}
+
+.ocr-thumb {
+  width: 48px;
+  height: 48px;
+  object-fit: cover;
+  border-radius: 0.375rem;
+  border: 1px solid #d1fae5;
+  flex-shrink: 0;
+}
+
+.ocr-result-info {
+  min-width: 0;
+}
+
+.ocr-result-title {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #15803d;
+  margin: 0 0 0.2rem;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.ocr-result-sub {
+  font-size: 0.8rem;
+  color: #166534;
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ocr-rescan-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.35rem 0.75rem;
+  background: white;
+  border: 1px solid #bbf7d0;
+  border-radius: 0.375rem;
+  color: #15803d;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: background 0.15s;
+}
+
+.ocr-rescan-btn:hover {
+  background: #dcfce7;
+}
+
+/* ── OCR tag badge next to label ── */
+.ocr-filled-tag {
+  display: inline-block;
+  margin-left: 0.4rem;
+  padding: 0.1rem 0.4rem;
+  background: #dcfce7;
+  color: #15803d;
+  border-radius: 9999px;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  vertical-align: middle;
+}

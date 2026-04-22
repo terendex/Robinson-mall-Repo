@@ -4,6 +4,7 @@ import CampaignModal from '../../components/CampaignModal';
 import CampaignDetailsModal from '../../components/CampaignDetailsModal';
 import NotificationContext from '../../context/NotificationContext';
 import '../../css/Campaigns.css';
+import '../../css/Transactions.css';
 
 /**
  * Campaigns Component
@@ -169,17 +170,17 @@ const Campaigns = () => {
           </button>
         </div>
 
-        <div className="campaign-stats">
-          <div className="campaign-stat-card">
-            <div className="stat-title">ACTIVE CAMPAIGNS</div>
+        <div className="txn-stats">
+          <div className="txn-stat-card">
+            <div className="stat-title">Active Campaigns</div>
             <div className="stat-value">{stats.active}</div>
           </div>
-          <div className="campaign-stat-card">
-            <div className="stat-title">TOTAL REACH</div>
+          <div className="txn-stat-card">
+            <div className="stat-title">Total Reach</div>
             <div className="stat-value">{stats.reach}</div>
           </div>
-          <div className="campaign-stat-card">
-            <div className="stat-title">SCHEDULED CAMPAIGNS</div>
+          <div className="txn-stat-card">
+            <div className="stat-title">Scheduled Campaigns</div>
             <div className="stat-value">{stats.scheduled}</div>
           </div>
         </div>

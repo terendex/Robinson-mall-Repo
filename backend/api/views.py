@@ -11,6 +11,7 @@ from rest_framework import viewsets, status, views
 from rest_framework.response import Response
 from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny, IsAuthenticated
+from .permissions import IsAdmin, IsManager, IsStaff, IsCustomer, IsOwnerOrStaff
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth import authenticate, login
 from django.db.models import Sum, Count
@@ -27,6 +28,12 @@ class UserViewSet(viewsets.ModelViewSet):
     """
     queryset = User.objects.all()
     serializer_class = UserSerializer
+    permission_classes = [IsAdmin]
+
+    def get_permissions(self):
+        if self.action in ['register', 'login']:
+            return [AllowAny()]
+        return super().get_permissions()
 
     @action(detail=False, methods=['post'], permission_classes=[AllowAny])
     def register(self, request):
@@ -63,6 +70,7 @@ class PasswordResetRequestView(views.APIView):
     Handles generation of a password reset token and dispatches the reset email.
     """
     permission_classes = [AllowAny]
+    throttle_scope = 'password_reset'
 
     def post(self, request):
         email = request.data.get('email')
@@ -72,13 +80,15 @@ class PasswordResetRequestView(views.APIView):
         try:
             user = User.objects.get(email=email)
         except User.DoesNotExist:
+            # We return 200 OK to prevent email enumeration
             return Response({'detail': 'If a user with that email exists, a password reset link has been sent.'}, status=status.HTTP_200_OK)
 
-        token = secrets.token_urlsafe(32)
-        user.password_reset_token = token
-        user.save()
-
-        reset_link = f"http://localhost:5173/password-reset/{token}"
+        # Generate standard secure token and uid
+        token = default_token_generator.make_token(user)
+        uid = urlsafe_base64_encode(force_bytes(user.pk))
+        
+        # Link structure for the frontend
+        reset_link = f"{settings.FRONTEND_URL}/password-reset/{uid}/{token}/"
 
         try:
             send_mail(
@@ -88,15 +98,13 @@ class PasswordResetRequestView(views.APIView):
                 [email],
                 fail_silently=False,
             )
-        except smtplib.SMTPAuthenticationError as e:
+        except smtplib.SMTPAuthenticationError:
             return Response({
-                'detail': 'SMTP Authentication Error: Could not log in. Please check your email credentials in the environment variables.',
-                'error': str(e)
+                'detail': 'Email service is currently unavailable. Please try again later.'
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-        except Exception as e:
+        except Exception:
             return Response({
-                'detail': 'An unexpected error occurred while sending the email.',
-                'error': str(e)
+                'detail': 'An unexpected error occurred while sending the email.'
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         return Response({'detail': 'If a user with that email exists, a password reset link has been sent.'}, status=status.HTTP_200_OK)
@@ -104,19 +112,24 @@ class PasswordResetRequestView(views.APIView):
 
 class PasswordResetView(views.APIView):
     permission_classes = [AllowAny]
+    throttle_scope = 'password_reset'
 
-    def post(self, request, token):
+    def post(self, request, uidb64, token):
         password = request.data.get('password')
         if not password:
             return Response({'detail': 'New password is required.'}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
-            user = User.objects.get(password_reset_token=token)
-        except User.DoesNotExist:
-            return Response({'detail': 'Invalid or expired token.'}, status=status.HTTP_404_NOT_FOUND)
+            from django.utils.http import urlsafe_base64_decode
+            uid = urlsafe_base64_decode(uidb64).decode()
+            user = User.objects.get(pk=uid)
+        except (TypeError, ValueError, OverflowError, User.DoesNotExist):
+            return Response({'detail': 'Invalid or expired token link.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        if not default_token_generator.check_token(user, token):
+             return Response({'detail': 'Invalid or expired token.'}, status=status.HTTP_400_BAD_REQUEST)
 
         user.set_password(password)
-        user.password_reset_token = None
         user.save()
 
         return Response({'detail': 'Password has been reset successfully.'}, status=status.HTTP_200_OK)
@@ -125,6 +138,12 @@ class PasswordResetView(views.APIView):
 class VoucherViewSet(viewsets.ModelViewSet):
     queryset = Voucher.objects.all()
     serializer_class = VoucherSerializer
+    permission_classes = [IsStaff]
+
+    def get_permissions(self):
+        if self.action in ['list', 'retrieve']:
+            return [IsAuthenticated()]
+        return super().get_permissions()
 
 
 class CampaignViewSet(viewsets.ModelViewSet):
@@ -134,6 +153,12 @@ class CampaignViewSet(viewsets.ModelViewSet):
     """
     queryset = Campaign.objects.all()
     serializer_class = CampaignSerializer
+    permission_classes = [IsManager]
+
+    def get_permissions(self):
+        if self.action in ['list', 'retrieve']:
+            return [IsAuthenticated()]
+        return super().get_permissions()
 
     def get_queryset(self):
         today = timezone.localtime().date()
@@ -155,6 +180,12 @@ class CampaignViewSet(viewsets.ModelViewSet):
 class StoreViewSet(viewsets.ModelViewSet):
     queryset = Store.objects.all()
     serializer_class = StoreSerializer
+    permission_classes = [IsStaff]
+
+    def get_permissions(self):
+        if self.action in ['list', 'retrieve']:
+            return [IsAuthenticated()]
+        return super().get_permissions()
 
 class ClaimViewSet(viewsets.ModelViewSet):
     """
@@ -162,88 +193,180 @@ class ClaimViewSet(viewsets.ModelViewSet):
     """
     queryset = Claim.objects.all()
     serializer_class = ClaimSerializer
+    permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        queryset = Claim.objects.all()
-        status = self.request.query_params.get('status')
-        user_id = self.request.query_params.get('user_id')
-        
-        if status:
-            queryset = queryset.filter(status=status)
-        if user_id:
-            queryset = queryset.filter(user_id=user_id)
+        user = self.request.user
+        # Staff see everything
+        if user.role in ['admin', 'manager', 'staff']:
+            queryset = Claim.objects.all()
+            status_param = self.request.query_params.get('status')
+            user_id_param = self.request.query_params.get('user_id')
+            
+            if status_param:
+                queryset = queryset.filter(status=status_param)
+            if user_id_param:
+                queryset = queryset.filter(user_id=user_id_param)
+        else:
+            # Customers only see their own claims
+            queryset = Claim.objects.filter(user=user)
             
         return queryset.order_by('-created_at')
 
 class NotificationViewSet(viewsets.ModelViewSet):
     queryset = Notification.objects.all()
     serializer_class = NotificationSerializer
+    permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        user_id = self.request.query_params.get('user_id')
-        if user_id:
-            # Return global notifications (user=None) OR user's specific notifications
-            from django.db.models import Q
-            return Notification.objects.filter(Q(user_id=user_id) | Q(user__isnull=True)).order_by('-created_at')
-        return Notification.objects.all().order_by('-created_at')
+        user = self.request.user
+        from django.db.models import Q
+        # Users see their own targeted notifications OR global notifications (user=None)
+        return Notification.objects.filter(Q(user=user) | Q(user__isnull=True)).order_by('-created_at')
 
     @action(detail=False, methods=['post'])
     def mark_all_as_read(self, request):
-        Notification.objects.filter(is_read=False).update(is_read=True)
-        return Response({'status': 'all notifications marked as read'})
+        # ONLY mark notifications for the current user or global unread ones
+        from django.db.models import Q
+        Notification.objects.filter(
+            Q(user=request.user) | Q(user__isnull=True),
+            is_read=False
+        ).update(is_read=True)
+        return Response({'status': 'notifications marked as read for current user'})
 
 class DashboardStatsView(views.APIView):
     """
-    Generates aggregated metrics for the dashboard charts including:
-    - Redemption Rates and Voucher values
-    - 6-month Historical Data Arrays
-    - Current Active Campaign Totals
+    Generates aggregated metrics for the redesigned dashboard including:
+    - Stat card summaries (active/scheduled campaigns, reach, claims today, vouchers)
+    - Active & Upcoming Campaigns list
+    - Claims Requiring Attention (Pending/Rejected)
+    - Top Campaigns by Reach
+    - Recent Activity timeline
     """
+    permission_classes = [IsManager]
+
     def get(self, request):
         today = timezone.localtime().date()
+
+        # ── Core counts ──────────────────────────────────────────────
         total_claims = Claim.objects.count()
         approved_claims = Claim.objects.filter(status='Approved').count()
         redemption_rate = round((approved_claims / total_claims * 100), 1) if total_claims > 0 else 0
+
         active_campaigns_count = Campaign.objects.filter(status='Active').count()
+        scheduled_campaigns_count = Campaign.objects.filter(status='Scheduled').count()
+
+        total_reach = Campaign.objects.aggregate(Sum('reach'))['reach__sum'] or 0
+        claims_today = Claim.objects.filter(created_at__date=today).count()
+        claims_pending = Claim.objects.filter(status='Pending').count()
+
         voucher_value_sum = Claim.objects.filter(status='Approved').aggregate(Sum('amount'))['amount__sum'] or 0
 
-        # Activity Overview: 6 months
+        # ── Active & Upcoming Campaigns list ─────────────────────────
+        active_upcoming = Campaign.objects.filter(
+            status__in=['Active', 'Scheduled']
+        ).order_by('status', 'start_date')[:6]
+
+        active_upcoming_list = [
+            {
+                'id': c.id,
+                'name': c.name,
+                'status': c.status,
+                'start_date': str(c.start_date),
+                'end_date': str(c.end_date),
+            }
+            for c in active_upcoming
+        ]
+
+        # ── Claims Requiring Attention ────────────────────────────────
+        attention_claims = Claim.objects.filter(
+            status__in=['Pending', 'Rejected']
+        ).select_related('user', 'voucher').order_by('-created_at')[:5]
+
+        attention_list = [
+            {
+                'id': c.id,
+                'user_name': c.user.get_full_name() or c.user.username if c.user else 'Anonymous',
+                'voucher_name': c.voucher.name if c.voucher else '—',
+                'amount': float(c.amount or 0),
+                'status': c.status,
+            }
+            for c in attention_claims
+        ]
+
+        # ── Top Campaigns by Reach ────────────────────────────────────
+        top_campaigns = Campaign.objects.order_by('-reach')[:5]
+        top_campaigns_list = [
+            {
+                'name': c.name,
+                'reach': c.reach or 0,
+            }
+            for c in top_campaigns
+        ]
+
+        # ── Recent Activity (from Claims + Campaigns) ─────────────────
+        recent_claims = Claim.objects.select_related('user', 'voucher').order_by('-created_at')[:6]
+        recent_campaigns = Campaign.objects.order_by('-created_at')[:3]
+
+        activity = []
+        for c in recent_claims:
+            user_display = c.user.get_full_name() or c.user.username if c.user else 'Anonymous'
+            activity.append({
+                'type': 'claim',
+                'description': f'{user_display} claim {c.status.lower()}',
+                'timestamp': c.created_at.isoformat(),
+                'status': c.status,
+            })
+        for c in recent_campaigns:
+            activity.append({
+                'type': 'campaign',
+                'description': f'{c.name} campaign {c.status.lower()}',
+                'timestamp': c.created_at.isoformat(),
+                'status': c.status,
+            })
+        activity.sort(key=lambda x: x['timestamp'], reverse=True)
+        activity = activity[:8]
+
+        # ── 6-month historical stats (kept for compatibility) ─────────
         monthly_stats = []
         for i in range(5, -1, -1):
-            # Calculate the first day of the month i months ago
             target_date = today - timedelta(days=30 * i)
             month_start = target_date.replace(day=1)
-            # Find the last day of that month
             if month_start.month == 12:
                 next_month = month_start.replace(year=month_start.year + 1, month=1)
             else:
                 next_month = month_start.replace(month=month_start.month + 1)
-            
-            month_claims = Claim.objects.filter(created_at__gte=month_start, created_at__lt=next_month).count()
-            month_redemptions = Claim.objects.filter(created_at__gte=month_start, created_at__lt=next_month, status='Approved').count()
-            
+
+            month_claims = Claim.objects.filter(
+                created_at__gte=month_start, created_at__lt=next_month
+            ).count()
+            month_redemptions = Claim.objects.filter(
+                created_at__gte=month_start, created_at__lt=next_month, status='Approved'
+            ).count()
             monthly_stats.append({
                 'month': month_start.strftime('%b %Y'),
                 'claims': month_claims,
-                'redemptions': month_redemptions
+                'redemptions': month_redemptions,
             })
 
-        # Campaign Distribution
-        active_campaigns = Campaign.objects.filter(status='Active')
-        campaign_distribution = []
-        for campaign in active_campaigns:
-            claims_count = Claim.objects.filter(voucher=campaign.voucher).count()
-            if claims_count > 0:
-                campaign_distribution.append({
-                    'name': campaign.name,
-                    'count': claims_count
-                })
-
         return Response({
+            # Stat cards
             'total_claims': total_claims,
             'redemption_rate': redemption_rate,
             'active_campaigns': active_campaigns_count,
+            'scheduled_campaigns': scheduled_campaigns_count,
+            'total_reach': total_reach,
+            'claims_today': claims_today,
+            'claims_pending': claims_pending,
+            'vouchers_redeemed': approved_claims,
+            'vouchers_generated': total_claims,
             'voucher_value': float(voucher_value_sum),
+            # Lists
+            'active_upcoming_campaigns': active_upcoming_list,
+            'claims_requiring_attention': attention_list,
+            'top_campaigns_by_reach': top_campaigns_list,
+            'recent_activity': activity,
+            # Legacy chart data
             'monthly_stats': monthly_stats,
-            'campaign_distribution': campaign_distribution
         })
+

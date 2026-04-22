@@ -4,6 +4,7 @@ import axios from 'axios';
 import Header from './components/Header';
 import Register from './pages/Register'
 import Log from './pages/Log'
+import IdleTimer from './components/IdleTimer';
 import AdminLayout from './pages/admin/AdminLayout';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import Vouchers from './pages/admin/Vouchers';
@@ -58,7 +59,50 @@ axios.interceptors.request.use(
     }
     return config;
   },
-  (error) => {
+  (error) => Promise.reject(error)
+);
+
+/**
+ * Global Response Interceptor
+ * Handles 401 Unauthorized errors by attempting to refresh the token.
+ * If refresh succeeds, it retries the original request.
+ * If refresh fails, it clears local storage to end the session.
+ */
+axios.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    const originalRequest = error.config;
+    
+    // If error is 401 and we haven't retried yet
+    if (error.response?.status === 401 && !originalRequest._retry && !originalRequest.url.includes('/token/refresh/')) {
+      originalRequest._retry = true;
+      const refreshToken = localStorage.getItem('refreshToken');
+
+      if (refreshToken) {
+        try {
+          const response = await axios.post(`${import.meta.env.VITE_API_URL}/api/token/refresh/`, {
+            refresh: refreshToken,
+          });
+          
+          const { access } = response.data;
+          localStorage.setItem('accessToken', access);
+          
+          // Update the original request's header and retry
+          originalRequest.headers['Authorization'] = `Bearer ${access}`;
+          return axios(originalRequest);
+        } catch (refreshError) {
+          // Refresh failed, clear everything and force re-login
+          console.error("Session expired. Please log in again.");
+          localStorage.removeItem('user');
+          localStorage.removeItem('accessToken');
+          localStorage.removeItem('refreshToken');
+          window.location.href = '/login';
+        }
+      } else {
+        // No refresh token available
+        window.location.href = '/login';
+      }
+    }
     return Promise.reject(error);
   }
 );
@@ -78,7 +122,7 @@ function App() {
    */
   const handleLogin = async (identifier, password) => {
     try {
-      const response = await axios.post('http://127.0.0.1:8000/api/users/login/', {
+      const response = await axios.post(`${import.meta.env.VITE_API_URL}/api/users/login/`, {
         identifier: identifier,
         password: password,
       });
@@ -109,13 +153,14 @@ function App() {
   return (
     <Router>
       <div className="App">
+        {user && <IdleTimer onLogout={handleLogout} timeout={5 * 60 * 1000} />}
         <Header />
         <Routes>
           <Route path="/" element={user ? <Navigate to={`/${user.role}`} /> : <Log onLogin={handleLogin} />} />
           <Route path="/login" element={<Log onLogin={handleLogin} />} />
           <Route path="/register" element={<Register />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
-          <Route path="/password-reset/:token" element={<PasswordReset />} />
+          <Route path="/password-reset/:uidb64/:token" element={<PasswordReset />} />
           <Route path="/privacy-policy" element={<PrivacyPolicy />} />
 
           {/* Admin Routes */}
