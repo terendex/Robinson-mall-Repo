@@ -3,7 +3,7 @@ import smtplib
 import os
 from django.conf import settings
 from django.contrib.auth.tokens import default_token_generator
-from django.core.mail import send_mail
+from django.core.mail import send_mail, EmailMultiAlternatives
 from django.shortcuts import get_object_or_404
 from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode
@@ -90,14 +90,107 @@ class PasswordResetRequestView(views.APIView):
         # Link structure for the frontend
         reset_link = f"{settings.FRONTEND_URL}/password-reset/{uid}/{token}/"
 
+        # ── Branded HTML email body ───────────────────────────────────
+        subject = 'Password Reset Request – Robinson Mall'
+        plain_text = (
+            f"Hi {user.first_name or user.username},\n\n"
+            f"We received a request to reset the password for your Robinson Mall account.\n\n"
+            f"Click the link below to set a new password (valid for 1 hour):\n{reset_link}\n\n"
+            f"If you didn't request this, you can safely ignore this email — your password won't change.\n\n"
+            f"— The Robinson Mall Team"
+        )
+        html_body = f"""
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>Password Reset</title>
+        </head>
+        <body style="margin:0;padding:0;background:#f4f4f4;font-family:'Segoe UI',Arial,sans-serif;">
+          <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f4;padding:40px 16px;">
+            <tr>
+              <td align="center">
+                <table width="100%" style="max-width:520px;background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.09);">
+
+                  <!-- Header -->
+                  <tr>
+                    <td style="background:#C40000;padding:28px 40px;text-align:center;">
+                      <h1 style="margin:0;color:#ffffff;font-size:22px;font-weight:700;letter-spacing:0.5px;">
+                        Robinson Mall
+                      </h1>
+                      <p style="margin:4px 0 0;color:rgba(255,255,255,0.80);font-size:13px;">
+                        Loyalty &amp; Rewards Portal
+                      </p>
+                    </td>
+                  </tr>
+
+                  <!-- Body -->
+                  <tr>
+                    <td style="padding:40px 40px 32px;">
+                      <p style="margin:0 0 6px;font-size:15px;color:#1a1a1a;font-weight:600;">
+                        Hi {user.first_name or user.username},
+                      </p>
+                      <p style="margin:0 0 24px;font-size:14px;color:#555;line-height:1.7;">
+                        We received a request to reset the password for your Robinson Mall account.
+                        Click the button below to choose a new password.
+                        This link is valid for <strong>1 hour</strong>.
+                      </p>
+
+                      <!-- CTA Button -->
+                      <table width="100%" cellpadding="0" cellspacing="0">
+                        <tr>
+                          <td align="center" style="padding:8px 0 28px;">
+                            <a href="{reset_link}"
+                               style="display:inline-block;padding:14px 36px;background:#C40000;color:#ffffff;
+                                      text-decoration:none;border-radius:8px;font-size:15px;font-weight:700;
+                                      letter-spacing:0.3px;">
+                              Reset My Password
+                            </a>
+                          </td>
+                        </tr>
+                      </table>
+
+                      <p style="margin:0 0 8px;font-size:13px;color:#888;line-height:1.6;">
+                        If the button doesn't work, copy and paste this link into your browser:
+                      </p>
+                      <p style="margin:0 0 24px;word-break:break-all;">
+                        <a href="{reset_link}" style="font-size:12.5px;color:#C40000;">{reset_link}</a>
+                      </p>
+
+                      <p style="margin:0;font-size:13px;color:#aaa;line-height:1.6;">
+                        If you didn't request a password reset, you can safely ignore this email —
+                        your password will remain unchanged.
+                      </p>
+                    </td>
+                  </tr>
+
+                  <!-- Footer -->
+                  <tr>
+                    <td style="background:#fafafa;border-top:1px solid #f0f0f0;padding:20px 40px;text-align:center;">
+                      <p style="margin:0;font-size:12px;color:#bbb;">
+                        &copy; 2025 Robinson Mall. All rights reserved.
+                      </p>
+                    </td>
+                  </tr>
+
+                </table>
+              </td>
+            </tr>
+          </table>
+        </body>
+        </html>
+        """
+
         try:
-            send_mail(
-                'Password Reset Request',
-                f'Click the link to reset your password: {reset_link}',
-                settings.DEFAULT_FROM_EMAIL,
-                [email],
-                fail_silently=False,
+            msg = EmailMultiAlternatives(
+                subject=subject,
+                body=plain_text,
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                to=[email],
             )
+            msg.attach_alternative(html_body, "text/html")
+            msg.send(fail_silently=False)
         except smtplib.SMTPAuthenticationError:
             return Response({
                 'detail': 'Email service is currently unavailable. Please try again later.'
