@@ -212,7 +212,7 @@ const Reports = () => {
     const pending  = filteredClaims.filter(c => c.status === 'Pending').length;
     const rejected = filteredClaims.filter(c => c.status === 'Rejected').length;
     return [
-      { name: 'Redeemed', value: approved },
+      { name: 'Approved', value: approved },
       { name: 'Pending',  value: pending  },
       { name: 'Expired',  value: rejected },
     ].filter(d => d.value > 0);

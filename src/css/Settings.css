@@ -1,3 +1,7 @@
+/* ─────────────────────────────────────────────
+   Settings Page
+   ───────────────────────────────────────────── */
+
 .settings-page {
   padding: 2rem;
   background-color: #f8fafc;
@@ -22,21 +26,24 @@
 
 .settings-header p {
   color: #64748b;
+  font-size: 0.9rem;
 }
 
 .settings-content {
   display: flex;
   background: white;
-  border-radius: 12px;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  border-radius: 14px;
+  box-shadow: 0 4px 20px -4px rgba(0, 0, 0, 0.1);
   overflow: hidden;
-  min-height: 500px;
+  min-height: 520px;
 }
 
+/* ── Sidebar tabs ── */
 .settings-tabs {
-  width: 240px;
-  background-color: #f1f5f9;
-  padding: 1.5rem 0;
+  width: 220px;
+  flex-shrink: 0;
+  background-color: #f8fafc;
+  padding: 1.25rem 0;
   border-right: 1px solid #e2e8f0;
 }
 
@@ -44,72 +51,97 @@
   width: 100%;
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  padding: 1rem 1.5rem;
+  gap: 0.7rem;
+  padding: 0.9rem 1.5rem;
   border: none;
   background: none;
   color: #64748b;
+  font-size: 0.875rem;
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: background 0.18s, color 0.18s;
   text-align: left;
+  border-left: 3px solid transparent;
+}
+
+.tab-btn i {
+  font-size: 0.875rem;
+  width: 16px;
+  text-align: center;
 }
 
 .tab-btn:hover {
-  background-color: #e2e8f0;
+  background-color: #f1f5f9;
   color: #1e293b;
 }
 
 .tab-btn.active {
-  background-color: white;
-  color: #ef4444;
-  border-left: 3px solid #ef4444;
+  background-color: #fff0f0;
+  color: #c50000;
+  border-left-color: #c50000;
+  font-weight: 600;
 }
 
+/* ── Content pane ── */
 .settings-pane {
   flex: 1;
-  padding: 2rem;
+  padding: 2rem 2.25rem;
+  overflow-y: auto;
 }
 
 .settings-section h3 {
-  font-size: 1.25rem;
-  font-weight: 600;
+  font-size: 1.125rem;
+  font-weight: 700;
   color: #1e293b;
-  margin-bottom: 1.5rem;
+  margin: 0 0 1.75rem;
+  padding-bottom: 0.875rem;
+  border-bottom: 1px solid #f1f5f9;
 }
 
+/* ── Avatar ── */
 .profile-avatar-large {
   display: flex;
   align-items: center;
-  gap: 1.5rem;
+  gap: 1.25rem;
   margin-bottom: 2rem;
 }
 
-.profile-avatar-large i {
-  font-size: 80px;
-  color: #cbd5e1;
+.settings-avatar-circle {
+  width: 72px;
+  height: 72px;
+  border-radius: 9999px;
+  background: linear-gradient(135deg, #c50000, #8b0000);
+  color: #fff;
+  font-size: 1.5rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 4px 14px rgba(197, 0, 0, 0.3);
+  letter-spacing: 0.04em;
 }
 
-.change-avatar-btn {
-  background-color: white;
-  border: 1px solid #e2e8f0;
-  padding: 0.5rem 1rem;
-  border-radius: 6px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s;
+.settings-avatar-name {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #1e293b;
+  line-height: 1.3;
 }
 
-.change-avatar-btn:hover {
-  background-color: #f8fafc;
-  border-color: #cbd5e1;
+.settings-avatar-role {
+  font-size: 0.8125rem;
+  color: #c50000;
+  font-weight: 600;
+  margin-top: 0.2rem;
 }
 
+/* ── Form ── */
 .settings-form {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
-  max-width: 600px;
+  gap: 1.25rem;
+  max-width: 580px;
 }
 
 .form-row {
@@ -121,22 +153,38 @@
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 0.45rem;
 }
 
 .form-group label {
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: #475569;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #374151;
 }
 
-.form-group input {
-  padding: 0.75rem;
-  border: 1px solid #e2e8f0;
+.form-group input,
+.form-group select {
+  padding: 0.65rem 0.875rem;
+  border: 1px solid #d1d5db;
   border-radius: 8px;
-  background-color: #f8fafc;
-  color: #1e293b;
+  background-color: #fff;
+  color: #111827;
   font-family: inherit;
+  font-size: 0.875rem;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+  outline: none;
+  border-color: #c50000;
+  box-shadow: 0 0 0 3px rgba(197, 0, 0, 0.1);
+}
+
+.settings-input-readonly {
+  background-color: #f9fafb !important;
+  color: #6b7280 !important;
+  cursor: not-allowed;
 }
 
 .role-input {
@@ -144,34 +192,141 @@
   color: #ef4444 !important;
 }
 
-/* Notifications Toggle */
+.settings-input-wrap {
+  position: relative;
+}
+
+.settings-input-wrap input {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* Show password checkbox */
+.settings-show-password {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.8125rem;
+  color: #64748b;
+  cursor: pointer;
+  user-select: none;
+}
+
+.settings-show-password input[type='checkbox'] {
+  width: 15px;
+  height: 15px;
+  accent-color: #c50000;
+  cursor: pointer;
+}
+
+/* ── Status messages ── */
+.settings-status-msg {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.65rem 0.875rem;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.settings-status-msg.success {
+  background: #f0fdf4;
+  color: #15803d;
+  border: 1px solid #bbf7d0;
+}
+
+.settings-status-msg.error {
+  background: #fff5f5;
+  color: #b91c1c;
+  border: 1px solid #fecaca;
+}
+
+/* ── Form actions ── */
+.settings-form-actions {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  justify-content: flex-end;
+  padding-top: 0.5rem;
+}
+
+.settings-cancel-btn {
+  padding: 0.6rem 1.25rem;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  background: #fff;
+  color: #374151;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.settings-cancel-btn:hover {
+  background: #f9fafb;
+  border-color: #9ca3af;
+}
+
+.settings-save-btn {
+  padding: 0.6rem 1.5rem;
+  border: none;
+  border-radius: 8px;
+  background: #c50000;
+  color: #fff;
+  font-size: 0.875rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  transition: background 0.18s, box-shadow 0.18s;
+  box-shadow: 0 2px 8px rgba(197, 0, 0, 0.25);
+}
+
+.settings-save-btn:hover {
+  background: #a50000;
+  box-shadow: 0 4px 14px rgba(197, 0, 0, 0.35);
+}
+
+.settings-save-btn:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+/* ── Notifications Toggle ── */
 .toggle-list {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
-  margin-top: 1.5rem;
+  gap: 0;
 }
 
 .toggle-item {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding-bottom: 1.5rem;
+  padding: 1.25rem 0;
   border-bottom: 1px solid #f1f5f9;
+}
+
+.toggle-item:last-child {
+  border-bottom: none;
 }
 
 .toggle-info {
   display: flex;
   flex-direction: column;
+  gap: 0.2rem;
 }
 
 .toggle-label {
   font-weight: 600;
   color: #1e293b;
+  font-size: 0.9rem;
 }
 
 .toggle-desc {
-  font-size: 0.875rem;
+  font-size: 0.8125rem;
   color: #64748b;
 }
 
@@ -179,11 +334,12 @@
 .switch {
   position: relative;
   display: inline-block;
-  width: 50px;
-  height: 24px;
+  width: 48px;
+  height: 26px;
+  flex-shrink: 0;
 }
 
-.switch input { 
+.switch input {
   opacity: 0;
   width: 0;
   height: 0;
@@ -196,27 +352,28 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: #cbd5e1;
-  transition: .4s;
+  background-color: #d1d5db;
+  transition: 0.3s;
 }
 
 .slider:before {
   position: absolute;
   content: "";
-  height: 18px;
-  width: 18px;
+  height: 20px;
+  width: 20px;
   left: 3px;
   bottom: 3px;
   background-color: white;
-  transition: .4s;
+  transition: 0.3s;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.2);
 }
 
 input:checked + .slider {
-  background-color: #ef4444;
+  background-color: #c50000;
 }
 
 input:checked + .slider:before {
-  transform: translateX(26px);
+  transform: translateX(22px);
 }
 
 .slider.round {
@@ -227,11 +384,16 @@ input:checked + .slider:before {
   border-radius: 50%;
 }
 
+/* ── Responsive ── */
 @media (max-width: 768px) {
+  .settings-page {
+    padding: 1rem;
+  }
+
   .settings-content {
     flex-direction: column;
   }
-  
+
   .settings-tabs {
     width: 100%;
     display: flex;
@@ -240,19 +402,37 @@ input:checked + .slider:before {
     border-right: none;
     border-bottom: 1px solid #e2e8f0;
   }
-  
+
   .tab-btn {
-    padding: 1rem;
+    padding: 0.875rem 1rem;
     white-space: nowrap;
     border-left: none;
     border-bottom: 3px solid transparent;
+    flex-shrink: 0;
   }
-  
+
   .tab-btn.active {
-    border-bottom: 3px solid #ef4444;
+    border-left-color: transparent;
+    border-bottom: 3px solid #c50000;
+    background: #fff0f0;
   }
-  
+
+  .settings-pane {
+    padding: 1.5rem 1rem;
+  }
+
   .form-row {
     flex-direction: column;
+  }
+
+  .settings-form-actions {
+    justify-content: stretch;
+    flex-direction: column-reverse;
+  }
+
+  .settings-cancel-btn,
+  .settings-save-btn {
+    width: 100%;
+    justify-content: center;
   }
 }

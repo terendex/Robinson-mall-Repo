@@ -14,6 +14,7 @@ import Transactions from './pages/admin/Transactions';
 import Users from './pages/admin/Users';
 import Reports from './pages/admin/Reports';
 import Settings from './pages/admin/Settings';
+import Shops from './pages/admin/Shops';
 import ManagerLayout from './pages/manager/ManagerLayout';
 import ManagerDashboard from './pages/manager/ManagerDashboard';
 import ManagerVouchers from './pages/manager/ManagerVouchers';
@@ -171,6 +172,7 @@ function App() {
             <Route path="claims" element={<Claims />} />
             <Route path="transactions" element={<Transactions />} />
             <Route path="users" element={<Users />} />
+            <Route path="shops" element={<Shops />} />
             <Route path="reports" element={<Reports />} />
             <Route path="settings" element={<Settings />} />
             <Route path="notifications" element={<Notifications />} />
@@ -184,6 +186,7 @@ function App() {
             <Route path="campaigns" element={<ManagerCampaigns />} />
             <Route path="claims" element={<ManagerClaims />} />
             <Route path="transactions" element={<ManagerTransactions />} />
+            <Route path="shops" element={<Shops />} />
             <Route path="reports" element={<ManagerReports />} />
             <Route path="settings" element={<ManagerSettings />} />
             <Route path="notifications" element={<ManagerNotifications />} />

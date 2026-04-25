@@ -110,6 +110,8 @@ const StaffVouchers = () => {
               <thead>
                 <tr>
                   <th>Voucher</th>
+                  <th>Campaign</th>
+                  <th>Store</th>
                   <th>Type</th>
                   <th>Discount</th>
                   <th>Usage</th>
@@ -125,6 +127,18 @@ const StaffVouchers = () => {
                         <span className="voucher-name">{voucher.name}</span>
                         <span className="voucher-code">{voucher.code}</span>
                       </div>
+                    </td>
+                    <td className="voucher-campaign-cell">
+                      {voucher.campaign_name
+                        ? <span className="voucher-campaign-tag">{voucher.campaign_name}</span>
+                        : <span style={{ color: '#bbb', fontSize: '0.8rem' }}>—</span>
+                      }
+                    </td>
+                    <td className="voucher-store-cell">
+                      {voucher.store_name
+                        ? <span className="voucher-store-tag"><i className="fa-solid fa-store" style={{ fontSize: '0.7rem', marginRight: '0.3rem' }}></i>{voucher.store_name}</span>
+                        : <span style={{ color: '#bbb', fontSize: '0.8rem' }}>—</span>
+                      }
                     </td>
                     <td className="voucher-type-cell">{voucher.voucher_type}</td>
                     <td className="discount-cell">{voucher.discount_percentage}%</td>

@@ -6,28 +6,33 @@ import { exportCSV, exportExcel, buildTransactionRows } from '../../utils/export
 import '../../css/Transactions.css';
 
 const Transactions = () => {
-  // Get user from localStorage to determine role
   const user = JSON.parse(localStorage.getItem('user') || '{}');
   const isViewOnly = user.role === 'manager';
 
-  const [transactions, setTransactions] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [transactions, setTransactions]         = useState([]);
+  const [loading, setLoading]                   = useState(true);
+  const [searchQuery, setSearchQuery]           = useState('');
 
   // Filters
-  const [timeFilter, setTimeFilter] = useState('All Time');
-  const [amountFilter, setAmountFilter] = useState('All Values');
-  const [isTimeDropdownOpen, setIsTimeDropdownOpen] = useState(false);
+  const [timeFilter,           setTimeFilter]           = useState('All Time');
+  const [amountFilter,         setAmountFilter]         = useState('All Values');
+  const [isTimeDropdownOpen,   setIsTimeDropdownOpen]   = useState(false);
   const [isAmountDropdownOpen, setIsAmountDropdownOpen] = useState(false);
 
   // Modals
   const [selectedTransaction, setSelectedTransaction] = useState(null);
-  const [showDetailsModal, setShowDetailsModal] = useState(false);
-  const [showFormModal, setShowFormModal] = useState(false);
-  const [transactionToEdit, setTransactionToEdit] = useState(null);
+  const [showDetailsModal,    setShowDetailsModal]    = useState(false);
+  const [showFormModal,       setShowFormModal]       = useState(false);
+  const [transactionToEdit,   setTransactionToEdit]   = useState(null);
 
   // Row actions
   const [activeActions, setActiveActions] = useState(null);
+
+  // Reject-reason inline modal state
+  const [rejectTarget,       setRejectTarget]       = useState(null);  // txn being rejected
+  const [rejectReason,       setRejectReason]       = useState('');
+  const [showRejectModal,    setShowRejectModal]     = useState(false);
+  const [statusLoading,      setStatusLoading]       = useState(null);  // txn id being updated
 
   // Export dropdown
   const [isExportOpen, setIsExportOpen] = useState(false);
@@ -37,20 +42,14 @@ const Transactions = () => {
   const actionsRef      = useRef(null);
   const exportRef       = useRef(null);
 
-  useEffect(() => {
-    fetchTransactions();
-  }, []);
+  useEffect(() => { fetchTransactions(); }, []);
 
   useEffect(() => {
     const handleClickOutside = (e) => {
-      if (timeFilterRef.current && !timeFilterRef.current.contains(e.target))
-        setIsTimeDropdownOpen(false);
-      if (amountFilterRef.current && !amountFilterRef.current.contains(e.target))
-        setIsAmountDropdownOpen(false);
-      if (actionsRef.current && !actionsRef.current.contains(e.target))
-        setActiveActions(null);
-      if (exportRef.current && !exportRef.current.contains(e.target))
-        setIsExportOpen(false);
+      if (timeFilterRef.current   && !timeFilterRef.current.contains(e.target))   setIsTimeDropdownOpen(false);
+      if (amountFilterRef.current && !amountFilterRef.current.contains(e.target)) setIsAmountDropdownOpen(false);
+      if (actionsRef.current      && !actionsRef.current.contains(e.target))      setActiveActions(null);
+      if (exportRef.current       && !exportRef.current.contains(e.target))       setIsExportOpen(false);
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
@@ -70,15 +69,12 @@ const Transactions = () => {
 
   const handleSaveTransaction = async (formData) => {
     try {
-      // Separate receipt_image (local base64 preview) from API payload
       const { receipt_image, ...apiPayload } = formData;
-
       if (transactionToEdit) {
         const response = await axios.patch(
           `http://127.0.0.1:8000/api/transactions/${transactionToEdit.id}/`,
           apiPayload
         );
-        // Merge receipt_image locally (not persisted to backend)
         setTransactions(transactions.map(t =>
           t.id === transactionToEdit.id
             ? { ...response.data, receipt_image: receipt_image || t.receipt_image }
@@ -96,6 +92,55 @@ const Transactions = () => {
     }
   };
 
+  // ── Status update helpers ──────────────────────────────────────────
+  const markApproved = async (txn) => {
+    setStatusLoading(txn.id);
+    setActiveActions(null);
+    try {
+      const response = await axios.patch(
+        `http://127.0.0.1:8000/api/transactions/${txn.id}/update_status/`,
+        { status: 'Approved' }
+      );
+      setTransactions(prev => prev.map(t => t.id === txn.id ? response.data : t));
+    } catch (err) {
+      console.error('Error marking approved:', err);
+      alert(err.response?.data?.detail || 'Failed to update status.');
+    } finally {
+      setStatusLoading(null);
+    }
+  };
+
+  const openRejectModal = (txn) => {
+    setRejectTarget(txn);
+    setRejectReason('');
+    setShowRejectModal(true);
+    setActiveActions(null);
+  };
+
+  const confirmReject = async () => {
+    if (!rejectReason.trim()) {
+      alert('Please provide a rejection reason.');
+      return;
+    }
+    setStatusLoading(rejectTarget.id);
+    setShowRejectModal(false);
+    try {
+      const response = await axios.patch(
+        `http://127.0.0.1:8000/api/transactions/${rejectTarget.id}/update_status/`,
+        { status: 'Rejected', rejection_reason: rejectReason }
+      );
+      setTransactions(prev => prev.map(t => t.id === rejectTarget.id ? response.data : t));
+    } catch (err) {
+      console.error('Error rejecting transaction:', err);
+      alert(err.response?.data?.rejection_reason || err.response?.data?.detail || 'Failed to reject.');
+    } finally {
+      setStatusLoading(null);
+      setRejectTarget(null);
+      setRejectReason('');
+    }
+  };
+
+  // ── View / Edit helpers ──────────────────────────────────────────
   const openViewModal = (txn) => {
     setSelectedTransaction(txn);
     setShowDetailsModal(true);
@@ -113,32 +158,31 @@ const Transactions = () => {
     setShowFormModal(true);
   };
 
-  // ── Filtering ──
+  // ── Filtering ──────────────────────────────────────────────────────
   const filteredTransactions = useMemo(() => {
     const now = new Date();
-
     return transactions.filter((t) => {
       const matchesSearch =
         (t.transaction_id || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (t.user_name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (t.store_name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (t.receipt_no || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (t.user_name      || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (t.store_display_name || t.store_name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (t.receipt_no     || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
         (t.amount?.toString() || '').includes(searchQuery);
 
       let matchesTime = true;
       if (timeFilter !== 'All Time' && t.created_at) {
-        const created = new Date(t.created_at);
+        const created  = new Date(t.created_at);
         const diffDays = (now - created) / (1000 * 60 * 60 * 24);
-        if (timeFilter === 'Today') matchesTime = diffDays < 1;
-        else if (timeFilter === 'Last 7 Days') matchesTime = diffDays <= 7;
+        if      (timeFilter === 'Today')        matchesTime = diffDays < 1;
+        else if (timeFilter === 'Last 7 Days')  matchesTime = diffDays <= 7;
         else if (timeFilter === 'Last 30 Days') matchesTime = diffDays <= 30;
       }
 
       let matchesAmount = true;
       const amt = Number(t.amount);
-      if (amountFilter === 'Under ₱1,000') matchesAmount = amt < 1000;
-      else if (amountFilter === '₱1,000 – ₱5,000') matchesAmount = amt >= 1000 && amt <= 5000;
-      else if (amountFilter === 'Over ₱5,000') matchesAmount = amt > 5000;
+      if      (amountFilter === 'Under ₱1,000')     matchesAmount = amt < 1000;
+      else if (amountFilter === '₱1,000 – ₱5,000')  matchesAmount = amt >= 1000 && amt <= 5000;
+      else if (amountFilter === 'Over ₱5,000')       matchesAmount = amt > 5000;
 
       return matchesSearch && matchesTime && matchesAmount;
     });
@@ -149,12 +193,12 @@ const Transactions = () => {
     return `₱${Number(amount).toLocaleString('en-PH', { minimumFractionDigits: 2 })}`;
   };
 
-  // ── Stats ──
+  // ── Stats ──────────────────────────────────────────────────────────
   const stats = useMemo(() => ({
-    totalQR: transactions.length,
-    redeemed: transactions.filter(t => t.status === 'Redeemed').length,
-    pending: transactions.filter(t => t.status === 'Pending').length,
-    expired: transactions.filter(t => t.status === 'Expired').length,
+    totalQR:  transactions.length,
+    approved: transactions.filter(t => t.status === 'Approved').length,
+    pending:  transactions.filter(t => t.status === 'Pending').length,
+    rejected: transactions.filter(t => t.status === 'Rejected').length,
   }), [transactions]);
 
   const formatTimestamp = (dateString) => {
@@ -175,11 +219,29 @@ const Transactions = () => {
 
   const getStatusClass = (status) => {
     switch (status) {
-      case 'Redeemed': return 'redeemed';
-      case 'Pending': return 'pending';
-      case 'Expired': return 'expired';
-      default: return '';
+      case 'Approved': return 'redeemed';  // reuse green style
+      case 'Pending':  return 'pending';
+      case 'Rejected': return 'rejected';
+      case 'Expired':  return 'expired';
+      default:         return '';
     }
+  };
+
+  // ── Fixed-position action dropdown (escapes overflow:auto clipping) ──
+  const [actionMenuPos, setActionMenuPos] = useState(null);
+
+  const openActionMenu = (e, txnId) => {
+    if (activeActions === txnId) {
+      setActiveActions(null);
+      setActionMenuPos(null);
+      return;
+    }
+    const rect = e.currentTarget.getBoundingClientRect();
+    setActionMenuPos({
+      top:   rect.bottom + window.scrollY + 4,
+      right: window.innerWidth - rect.right,
+    });
+    setActiveActions(txnId);
   };
 
   return (
@@ -207,10 +269,7 @@ const Transactions = () => {
                   <button
                     className="txn-export-item"
                     onClick={() => {
-                      exportCSV(
-                        buildTransactionRows(filteredTransactions),
-                        `transactions-${new Date().toISOString().slice(0,10)}.csv`
-                      );
+                      exportCSV(buildTransactionRows(filteredTransactions), `transactions-${new Date().toISOString().slice(0,10)}.csv`);
                       setIsExportOpen(false);
                     }}
                   >
@@ -220,11 +279,7 @@ const Transactions = () => {
                   <button
                     className="txn-export-item"
                     onClick={() => {
-                      exportExcel(
-                        buildTransactionRows(filteredTransactions),
-                        'Transactions',
-                        `transactions-${new Date().toISOString().slice(0,10)}.xlsx`
-                      );
+                      exportExcel(buildTransactionRows(filteredTransactions), 'Transactions', `transactions-${new Date().toISOString().slice(0,10)}.xlsx`);
                       setIsExportOpen(false);
                     }}
                   >
@@ -246,20 +301,20 @@ const Transactions = () => {
         {/* ── Stat Cards ── */}
         <div className="txn-stats">
           <div className="txn-stat-card">
-            <div className="stat-title">TOTAL QR GENERATED</div>
+            <div className="stat-title">TOTAL TRANSACTIONS</div>
             <div className="stat-value">{stats.totalQR}</div>
           </div>
           <div className="txn-stat-card">
-            <div className="stat-title">REDEEMED VOUCHERS</div>
-            <div className="stat-value">{stats.redeemed}</div>
+            <div className="stat-title">APPROVED</div>
+            <div className="stat-value">{stats.approved}</div>
           </div>
           <div className="txn-stat-card">
             <div className="stat-title">PENDING</div>
             <div className="stat-value">{stats.pending}</div>
           </div>
-          <div className="txn-stat-card">
-            <div className="stat-title">EXPIRED VOUCHERS</div>
-            <div className="stat-value">{stats.expired}</div>
+          <div className="txn-stat-card txn-stat-card--rejected">
+            <div className="stat-title">REJECTED</div>
+            <div className="stat-value">{stats.rejected}</div>
           </div>
         </div>
 
@@ -341,9 +396,8 @@ const Transactions = () => {
                     <th>Transaction ID</th>
                     <th>Customer</th>
                     <th>Store / Amount</th>
-                    <th>Voucher</th>
+                    <th>SI No.</th>
                     <th>Timestamp</th>
-                    <th>Expiry Date</th>
                     <th>Status</th>
                     <th>Actions</th>
                   </tr>
@@ -380,7 +434,9 @@ const Transactions = () => {
                         {/* Store / Amount */}
                         <td>
                           <div className="txn-voucher-cell">
-                            <span className="txn-voucher-name">{txn.store_name || '—'}</span>
+                            <span className="txn-voucher-name">
+                              {txn.store_display_name || txn.store_name || '—'}
+                            </span>
                             {txn.amount ? (
                               <span style={{ fontSize: '0.75rem', color: '#c50000', fontWeight: 600 }}>
                                 {formatAmount(txn.amount)}
@@ -389,19 +445,13 @@ const Transactions = () => {
                           </div>
                         </td>
 
-                        {/* Voucher */}
-                        <td>
-                          <div className="txn-voucher-cell">
-                            <span className="txn-voucher-name">{txn.voucher_name || '—'}</span>
-                            <span className="txn-voucher-code">{txn.voucher_code || ''}</span>
-                          </div>
+                        {/* SI No. */}
+                        <td className="txn-date-cell">
+                          {txn.receipt_no || '—'}
                         </td>
 
                         {/* Timestamp */}
                         <td className="txn-date-cell">{formatTimestamp(txn.created_at)}</td>
-
-                        {/* Expiry Date */}
-                        <td className="txn-expiry-cell">{formatDate(txn.expiry_date)}</td>
 
                         {/* Status */}
                         <td>
@@ -410,43 +460,24 @@ const Transactions = () => {
                           </span>
                         </td>
 
-                        {/* Actions */}
-                        <td
-                          className="txn-actions-cell"
-                          ref={activeActions === txn.id ? actionsRef : null}
-                        >
-                          <button
-                            className="txn-action-dot-btn"
-                            onClick={() =>
-                              setActiveActions(activeActions === txn.id ? null : txn.id)
-                            }
-                          >
-                            <i className="fa-solid fa-ellipsis"></i>
-                          </button>
-                          {activeActions === txn.id && (
-                            <div className="txn-action-dropdown">
-                              <button
-                                className="txn-action-item"
-                                onClick={() => openViewModal(txn)}
-                              >
-                                <i className="fa-regular fa-eye"></i> View Transaction Details
-                              </button>
-                              {!isViewOnly && (
-                                <button
-                                  className="txn-action-item"
-                                  onClick={() => openEditModal(txn)}
-                                >
-                                  <i className="fa-regular fa-pen-to-square"></i> Edit Transaction Details
-                                </button>
-                              )}
-                            </div>
+                        {/* Actions — button positioned fixed so it escapes overflow:auto */}
+                        <td className="txn-actions-cell">
+                          {statusLoading === txn.id ? (
+                            <i className="fa-solid fa-spinner fa-spin" style={{ color: '#c50000' }}></i>
+                          ) : (
+                            <button
+                              className="txn-action-dot-btn"
+                              onClick={(e) => openActionMenu(e, txn.id)}
+                            >
+                              <i className="fa-solid fa-ellipsis"></i>
+                            </button>
                           )}
                         </td>
                       </tr>
                     ))
                   ) : (
                     <tr>
-                      <td colSpan="8" className="txn-empty-row">
+                      <td colSpan="7" className="txn-empty-row">
                         No transactions found matching your criteria.
                       </td>
                     </tr>
@@ -457,6 +488,114 @@ const Transactions = () => {
           </div>
         </div>
       </div>
+
+      {/* ── Fixed-position action dropdown (portal-like, escapes overflow clip) ── */}
+      {activeActions !== null && actionMenuPos && (() => {
+        const txn = transactions.find(t => t.id === activeActions);
+        if (!txn) return null;
+        return (
+          <div
+            ref={actionsRef}
+            className="txn-action-dropdown"
+            style={{
+              position: 'fixed',
+              top:   actionMenuPos.top,
+              right: actionMenuPos.right,
+              zIndex: 9999,
+            }}
+          >
+            {/* View details — always */}
+            <button className="txn-action-item" onClick={() => openViewModal(txn)}>
+              <i className="fa-regular fa-eye"></i> View Details
+            </button>
+
+            {/* Edit — non-view-only */}
+            {!isViewOnly && (
+              <button className="txn-action-item" onClick={() => openEditModal(txn)}>
+                <i className="fa-regular fa-pen-to-square"></i> Edit Transaction
+              </button>
+            )}
+
+            {/* Status actions — Pending only */}
+            {!isViewOnly && txn.status === 'Pending' && (
+              <>
+                <div className="txn-action-divider"></div>
+                <button
+                  className="txn-action-item txn-action-redeem"
+                  onClick={() => markApproved(txn)}
+                >
+                  <i className="fa-solid fa-circle-check"></i> Mark as Approved
+                </button>
+                <button
+                  className="txn-action-item txn-action-reject"
+                  onClick={() => openRejectModal(txn)}
+                >
+                  <i className="fa-solid fa-circle-xmark"></i> Mark as Rejected
+                </button>
+              </>
+            )}
+          </div>
+        );
+      })()}
+
+      {/* ── Reject Reason Modal ── */}
+      {showRejectModal && rejectTarget && (
+        <div className="modal-overlay">
+          <div className="modal-content" style={{ maxWidth: 480 }}>
+            <div className="modal-header">
+              <h2>Reject Transaction</h2>
+              <button className="close-x" onClick={() => { setShowRejectModal(false); setRejectTarget(null); }}>&times;</button>
+            </div>
+            <div style={{ padding: '1.25rem 1.5rem' }}>
+              <p style={{ margin: '0 0 0.5rem', fontSize: '0.9rem', color: '#555' }}>
+                Transaction: <strong>{rejectTarget.transaction_id}</strong>
+              </p>
+              <p style={{ margin: '0 0 1rem', fontSize: '0.87rem', color: '#888' }}>
+                Customer: {rejectTarget.user_name || 'Anonymous'}
+              </p>
+              <div className="form-group">
+                <label style={{ fontWeight: 600 }}>
+                  Rejection Reason <span style={{ color: '#c40000' }}>*</span>
+                </label>
+                <textarea
+                  rows={4}
+                  value={rejectReason}
+                  onChange={e => setRejectReason(e.target.value)}
+                  placeholder="Explain why this transaction is being rejected…"
+                  style={{
+                    width: '100%',
+                    padding: '0.65rem 0.85rem',
+                    border: '1.5px solid #ddd',
+                    borderRadius: '8px',
+                    fontSize: '0.9rem',
+                    resize: 'vertical',
+                    fontFamily: 'inherit',
+                    outline: 'none',
+                    boxSizing: 'border-box',
+                  }}
+                  autoFocus
+                />
+              </div>
+            </div>
+            <div className="modal-actions" style={{ padding: '0 1.5rem 1.25rem' }}>
+              <button
+                className="cancel-inner-btn"
+                onClick={() => { setShowRejectModal(false); setRejectTarget(null); }}
+              >
+                Cancel
+              </button>
+              <button
+                className="save-btn"
+                style={{ background: '#c40000' }}
+                onClick={confirmReject}
+                disabled={!rejectReason.trim()}
+              >
+                <i className="fa-solid fa-circle-xmark"></i> Confirm Rejection
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <TransactionDetailsModal
         show={showDetailsModal}

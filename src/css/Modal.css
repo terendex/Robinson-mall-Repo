@@ -564,3 +564,126 @@
 .campaign-badge-pill.scheduled { background-color: #0ea5e9; }
 .campaign-badge-pill.completed { background-color: #64748b; }
 .campaign-badge-pill.inactive { background-color: #ef4444; }
+
+/* ─────────────────────────────────────────────────────
+   Preset quick-select buttons (VoucherModal)
+   ───────────────────────────────────────────────────── */
+.preset-btn-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin-bottom: 0.55rem;
+}
+
+.preset-btn {
+  padding: 0.3rem 0.75rem;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 20px;
+  background: #f8fafc;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #475569;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+
+.preset-btn:hover {
+  border-color: #c40000;
+  color: #c40000;
+  background: #fff5f5;
+}
+
+.preset-btn.active {
+  background: #c40000;
+  border-color: #c40000;
+  color: #fff;
+}
+
+/* ─────────────────────────────────────────────────────
+   Campaign Modal — attached vouchers list
+   ───────────────────────────────────────────────────── */
+.campaign-voucher-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  max-height: 200px;
+  overflow-y: auto;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 0.5rem;
+  background: #fafafa;
+}
+
+.campaign-voucher-item {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.45rem 0.7rem;
+  background: #fff;
+  border: 1px solid #f1f5f9;
+  border-radius: 6px;
+  font-size: 0.82rem;
+}
+
+.campaign-voucher-name {
+  flex: 1;
+  font-weight: 600;
+  color: #1e293b;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.campaign-voucher-code {
+  font-family: 'Courier New', monospace;
+  font-size: 0.75rem;
+  color: #64748b;
+  background: #f1f5f9;
+  padding: 0.1rem 0.4rem;
+  border-radius: 4px;
+}
+
+.campaign-voucher-discount {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #c40000;
+  white-space: nowrap;
+}
+
+.campaign-voucher-status {
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 0.15rem 0.5rem;
+  border-radius: 12px;
+  white-space: nowrap;
+}
+
+.campaign-voucher-status.active {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.campaign-voucher-status.inactive {
+  background: #f1f5f9;
+  color: #64748b;
+}
+
+/* ─────────────────────────────────────────────────────
+   save-btn disabled state
+   ───────────────────────────────────────────────────── */
+.save-btn:disabled {
+  background: #cbd5e1;
+  cursor: not-allowed;
+}
+
+/* ─────────────────────────────────────────────────────
+   Voucher opt store tag (TransactionModal dropdown)
+   ───────────────────────────────────────────────────── */
+.voucher-opt-store {
+  font-size: 0.72rem;
+  color: #64748b;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}

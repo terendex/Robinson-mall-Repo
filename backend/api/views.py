@@ -33,7 +33,58 @@ class UserViewSet(viewsets.ModelViewSet):
     def get_permissions(self):
         if self.action in ['register', 'login']:
             return [AllowAny()]
+        if self.action == 'me':
+            return [IsAuthenticated()]
         return super().get_permissions()
+
+    @action(detail=False, methods=['get', 'patch'], permission_classes=[IsAuthenticated])
+    def me(self, request):
+        """Allows any authenticated user to view or update their own profile."""
+        user = request.user
+        if request.method == 'GET':
+            serializer = self.get_serializer(user)
+            return Response(serializer.data)
+
+        # PATCH — partial update
+        data = request.data.copy()
+        # Prevent role escalation
+        data.pop('role', None)
+        data.pop('is_staff', None)
+        data.pop('is_superuser', None)
+
+        # Handle password change separately
+        old_password = data.pop('old_password', None)
+        new_password = data.pop('new_password', None)
+
+        if new_password:
+            if not old_password:
+                return Response({'detail': 'Current password is required to set a new one.'}, status=status.HTTP_400_BAD_REQUEST)
+            if not user.check_password(old_password):
+                return Response({'detail': 'Current password is incorrect.'}, status=status.HTTP_400_BAD_REQUEST)
+            user.set_password(new_password)
+            user.save(update_fields=['password'])
+
+        # Update other profile fields
+        if data:
+            serializer = self.get_serializer(user, data=data, partial=True)
+            if serializer.is_valid():
+                serializer.save()
+            else:
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        # Return fresh user data
+        refresh = RefreshToken.for_user(user)
+        return Response({
+            'id': user.id,
+            'role': user.role,
+            'email': user.email,
+            'username': user.username,
+            'first_name': user.first_name,
+            'last_name': user.last_name,
+            'phone_number': user.phone_number,
+            'access': str(refresh.access_token),
+            'refresh': str(refresh),
+        }, status=status.HTTP_200_OK)
 
     @action(detail=False, methods=['post'], permission_classes=[AllowAny])
     def register(self, request):
@@ -243,6 +294,9 @@ class CampaignViewSet(viewsets.ModelViewSet):
     """
     Provides CRUD for campaigns while dynamically overriding get_queryset 
     to automatically progress Scheduled -> Active -> Completed based on dates.
+
+    New campaigns are always created with status='Active' regardless of what
+    the client sends.
     """
     queryset = Campaign.objects.all()
     serializer_class = CampaignSerializer
@@ -252,6 +306,49 @@ class CampaignViewSet(viewsets.ModelViewSet):
         if self.action in ['list', 'retrieve']:
             return [IsAuthenticated()]
         return super().get_permissions()
+
+    def perform_create(self, serializer):
+        """
+        Validate start_date and auto-assign status:
+          - Past date → rejected (400)
+          - Today      → Active
+          - Future     → Scheduled
+        """
+        from datetime import date
+        start_date = serializer.validated_data.get('start_date')
+        today = timezone.localtime().date()
+
+        if start_date and start_date < today:
+            from rest_framework.exceptions import ValidationError
+            raise ValidationError(
+                {'start_date': 'Start date cannot be in the past.'}
+            )
+
+        auto_status = 'Active' if (not start_date or start_date <= today) else 'Scheduled'
+        serializer.save(status=auto_status)
+
+    def perform_update(self, serializer):
+        """
+        On edit, also re-derive status from the updated start_date
+        (unless the campaign is already Completed).
+        """
+        from datetime import date
+        instance = self.get_object()
+        start_date = serializer.validated_data.get('start_date', instance.start_date)
+        today = timezone.localtime().date()
+
+        if start_date and start_date < today:
+            from rest_framework.exceptions import ValidationError
+            raise ValidationError(
+                {'start_date': 'Start date cannot be in the past.'}
+            )
+
+        # Only re-derive status if not already Completed
+        if instance.status != 'Completed':
+            auto_status = 'Active' if start_date <= today else 'Scheduled'
+            serializer.save(status=auto_status)
+        else:
+            serializer.save()
 
     def get_queryset(self):
         today = timezone.localtime().date()
@@ -279,6 +376,15 @@ class StoreViewSet(viewsets.ModelViewSet):
         if self.action in ['list', 'retrieve']:
             return [IsAuthenticated()]
         return super().get_permissions()
+
+    @action(detail=True, methods=['get'], permission_classes=[IsAuthenticated])
+    def vouchers(self, request, pk=None):
+        """List all vouchers assigned to this store."""
+        store = self.get_object()
+        from .serializers import VoucherSerializer
+        qs = store.vouchers.all()
+        serializer = VoucherSerializer(qs, many=True)
+        return Response(serializer.data)
 
 class ClaimViewSet(viewsets.ModelViewSet):
     """
@@ -332,6 +438,12 @@ class TransactionViewSet(viewsets.ModelViewSet):
     CRUD endpoint for Transaction audit records.
     - Staff/Manager/Admin: full read + write access.
     - Customers: no access (403).
+
+    Creation rules:
+      - status is always forced to 'Pending' on creation
+      - Updates may only set status to 'Redeemed' or 'Rejected'
+      - 'Rejected' requires a non-empty rejection_reason
+
     Supports optional query-param filters:
       ?status=Redeemed  →  filter by status
       ?search=keyword   →  filter by user_name, store_name, receipt_no or transaction_id
@@ -339,6 +451,10 @@ class TransactionViewSet(viewsets.ModelViewSet):
     queryset = Transaction.objects.all().order_by('-created_at')
     serializer_class = TransactionSerializer
     permission_classes = [IsStaff]
+
+    def perform_create(self, serializer):
+        """Force status to Pending on all new transactions."""
+        serializer.save(status='Pending')
 
     def get_queryset(self):
         qs = Transaction.objects.all().order_by('-created_at')
@@ -358,6 +474,37 @@ class TransactionViewSet(viewsets.ModelViewSet):
             )
 
         return qs
+
+    @action(detail=True, methods=['patch'], permission_classes=[IsStaff])
+    def update_status(self, request, pk=None):
+        """
+        Dedicated status-update endpoint.
+        Accepts: { "status": "Redeemed" | "Rejected", "rejection_reason": "..." }
+        Validates transition rules and rejection reason requirement.
+        """
+        transaction = self.get_object()
+        new_status = request.data.get('status')
+        rejection_reason = request.data.get('rejection_reason', '').strip()
+
+        if new_status not in ('Approved', 'Rejected'):
+            return Response(
+                {'detail': 'Status must be Approved or Rejected.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        if new_status == 'Rejected' and not rejection_reason:
+            return Response(
+                {'rejection_reason': 'A rejection reason is required when rejecting a transaction.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        transaction.status = new_status
+        if new_status == 'Rejected':
+            transaction.rejection_reason = rejection_reason
+        transaction.save(update_fields=['status', 'rejection_reason', 'updated_at'])
+
+        serializer = self.get_serializer(transaction)
+        return Response(serializer.data)
 
 
 class DashboardStatsView(views.APIView):

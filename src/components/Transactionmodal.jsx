@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { createWorker } from 'tesseract.js';
 import axios from 'axios';
 import '../css/Transactionmodal.css';
@@ -11,23 +11,20 @@ const parseReceiptText = (rawText) => {
   const full = rawText;
   const extracted = {};
 
-  // ── Store / Branch name — match store TYPE not address ("Place La Union") ──
+  // ── Store / Branch name ──
   if (/department\s+store/i.test(full)) {
-    extracted.store_name = 'Robinsons Department Store';
+    extracted.store_text = 'Robinsons Department Store';
   } else if (/supermarket/i.test(full)) {
-    extracted.store_name = 'Robinsons Supermarket';
+    extracted.store_text = 'Robinsons Supermarket';
   } else if (/robinsons?\s+mall/i.test(full)) {
-    extracted.store_name = 'Robinsons Mall';
+    extracted.store_text = 'Robinsons Mall';
   }
 
   // ── Receipt / SI No. ──
-  // Tesseract often misreads capital I as: 1, l, |, or i
-  // So we match S[I1li|]\s*No and also scan line-by-line as fallback
   const siMatch = full.match(/S[I1li|]\s*[Nn][o0][.:\s]+([\d]{6,})/i);
   if (siMatch) {
     extracted.receipt_no = siMatch[1].trim();
   } else {
-    // Line-by-line fallback: find a line containing 'SI' or 'S1' near 'No'
     for (const line of lines) {
       if (/S[I1li|].{0,4}No/i.test(line)) {
         const numMatch = line.match(/(\d{6,})/);
@@ -35,14 +32,12 @@ const parseReceiptText = (rawText) => {
       }
     }
   }
-  // Last resort: Trans ID
   if (!extracted.receipt_no) {
     const transMatch = full.match(/Trans(?:action)?\s*ID[:\s]+(\d+)/i);
     if (transMatch) extracted.receipt_no = transMatch[1].trim();
   }
 
-  // ── Amount — require decimal (X.XX) to avoid matching cashier ID etc. ──
-  // Tesseract often reads ₱ as P, p, or omits it entirely
+  // ── Amount ──
   const totalMatch = full.match(/TOTAL\s+[P₱p]?\s*([\d,]+\.\d{2})/i);
   if (totalMatch) {
     extracted.amount = totalMatch[1].replace(/,/g, '').trim();
@@ -51,8 +46,7 @@ const parseReceiptText = (rawText) => {
     if (amtFallback) extracted.amount = amtFallback[1].replace(/,/g, '').trim();
   }
 
-  // ── Cashier / Customer name ──
-  // Robinsons: "Cashier: 112 Rhea Navidad" — skip optional numeric cashier ID
+  // ── Customer name ──
   const cashierMatch = full.match(/Cashier[:\s]+\d*\s*([A-Za-z][A-Za-z .]{2,40})/i);
   if (cashierMatch) {
     extracted.user_name = cashierMatch[1].trim();
@@ -61,19 +55,7 @@ const parseReceiptText = (rawText) => {
     if (nameMatch) extracted.user_name = nameMatch[1].trim();
   }
 
-  // ── Voucher code ──
-  const voucherCodeMatch = full.match(
-    /(?:voucher|promo|discount|code)[:\s]+([A-Z0-9]{4,16})/i
-  );
-  if (voucherCodeMatch) extracted.voucher_code = voucherCodeMatch[1].trim();
-
-  // ── Voucher / item name ──
-  const voucherNameMatch = full.match(
-    /(?:voucher name|promo name|item|description)[:\s]+([A-Za-z0-9 %&\-]{3,50})/i
-  );
-  if (voucherNameMatch) extracted.voucher_name = voucherNameMatch[1].trim();
-
-  // ── Date + Time — combined Robinsons format: "Date:12/22/2025 Time:15:41:10" ──
+  // ── Date + Time ──
   const dateTimeMatch = full.match(
     /Date[:\s]+(\d{1,2})\/(\d{1,2})\/(\d{4})\s+Time[:\s]+(\d{1,2}):(\d{2})/i
   );
@@ -82,11 +64,10 @@ const parseReceiptText = (rawText) => {
     extracted.created_at =
       `${yr}-${mo.padStart(2, '0')}-${dy.padStart(2, '0')}T${hh.padStart(2, '0')}:${mm}`;
   } else {
-    // Fallbacks
-    const isoMatch = full.match(/(\d{4}-\d{2}-\d{2})/);
+    const isoMatch   = full.match(/(\d{4}-\d{2}-\d{2})/);
     const slashMatch = full.match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);
-    const timeOnly = full.match(/Time[:\s]+(\d{1,2}:\d{2})/i);
-    const timePart = timeOnly ? `T${timeOnly[1].padStart(5, '0')}` : 'T00:00';
+    const timeOnly   = full.match(/Time[:\s]+(\d{1,2}:\d{2})/i);
+    const timePart   = timeOnly ? `T${timeOnly[1].padStart(5, '0')}` : 'T00:00';
     if (isoMatch) {
       extracted.created_at = isoMatch[1] + timePart;
     } else if (slashMatch) {
@@ -95,12 +76,75 @@ const parseReceiptText = (rawText) => {
     }
   }
 
-  // ── Status ──
-  if (/redeemed|used|availed/i.test(full)) extracted.status = 'Redeemed';
-  else if (/expired|invalid/i.test(full)) extracted.status = 'Expired';
-  else if (/pending|processing/i.test(full)) extracted.status = 'Pending';
-
   return extracted;
+};
+
+// ─────────────────────────────────────────────────────
+// Combobox: text input + filtered dropdown
+// ─────────────────────────────────────────────────────
+const Combobox = ({ value, onChange, options, placeholder, getLabel, getValue, disabled }) => {
+  const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState(value || '');
+  const ref = useRef(null);
+
+  // Sync external value changes (e.g. OCR fill)
+  useEffect(() => { setQuery(value || ''); }, [value]);
+
+  useEffect(() => {
+    const handler = (e) => {
+      if (ref.current && !ref.current.contains(e.target)) setOpen(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  const filtered = options.filter(o =>
+    getLabel(o).toLowerCase().includes(query.toLowerCase())
+  );
+
+  const handleInput = (e) => {
+    setQuery(e.target.value);
+    onChange({ text: e.target.value, item: null }); // free-text mode
+    setOpen(true);
+  };
+
+  const handleSelect = (item) => {
+    const label = getLabel(item);
+    setQuery(label);
+    onChange({ text: label, item });
+    setOpen(false);
+  };
+
+  return (
+    <div className="combobox-wrapper" ref={ref}>
+      <input
+        type="text"
+        value={query}
+        onChange={handleInput}
+        onFocus={() => setOpen(true)}
+        placeholder={placeholder}
+        disabled={disabled}
+        autoComplete="off"
+      />
+      {open && !disabled && (
+        <div className="combobox-dropdown">
+          {filtered.length === 0 ? (
+            <div className="combobox-empty">No matches — value will be saved as typed</div>
+          ) : (
+            filtered.slice(0, 20).map(item => (
+              <div
+                key={getValue(item)}
+                className="combobox-option"
+                onMouseDown={() => handleSelect(item)}
+              >
+                {getLabel(item)}
+              </div>
+            ))
+          )}
+        </div>
+      )}
+    </div>
+  );
 };
 
 // ─────────────────────────────────────────────────────
@@ -109,102 +153,102 @@ const parseReceiptText = (rawText) => {
 const TransactionModal = ({ show, onClose, onSave, transactionToEdit }) => {
   const [formData, setFormData] = useState({
     receipt_no: '',
-    user_name: '',
-    store_name: '',
-    amount: '',
-    voucher_name: '',
-    voucher_code: '',
+    user_name:  '',
+    store:      '',       // FK id (if matched)
+    store_name: '',       // free-text or matched store name
+    amount:     '',
     created_at: '',
-    expiry_date: '',
-    status: 'Redeemed',
+    status:     'Pending',
   });
 
-  const [ocrState, setOcrState] = useState('idle');
-  const [ocrPreview, setOcrPreview] = useState(null);
-  const [ocrRawText, setOcrRawText] = useState('');
+  const [ocrState,    setOcrState]    = useState('idle');
+  const [ocrPreview,  setOcrPreview]  = useState(null);
+  const [ocrRawText,  setOcrRawText]  = useState('');
   const [filledFields, setFilledFields] = useState([]);
 
-  // Voucher dropdown state
-  const [vouchers, setVouchers] = useState([]);
-  const [voucherSearch, setVoucherSearch] = useState('');
-  const [showVoucherDropdown, setShowVoucherDropdown] = useState(false);
-  const voucherDropdownRef = useRef(null);
+  // Camera
+  const [cameraActive, setCameraActive] = useState(false);
+  const [cameraError,  setCameraError]  = useState('');
+  const videoRef  = useRef(null);
+  const streamRef = useRef(null);
+
+  // Data for comboboxes
+  const [stores, setStores] = useState([]);
+  const [users,  setUsers]  = useState([]);
 
   const uploadInputRef = useRef(null);
-  const cameraInputRef = useRef(null);
 
-  // Fetch vouchers on mount
-  useEffect(() => {
-    axios.get('http://127.0.0.1:8000/api/vouchers/')
-      .then(res => setVouchers(res.data))
-      .catch(err => console.error('Failed to load vouchers:', err));
+  const stopCamera = useCallback(() => {
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(t => t.stop());
+      streamRef.current = null;
+    }
+    setCameraActive(false);
+    setCameraError('');
   }, []);
 
-  // Close voucher dropdown on outside click
+  // Fetch stores + customers on open
   useEffect(() => {
-    const handler = (e) => {
-      if (voucherDropdownRef.current && !voucherDropdownRef.current.contains(e.target)) {
-        setShowVoucherDropdown(false);
-      }
-    };
-    document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
-  }, []);
+    if (!show) return;
+    axios.get('http://127.0.0.1:8000/api/stores/')
+      .then(res => setStores(res.data))
+      .catch(err => console.error('Failed to load stores:', err));
+    axios.get('http://127.0.0.1:8000/api/users/?role=customer')
+      .then(res => setUsers(res.data))
+      .catch(err => console.error('Failed to load users:', err));
+  }, [show]);
 
   useEffect(() => {
     if (transactionToEdit) {
       const toDatetimeLocal = (str) => {
         if (!str) return '';
-        const d = new Date(str);
-        return d.toISOString().slice(0, 16);
+        return new Date(str).toISOString().slice(0, 16);
       };
       setFormData({
-        receipt_no: transactionToEdit.receipt_no || '',
-        user_name: transactionToEdit.user_name || '',
-        store_name: transactionToEdit.store_name || '',
-        amount: transactionToEdit.amount || '',
-        voucher_name: transactionToEdit.voucher_name || '',
-        voucher_code: transactionToEdit.voucher_code || '',
+        receipt_no: transactionToEdit.receipt_no  || '',
+        user_name:  transactionToEdit.user_name   || '',
+        store:      transactionToEdit.store        || '',
+        store_name: transactionToEdit.store_display_name || transactionToEdit.store_name || '',
+        amount:     transactionToEdit.amount       || '',
         created_at: toDatetimeLocal(transactionToEdit.created_at),
-        expiry_date: transactionToEdit.expiry_date || '',
-        status: transactionToEdit.status || 'Redeemed',
+        status:     transactionToEdit.status       || 'Pending',
       });
     } else {
       setFormData({
         receipt_no: '',
-        user_name: '',
+        user_name:  '',
+        store:      '',
         store_name: '',
-        amount: '',
-        voucher_name: '',
-        voucher_code: '',
+        amount:     '',
         created_at: '',
-        expiry_date: '',
-        status: 'Redeemed',
+        status:     'Pending',
       });
     }
     setOcrState('idle');
     setOcrPreview(null);
     setOcrRawText('');
     setFilledFields([]);
+    stopCamera();
   }, [transactionToEdit, show]);
 
   if (!show) return null;
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    setFormData(prev => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    onSave({ ...formData, receipt_image: ocrPreview || null });
+    onSave({
+      ...formData,
+      receipt_image: ocrPreview || null,
+    });
   };
 
-  // ── Core OCR runner (Tesseract.js — runs in browser, no API key needed) ──
+  // ── Core OCR runner ──
   const runOcr = async (file) => {
     if (!file) return;
-
-    // Show image preview immediately
     const reader = new FileReader();
     reader.onload = (ev) => setOcrPreview(ev.target.result);
     reader.readAsDataURL(file);
@@ -214,22 +258,32 @@ const TransactionModal = ({ show, onClose, onSave, transactionToEdit }) => {
 
     let worker;
     try {
-      worker = await createWorker('eng', 1, {
-        logger: () => { }, // suppress verbose logs
-      });
-
+      worker = await createWorker('eng', 1, { logger: () => {} });
       const { data: { text: rawText } } = await worker.recognize(file);
-
       setOcrRawText(rawText);
-
       if (!rawText.trim()) { setOcrState('error'); return; }
 
       const parsed = parseReceiptText(rawText);
       const filled = [];
 
-      setFormData((prev) => {
+      setFormData(prev => {
         const next = { ...prev };
         for (const [key, val] of Object.entries(parsed)) {
+          if (key === 'store_text') {
+            const matched = stores.find(s =>
+              s.name.toLowerCase().includes(val.toLowerCase()) ||
+              val.toLowerCase().includes(s.name.toLowerCase())
+            );
+            if (matched && !prev.store) {
+              next.store      = String(matched.id);
+              next.store_name = matched.name;
+              filled.push('store_name');
+            } else if (!prev.store_name) {
+              next.store_name = val;
+              filled.push('store_name');
+            }
+            continue;
+          }
           if (val && !prev[key]) {
             next[key] = val;
             filled.push(key);
@@ -237,7 +291,6 @@ const TransactionModal = ({ show, onClose, onSave, transactionToEdit }) => {
         }
         return next;
       });
-
       setFilledFields(filled);
       setOcrState('done');
     } catch (err) {
@@ -260,30 +313,65 @@ const TransactionModal = ({ show, onClose, onSave, transactionToEdit }) => {
     setOcrPreview(null);
     setOcrRawText('');
     setFilledFields([]);
+    stopCamera();
+  };
+
+  const openCamera = async () => {
+    setCameraError('');
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } },
+        audio: false,
+      });
+      streamRef.current = stream;
+      setCameraActive(true);
+      setTimeout(() => {
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+          videoRef.current.play();
+        }
+      }, 50);
+    } catch (err) {
+      setCameraError(
+        err.name === 'NotAllowedError'
+          ? 'Camera access was denied. Please allow camera access in your browser settings.'
+          : 'Could not open camera. Try uploading an image instead.'
+      );
+    }
+  };
+
+  const capturePhoto = () => {
+    if (!videoRef.current) return;
+    const video = videoRef.current;
+    const canvas = document.createElement('canvas');
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    canvas.getContext('2d').drawImage(video, 0, 0);
+    stopCamera();
+    canvas.toBlob(async (blob) => {
+      if (!blob) { setOcrState('error'); return; }
+      const file = new File([blob], 'camera_capture.jpg', { type: 'image/jpeg' });
+      await runOcr(file);
+    }, 'image/jpeg', 0.92);
   };
 
   const fieldLabel = {
     receipt_no: 'Receipt No.',
-    user_name: 'Customer Name',
+    user_name:  'Customer Name',
     store_name: 'Store',
-    amount: 'Amount',
-    voucher_name: 'Voucher Name',
-    voucher_code: 'Voucher Code',
+    amount:     'Amount',
     created_at: 'Timestamp',
-    status: 'Status',
   };
 
   return (
     <div className="modal-overlay">
       <div className="modal-content txn-form-modal">
 
-        {/* ── Header ── */}
         <div className="modal-header">
-          <h2>{transactionToEdit ? 'Edit Transaction Details' : 'Record New Transaction'}</h2>
+          <h2>{transactionToEdit ? 'Edit Transaction' : 'Record New Transaction'}</h2>
           <button className="close-x" onClick={onClose}>&times;</button>
         </div>
 
-        {/* ── Hidden file inputs ── */}
         <input
           type="file"
           accept="image/*"
@@ -291,48 +379,52 @@ const TransactionModal = ({ show, onClose, onSave, transactionToEdit }) => {
           style={{ display: 'none' }}
           onChange={handleFileChange}
         />
-        <input
-          type="file"
-          accept="image/*"
-          capture="environment"
-          ref={cameraInputRef}
-          style={{ display: 'none' }}
-          onChange={handleFileChange}
-        />
 
-        {/* ── OCR Scan Receipt Section ── */}
+        {/* ── OCR Scan Section ── */}
         <div className="ocr-scan-section">
-
-          {/* Idle: show Camera / Upload choice */}
           {ocrState === 'idle' && (
             <div className="ocr-choice-wrapper">
-              <p className="ocr-choice-label">
-                <i className="fa-solid fa-receipt"></i>
-                Scan receipt to auto-fill fields
-              </p>
-              <div className="ocr-choice-buttons">
-                <button
-                  type="button"
-                  className="ocr-choice-btn camera"
-                  onClick={() => cameraInputRef.current.click()}
-                >
-                  <i className="fa-solid fa-camera"></i>
-                  <span>Use Camera</span>
-                </button>
-                <div className="ocr-choice-divider">or</div>
-                <button
-                  type="button"
-                  className="ocr-choice-btn upload"
-                  onClick={() => uploadInputRef.current.click()}
-                >
-                  <i className="fa-solid fa-arrow-up-from-bracket"></i>
-                  <span>Upload Image</span>
-                </button>
-              </div>
+              {cameraActive && (
+                <div className="camera-viewfinder-wrapper">
+                  <video ref={videoRef} className="camera-viewfinder" autoPlay playsInline muted />
+                  <div className="camera-viewfinder-controls">
+                    <button type="button" className="camera-cancel-btn" onClick={stopCamera}>
+                      <i className="fa-solid fa-xmark"></i> Cancel
+                    </button>
+                    <button type="button" className="camera-shutter-btn" onClick={capturePhoto}>
+                      <i className="fa-solid fa-circle"></i>
+                    </button>
+                    <div style={{ width: 80 }} />
+                  </div>
+                </div>
+              )}
+              {cameraError && (
+                <p className="camera-error-msg">
+                  <i className="fa-solid fa-triangle-exclamation"></i> {cameraError}
+                </p>
+              )}
+              {!cameraActive && (
+                <>
+                  <p className="ocr-choice-label">
+                    <i className="fa-solid fa-receipt"></i>
+                    Scan receipt to auto-fill fields
+                  </p>
+                  <div className="ocr-choice-buttons">
+                    <button type="button" className="ocr-choice-btn camera" onClick={openCamera}>
+                      <i className="fa-solid fa-camera"></i>
+                      <span>Use Camera</span>
+                    </button>
+                    <div className="ocr-choice-divider">or</div>
+                    <button type="button" className="ocr-choice-btn upload" onClick={() => uploadInputRef.current.click()}>
+                      <i className="fa-solid fa-arrow-up-from-bracket"></i>
+                      <span>Upload Image</span>
+                    </button>
+                  </div>
+                </>
+              )}
             </div>
           )}
 
-          {/* Scanning */}
           {ocrState === 'scanning' && (
             <div className="ocr-status scanning">
               <i className="fa-solid fa-spinner fa-spin"></i>
@@ -340,13 +432,10 @@ const TransactionModal = ({ show, onClose, onSave, transactionToEdit }) => {
             </div>
           )}
 
-          {/* Done */}
           {ocrState === 'done' && (
             <div className="ocr-result-banner">
               <div className="ocr-result-left">
-                {ocrPreview && (
-                  <img src={ocrPreview} alt="Receipt preview" className="ocr-thumb" />
-                )}
+                {ocrPreview && <img src={ocrPreview} alt="Receipt" className="ocr-thumb" />}
                 <div className="ocr-result-info">
                   <p className="ocr-result-title">
                     <i className="fa-solid fa-circle-check"></i>
@@ -357,27 +446,22 @@ const TransactionModal = ({ show, onClose, onSave, transactionToEdit }) => {
                       Auto-filled: {filledFields.map(f => fieldLabel[f] || f).join(', ')}
                     </p>
                   ) : (
-                    <p className="ocr-result-sub">No matching fields detected — fill manually.</p>
+                    <p className="ocr-result-sub">No fields detected — fill manually.</p>
                   )}
                 </div>
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem', alignItems: 'flex-end' }}>
-                <button
-                  type="button"
-                  className="ocr-rescan-btn"
-                  onClick={handleRescan}
-                >
+                <button type="button" className="ocr-rescan-btn" onClick={handleRescan}>
                   <i className="fa-solid fa-rotate-right"></i> Rescan
                 </button>
                 <button
                   type="button"
                   className="ocr-debug-btn"
                   onClick={() => {
-                    // Print raw OCR text to console for debugging
                     console.group('🧠 Tesseract Raw OCR Output');
                     console.log(ocrRawText);
                     console.groupEnd();
-                    alert('Raw OCR text printed to browser console (F12 → Console tab).');
+                    alert('Raw OCR text printed to browser console (F12 → Console).');
                   }}
                 >
                   <i className="fa-solid fa-bug"></i> Debug
@@ -386,18 +470,11 @@ const TransactionModal = ({ show, onClose, onSave, transactionToEdit }) => {
             </div>
           )}
 
-          {/* Error */}
           {ocrState === 'error' && (
             <div className="ocr-status error">
               <i className="fa-solid fa-triangle-exclamation"></i>
               <span>Could not read receipt. Try a clearer image.</span>
-              <button
-                type="button"
-                className="ocr-retry-btn"
-                onClick={handleRescan}
-              >
-                Retry
-              </button>
+              <button type="button" className="ocr-retry-btn" onClick={handleRescan}>Retry</button>
             </div>
           )}
         </div>
@@ -421,35 +498,53 @@ const TransactionModal = ({ show, onClose, onSave, transactionToEdit }) => {
             />
           </div>
 
+          {/* Customer name combobox */}
           <div className="form-group">
             <label>
               Customer Name
               {filledFields.includes('user_name') && <span className="ocr-filled-tag">OCR</span>}
             </label>
-            <input
-              type="text"
-              name="user_name"
+            <Combobox
               value={formData.user_name}
-              onChange={handleChange}
-              placeholder="Full Name"
-              required
+              onChange={({ text, item }) =>
+                setFormData(prev => ({
+                  ...prev,
+                  user_name: item
+                    ? `${item.first_name} ${item.last_name}`.trim() || item.username
+                    : text,
+                }))
+              }
+              options={users}
+              placeholder="Type or search customer name…"
+              getLabel={u => `${u.first_name} ${u.last_name}`.trim() || u.username}
+              getValue={u => u.id}
             />
           </div>
 
           <div className="form-row">
+            {/* Store combobox — type OR pick from dropdown */}
             <div className="form-group">
               <label>
                 Store / Branch
                 {filledFields.includes('store_name') && <span className="ocr-filled-tag">OCR</span>}
               </label>
-              <input
-                type="text"
-                name="store_name"
+              <Combobox
                 value={formData.store_name}
-                onChange={handleChange}
-                placeholder="e.g. Robinsons Supermarket"
+                onChange={({ text, item }) =>
+                  setFormData(prev => ({
+                    ...prev,
+                    store:      item ? String(item.id) : '',
+                    store_name: item ? item.name : text,
+                  }))
+                }
+                options={stores}
+                placeholder="Type or search store…"
+                getLabel={s => s.name}
+                getValue={s => s.id}
               />
             </div>
+
+            {/* Amount */}
             <div className="form-group">
               <label>
                 Amount (₱)
@@ -467,7 +562,7 @@ const TransactionModal = ({ show, onClose, onSave, transactionToEdit }) => {
             </div>
           </div>
 
-          {/* Timestamp — above voucher fields */}
+          {/* Timestamp */}
           <div className="form-group">
             <label>
               Timestamp
@@ -481,128 +576,27 @@ const TransactionModal = ({ show, onClose, onSave, transactionToEdit }) => {
             />
           </div>
 
-          {/* Voucher — searchable dropdown connected to Vouchers page */}
-          <div className="form-group" ref={voucherDropdownRef}>
-            <label>
-              Voucher
-              {filledFields.includes('voucher_name') && <span className="ocr-filled-tag">OCR</span>}
-            </label>
-            <div className="voucher-select-wrapper">
-              <div
-                className={`voucher-select-trigger ${showVoucherDropdown ? 'open' : ''}`}
-                onClick={() => setShowVoucherDropdown(v => !v)}
-              >
-                {formData.voucher_name ? (
-                  <span className="voucher-select-chosen">
-                    <strong>{formData.voucher_name}</strong>
-                    <span className="voucher-select-code">{formData.voucher_code}</span>
-                  </span>
-                ) : (
-                  <span className="voucher-select-placeholder">Select a voucher…</span>
-                )}
-                <i className={`fa-solid fa-chevron-${showVoucherDropdown ? 'up' : 'down'}`}></i>
-              </div>
-
-              {showVoucherDropdown && (
-                <div className="voucher-select-dropdown">
-                  <div className="voucher-select-search">
-                    <i className="fa-solid fa-magnifying-glass"></i>
-                    <input
-                      type="text"
-                      placeholder="Search vouchers…"
-                      value={voucherSearch}
-                      onChange={e => setVoucherSearch(e.target.value)}
-                      autoFocus
-                    />
-                  </div>
-                  <div className="voucher-select-list">
-                    {/* Clear option */}
-                    <div
-                      className="voucher-select-option clear-option"
-                      onClick={() => {
-                        setFormData(prev => ({ ...prev, voucher_name: '', voucher_code: '' }));
-                        setShowVoucherDropdown(false);
-                        setVoucherSearch('');
-                      }}
-                    >
-                      <span className="voucher-select-none">— None —</span>
-                    </div>
-
-                    {vouchers
-                      .filter(v =>
-                        v.is_active &&
-                        (v.name.toLowerCase().includes(voucherSearch.toLowerCase()) ||
-                          v.code.toLowerCase().includes(voucherSearch.toLowerCase()))
-                      )
-                      .map(v => (
-                        <div
-                          key={v.id}
-                          className={`voucher-select-option ${formData.voucher_code === v.code ? 'selected' : ''
-                            }`}
-                          onClick={() => {
-                            setFormData(prev => ({
-                              ...prev,
-                              voucher_name: v.name,
-                              voucher_code: v.code,
-                            }));
-                            setShowVoucherDropdown(false);
-                            setVoucherSearch('');
-                          }}
-                        >
-                          <span className="voucher-opt-name">{v.name}</span>
-                          <span className="voucher-opt-meta">
-                            <span className="voucher-opt-code">{v.code}</span>
-                            <span className="voucher-opt-discount">{v.discount_percentage}% off</span>
-                          </span>
-                        </div>
-                      ))
-                    }
-
-                    {vouchers.filter(v =>
-                      v.is_active &&
-                      (v.name.toLowerCase().includes(voucherSearch.toLowerCase()) ||
-                        v.code.toLowerCase().includes(voucherSearch.toLowerCase()))
-                    ).length === 0 && (
-                        <div className="voucher-select-empty">No active vouchers found.</div>
-                      )}
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-
-          <div className="form-row">
-            <div className="form-group">
-              <label>Expiry Date</label>
-              <input
-                type="date"
-                name="expiry_date"
-                value={formData.expiry_date}
-                onChange={handleChange}
-              />
-            </div>
-            <div className="form-group">
-              <label>
-                Status
-                {filledFields.includes('status') && <span className="ocr-filled-tag">OCR</span>}
-              </label>
-              <select name="status" value={formData.status} onChange={handleChange}>
-                <option value="Redeemed">Redeemed</option>
-                <option value="Pending">Pending</option>
-                <option value="Expired">Expired</option>
-              </select>
+          {/* Status — read-only display */}
+          <div className="form-group">
+            <label>Status</label>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <span className={`txn-status-badge ${(formData.status || 'pending').toLowerCase()}`}>
+                {formData.status || 'Pending'}
+              </span>
+              <span style={{ fontSize: '0.78rem', color: '#888' }}>
+                {transactionToEdit
+                  ? '(use the action menu on the table to update status)'
+                  : '(new transactions start as Pending automatically)'}
+              </span>
             </div>
           </div>
 
           <div className="modal-actions">
-            <button type="button" className="cancel-inner-btn" onClick={onClose}>
-              Cancel
-            </button>
+            <button type="button" className="cancel-inner-btn" onClick={onClose}>Cancel</button>
             <button type="submit" className="save-btn">
               {transactionToEdit ? 'Save Changes' : 'Record Transaction'}
             </button>
           </div>
-
         </form>
       </div>
     </div>

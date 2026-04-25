@@ -1,19 +1,10 @@
 import React from 'react';
-import SideNav from '../../components/SideNav';
+import SettingsPage from '../../components/SettingsPage';
+import '../../css/Settings.css';
 
 /**
- * Settings Component
- * Handles the UI and data logic for the Settings module.
+ * Settings Component — Admin portal
  */
-const Settings = () => {
-  return (
-    <div style={{ display: 'flex' }}>
-      <SideNav />
-      <div style={{ marginLeft: '250px', padding: '20px' }}>
-        <h1>Settings</h1>
-      </div>
-    </div>
-  );
-};
+const Settings = () => <SettingsPage />;
 
 export default Settings;

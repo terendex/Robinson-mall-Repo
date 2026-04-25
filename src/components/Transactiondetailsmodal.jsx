@@ -20,12 +20,16 @@ const TransactionDetailsModal = ({ show, onClose, transaction }) => {
 
   const getStatusClass = (status) => {
     switch (status) {
-      case 'Redeemed': return 'redeemed';
-      case 'Pending': return 'pending';
-      case 'Expired': return 'expired';
-      default: return '';
+      case 'Approved': return 'redeemed';   // reuse green badge style
+      case 'Pending':  return 'pending';
+      case 'Rejected': return 'rejected';
+      case 'Expired':  return 'expired';
+      default:         return '';
     }
   };
+
+  // Resolve the best store name: FK-derived takes priority over de-normalised
+  const storeName = transaction.store_display_name || transaction.store_name || null;
 
   return (
     <>
@@ -40,11 +44,7 @@ const TransactionDetailsModal = ({ show, onClose, transaction }) => {
 
           {/* ── QR Code ── */}
           <div className="txn-audit-qr-wrapper">
-            <img
-              src={qrImageUrl}
-              alt="QR Code"
-              className="txn-audit-qr-img"
-            />
+            <img src={qrImageUrl} alt="QR Code" className="txn-audit-qr-img" />
             <p className="txn-audit-qr-label">
               QR Code ID: <strong>{qrValue}</strong>
             </p>
@@ -64,11 +64,7 @@ const TransactionDetailsModal = ({ show, onClose, transaction }) => {
                   onClick={() => setReceiptZoomed(true)}
                   title="Click to enlarge"
                 >
-                  <img
-                    src={transaction.receipt_image}
-                    alt="Receipt"
-                    className="txn-audit-receipt-thumb"
-                  />
+                  <img src={transaction.receipt_image} alt="Receipt" className="txn-audit-receipt-thumb" />
                   <div className="txn-audit-receipt-zoom-hint">
                     <i className="fa-solid fa-magnifying-glass-plus"></i>
                   </div>
@@ -86,10 +82,10 @@ const TransactionDetailsModal = ({ show, onClose, transaction }) => {
               <span className="txn-audit-val">{transaction.user_name || 'Anonymous'}</span>
             </div>
 
-            {transaction.store_name && (
+            {storeName && (
               <div className="txn-audit-row">
                 <span className="txn-audit-key">Store / Branch</span>
-                <span className="txn-audit-val">{transaction.store_name}</span>
+                <span className="txn-audit-val">{storeName}</span>
               </div>
             )}
 
@@ -126,6 +122,17 @@ const TransactionDetailsModal = ({ show, onClose, transaction }) => {
               </span>
             </div>
 
+            {/* ── Rejection reason — only shown when rejected ── */}
+            {transaction.status === 'Rejected' && transaction.rejection_reason && (
+              <div className="txn-audit-row txn-audit-rejection-row">
+                <span className="txn-audit-key">Rejection Reason</span>
+                <span className="txn-audit-val txn-audit-rejection-reason">
+                  <i className="fa-solid fa-circle-xmark" style={{ color: '#c40000', marginRight: '0.35rem' }}></i>
+                  {transaction.rejection_reason}
+                </span>
+              </div>
+            )}
+
             <div className="txn-audit-row">
               <span className="txn-audit-key">Expires on</span>
               <span className="txn-audit-val">{formatDate(transaction.expiry_date)}</span>
@@ -135,6 +142,13 @@ const TransactionDetailsModal = ({ show, onClose, transaction }) => {
               <div className="txn-audit-row">
                 <span className="txn-audit-key">Date Recorded</span>
                 <span className="txn-audit-val">{formatDate(transaction.created_at)}</span>
+              </div>
+            )}
+
+            {transaction.updated_at && transaction.status !== 'Pending' && (
+              <div className="txn-audit-row">
+                <span className="txn-audit-key">Last Updated</span>
+                <span className="txn-audit-val">{formatDate(transaction.updated_at)}</span>
               </div>
             )}
           </div>
@@ -149,22 +163,12 @@ const TransactionDetailsModal = ({ show, onClose, transaction }) => {
 
       {/* ── Receipt Zoom Lightbox ── */}
       {receiptZoomed && transaction.receipt_image && (
-        <div
-          className="receipt-lightbox-overlay"
-          onClick={() => setReceiptZoomed(false)}
-        >
+        <div className="receipt-lightbox-overlay" onClick={() => setReceiptZoomed(false)}>
           <div className="receipt-lightbox-content" onClick={e => e.stopPropagation()}>
-            <button
-              className="receipt-lightbox-close"
-              onClick={() => setReceiptZoomed(false)}
-            >
+            <button className="receipt-lightbox-close" onClick={() => setReceiptZoomed(false)}>
               <i className="fa-solid fa-xmark"></i>
             </button>
-            <img
-              src={transaction.receipt_image}
-              alt="Receipt full view"
-              className="receipt-lightbox-img"
-            />
+            <img src={transaction.receipt_image} alt="Receipt full view" className="receipt-lightbox-img" />
           </div>
         </div>
       )}

@@ -550,3 +550,168 @@
     opacity: 1;
   }
 }
+
+/* ── Real camera viewfinder ── */
+.camera-viewfinder-wrapper {
+  width: 100%;
+  background: #000;
+  border-radius: 0.75rem;
+  overflow: hidden;
+  position: relative;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.35);
+}
+
+.camera-viewfinder {
+  width: 100%;
+  max-height: 280px;
+  object-fit: cover;
+  display: block;
+}
+
+.camera-viewfinder-controls {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1.25rem;
+  background: linear-gradient(to top, rgba(0,0,0,0.7) 0%, transparent 100%);
+}
+
+.camera-shutter-btn {
+  width: 56px;
+  height: 56px;
+  border-radius: 9999px;
+  background: #fff;
+  border: 4px solid rgba(255,255,255,0.6);
+  box-shadow: 0 0 0 3px rgba(255,255,255,0.3);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  color: #c50000;
+  transition: transform 0.12s, box-shadow 0.12s;
+}
+
+.camera-shutter-btn:active {
+  transform: scale(0.9);
+  box-shadow: 0 0 0 5px rgba(197, 0, 0, 0.3);
+}
+
+.camera-cancel-btn {
+  background: rgba(255,255,255,0.15);
+  border: 1px solid rgba(255,255,255,0.35);
+  border-radius: 0.5rem;
+  color: #fff;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  padding: 0.4rem 0.9rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  transition: background 0.15s;
+  width: 80px;
+  justify-content: center;
+}
+
+.camera-cancel-btn:hover {
+  background: rgba(255,255,255,0.28);
+}
+
+.camera-error-msg {
+  color: #b91c1c;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  margin: 0.5rem 0 0;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+/* ── Store tag inside voucher option ── */
+.voucher-opt-store {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.71rem;
+  color: #64748b;
+  background: #f1f5f9;
+  padding: 0.1rem 0.4rem;
+  border-radius: 0.25rem;
+  white-space: nowrap;
+}
+
+/* ── Status badge reused in modal ── */
+.txn-status-badge {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.txn-status-badge.pending  { background: #fef9c3; color: #a16207; }
+.txn-status-badge.redeemed { background: #dcfce7; color: #15803d; }
+.txn-status-badge.rejected { background: #fee2e2; color: #b91c1c; }
+.txn-status-badge.expired  { background: #f3f4f6; color: #6b7280; }
+
+/* ── Combobox (store + customer name) ── */
+.combobox-wrapper {
+  position: relative;
+}
+
+.combobox-wrapper input {
+  width: 100%;
+  padding: 12px 15px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 14px;
+  color: #333;
+  box-sizing: border-box;
+  transition: border-color 0.2s;
+  outline: none;
+}
+
+.combobox-wrapper input:focus {
+  border-color: #c50000;
+}
+
+.combobox-dropdown {
+  position: absolute;
+  top: calc(100% + 3px);
+  left: 0;
+  right: 0;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.625rem;
+  box-shadow: 0 10px 30px -5px rgba(0,0,0,0.15);
+  z-index: 500;
+  max-height: 200px;
+  overflow-y: auto;
+  animation: dropdownFadeIn 0.12s ease;
+}
+
+.combobox-option {
+  padding: 0.6rem 0.875rem;
+  font-size: 0.875rem;
+  color: #111827;
+  cursor: pointer;
+  transition: background 0.12s;
+}
+
+.combobox-option:hover {
+  background: #fef2f2;
+  color: #c50000;
+}
+
+.combobox-empty {
+  padding: 0.75rem 0.875rem;
+  font-size: 0.82rem;
+  color: #9ca3af;
+  font-style: italic;
+}

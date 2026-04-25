@@ -38,36 +38,93 @@ class UserSerializer(serializers.ModelSerializer):
         return instance
 
 class StoreSerializer(serializers.ModelSerializer):
+    # Include count of vouchers attached to this store
+    voucher_count = serializers.SerializerMethodField()
+
     class Meta:
         model = Store
-        fields = '__all__'
+        fields = ('id', 'name', 'location', 'created_at', 'voucher_count')
+
+    def get_voucher_count(self, obj):
+        return obj.vouchers.count()
 
 class VoucherSerializer(serializers.ModelSerializer):
     discount_percentage = serializers.IntegerField(min_value=0, max_value=100)
     usage_limit = serializers.IntegerField(min_value=1)
 
+    # Read-only derived fields from FK relationships
+    campaign_name = serializers.ReadOnlyField(source='campaign.name')
+    store_name    = serializers.ReadOnlyField(source='store.name')
+
     class Meta:
         model = Voucher
-        fields = '__all__'
+        fields = (
+            'id', 'name', 'code', 'voucher_type', 'discount_percentage',
+            'usage_limit', 'usage_count', 'is_active',
+            'campaign', 'campaign_name',
+            'store', 'store_name',
+            'created_at', 'updated_at',
+        )
 
 class CampaignSerializer(serializers.ModelSerializer):
-    """Serializer exposing deeply nested voucher fields for frontend convenience."""
-    voucher_name = serializers.ReadOnlyField(source='voucher.name')
-    voucher_code = serializers.ReadOnlyField(source='voucher.code')
-    voucher_discount = serializers.ReadOnlyField(source='voucher.discount_percentage')
+    """Serializer exposing nested voucher list and auto-computed reach/conversions."""
+    # Both reach and conversions are fully auto-computed
+    vouchers      = serializers.SerializerMethodField()
+    voucher_count = serializers.SerializerMethodField()
+    reach         = serializers.SerializerMethodField()  # count of Claims for campaign vouchers
+    conversions   = serializers.SerializerMethodField()  # count of Approved transactions
 
     budget = serializers.DecimalField(max_digits=10, decimal_places=2, min_value=0)
 
     class Meta:
         model = Campaign
-        fields = '__all__'
+        fields = (
+            'id', 'name', 'status', 'budget',
+            'start_date', 'end_date',
+            'reach', 'conversions',
+            'vouchers', 'voucher_count',
+            'created_at', 'updated_at',
+        )
+        read_only_fields = ('reach', 'conversions', 'created_at', 'updated_at')
+
+    def get_reach(self, obj):
+        """Reach = total Claims made against any voucher in this campaign."""
+        from .models import Claim
+        return Claim.objects.filter(voucher__campaign=obj).count()
+
+    def get_conversions(self, obj):
+        """Conversions = Approved transactions linked to this campaign's vouchers."""
+        from .models import Transaction
+        voucher_codes = list(obj.vouchers.values_list('code', flat=True))
+        if not voucher_codes:
+            return 0
+        return Transaction.objects.filter(
+            voucher_code__in=voucher_codes,
+            status='Approved'
+        ).count()
+
+    def get_vouchers(self, obj):
+        return [
+            {
+                'id': v.id,
+                'name': v.name,
+                'code': v.code,
+                'voucher_type': v.voucher_type,
+                'discount_percentage': v.discount_percentage,
+                'is_active': v.is_active,
+            }
+            for v in obj.vouchers.all()
+        ]
+
+    def get_voucher_count(self, obj):
+        return obj.vouchers.count()
 
 class ClaimSerializer(serializers.ModelSerializer):
-    user_name = serializers.ReadOnlyField(source='user.get_full_name')
-    user_phone = serializers.ReadOnlyField(source='user.phone_number')
+    user_name    = serializers.ReadOnlyField(source='user.get_full_name')
+    user_phone   = serializers.ReadOnlyField(source='user.phone_number')
     voucher_name = serializers.ReadOnlyField(source='voucher.name')
     voucher_code = serializers.ReadOnlyField(source='voucher.code')
-    store_name = serializers.ReadOnlyField(source='store.name')
+    store_name   = serializers.ReadOnlyField(source='store.name')
 
     amount = serializers.DecimalField(max_digits=10, decimal_places=2, min_value=0)
 
@@ -79,16 +136,60 @@ class ClaimSerializer(serializers.ModelSerializer):
 class TransactionSerializer(serializers.ModelSerializer):
     """
     Serializer for the Transaction audit-log model.
-    Exposes a computed `transaction_id_short` (first 12 chars) for the
-    table view and the full `transaction_id` UUID for detail views.
+
+    New rules:
+    - status defaults to 'Pending' on creation
+    - Only 'Redeemed' or 'Rejected' are valid status updates
+    - rejection_reason is required when status == 'Rejected'
+    - store_name is surfaced from the Store FK (read-only computed)
     """
     transaction_id_short = serializers.SerializerMethodField()
+    # Read store name from FK if available, else from de-normalised field
+    store_display_name   = serializers.SerializerMethodField()
 
     class Meta:
         model = Transaction
-        fields = '__all__'
+        fields = (
+            'id', 'transaction_id', 'transaction_id_short',
+            'receipt_no', 'user_name',
+            'store', 'store_name', 'store_display_name',
+            'voucher_name', 'voucher_code',
+            'amount', 'expiry_date',
+            'status', 'rejection_reason',
+            'created_at', 'updated_at',
+        )
         read_only_fields = ('transaction_id', 'created_at', 'updated_at')
 
     def get_transaction_id_short(self, obj):
         """Returns e.g. 'TXN-A1B2C3D4' — the full generated ID is already short."""
         return obj.transaction_id
+
+    def get_store_display_name(self, obj):
+        """FK store name takes priority; falls back to de-normalised store_name text."""
+        if obj.store_id:
+            return obj.store.name
+        return obj.store_name
+
+    def validate(self, data):
+        """
+        Enforce status transition rules:
+          - New transactions can only be Pending (enforced in view)
+          - Updates can only set status to Approved or Rejected
+          - Rejected requires rejection_reason
+        """
+        instance = self.instance  # None on create
+        new_status = data.get('status')
+
+        if instance is not None and new_status:
+            if new_status not in ('Approved', 'Rejected', 'Pending', 'Expired'):
+                raise serializers.ValidationError(
+                    {'status': 'Invalid status value.'}
+                )
+            if new_status == 'Rejected':
+                reason = data.get('rejection_reason') or (instance.rejection_reason if instance else '')
+                if not reason or not reason.strip():
+                    raise serializers.ValidationError(
+                        {'rejection_reason': 'A rejection reason is required when rejecting a transaction.'}
+                    )
+
+        return data
