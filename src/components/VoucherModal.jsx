@@ -1,6 +1,75 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import '../css/Modal.css';
+
+// ─────────────────────────────────────────────────────
+// Combobox: text input + filtered dropdown
+// ─────────────────────────────────────────────────────
+const Combobox = ({ value, onChange, options, placeholder, getLabel, getValue, disabled }) => {
+  const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState(value || '');
+  const ref = useRef(null);
+
+  // Sync external value changes
+  useEffect(() => { setQuery(value || ''); }, [value]);
+
+  // Close on outside click
+  useEffect(() => {
+    const handler = (e) => {
+      if (ref.current && !ref.current.contains(e.target)) setOpen(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  const filtered = options.filter(o =>
+    getLabel(o).toLowerCase().includes(query.toLowerCase())
+  );
+
+  const handleInput = (e) => {
+    setQuery(e.target.value);
+    onChange({ text: e.target.value, item: null });
+    setOpen(true);
+  };
+
+  const handleSelect = (item) => {
+    const label = getLabel(item);
+    setQuery(label);
+    onChange({ text: label, item });
+    setOpen(false);
+  };
+
+  return (
+    <div className="combobox-wrapper" ref={ref}>
+      <input
+        type="text"
+        value={query}
+        onChange={handleInput}
+        onFocus={() => setOpen(true)}
+        placeholder={placeholder}
+        disabled={disabled}
+        autoComplete="off"
+      />
+      {open && !disabled && (
+        <div className="combobox-dropdown">
+          {filtered.length === 0 ? (
+            <div className="combobox-empty">No matches found</div>
+          ) : (
+            filtered.slice(0, 20).map(item => (
+              <div
+                key={getValue(item)}
+                className="combobox-option"
+                onMouseDown={() => handleSelect(item)}
+              >
+                {getLabel(item)}
+              </div>
+            ))
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
 
 /**
  * VoucherModal Component
@@ -17,13 +86,14 @@ const VoucherModal = ({ show, onClose, onSave, voucherToEdit, readOnly }) => {
   const [stores, setStores] = useState([]);
 
   const [formData, setFormData] = useState({
-    name: '',
-    code: '',
-    voucher_type: 'Fashion',
+    name:                '',
+    code:                '',
+    voucher_type:        'Fashion',
     discount_percentage: '',
-    usage_limit: '',
-    campaign: '',
-    store: '',
+    usage_limit:         '',
+    campaign:            '',
+    store:               '',
+    store_name:          '',
   });
 
   // Load campaigns + stores for selectors
@@ -40,23 +110,25 @@ const VoucherModal = ({ show, onClose, onSave, voucherToEdit, readOnly }) => {
   useEffect(() => {
     if (voucherToEdit) {
       setFormData({
-        name: voucherToEdit.name || '',
-        code: voucherToEdit.code || '',
-        voucher_type: voucherToEdit.voucher_type || 'Fashion',
+        name:                voucherToEdit.name                || '',
+        code:                voucherToEdit.code                || '',
+        voucher_type:        voucherToEdit.voucher_type        || 'Fashion',
         discount_percentage: voucherToEdit.discount_percentage || '',
-        usage_limit: voucherToEdit.usage_limit || '',
-        campaign: voucherToEdit.campaign || '',
-        store: voucherToEdit.store || '',
+        usage_limit:         voucherToEdit.usage_limit         || '',
+        campaign:            voucherToEdit.campaign            || '',
+        store:               voucherToEdit.store               || '',
+        store_name:          voucherToEdit.store_display_name  || voucherToEdit.store_name || '',
       });
     } else {
       setFormData({
-        name: '',
-        code: '',
-        voucher_type: 'Fashion',
+        name:                '',
+        code:                '',
+        voucher_type:        'Fashion',
         discount_percentage: '',
-        usage_limit: '',
-        campaign: '',
-        store: '',
+        usage_limit:         '',
+        campaign:            '',
+        store:               '',
+        store_name:          '',
       });
     }
   }, [voucherToEdit, show]);
@@ -136,26 +208,36 @@ const VoucherModal = ({ show, onClose, onSave, voucherToEdit, readOnly }) => {
             </div>
           )}
 
-          {/* Store selector */}
+          {/* Store selector — combobox (type + dropdown) */}
           <div className="form-group">
-            <label>
-              Store / Branch
-              {filledFields.includes('store_name') && <span className="ocr-filled-tag">OCR</span>}
-            </label>
-            <Combobox
-              value={formData.store_name}
-              onChange={({ text, item }) =>
-                setFormData(prev => ({
-                  ...prev,
-                  store: item ? String(item.id) : '',
-                  store_name: item ? item.name : text,
-                }))
-              }
-              options={stores}
-              placeholder="Type or search store…"
-              getLabel={s => s.name}
-              getValue={s => s.id}
-            />
+            <label>Store / Branch <span style={{ fontSize: '0.75rem', color: '#888' }}>(optional)</span></label>
+            {readOnly ? (
+              <input
+                type="text"
+                value={
+                  formData.store_name ||
+                  stores.find(s => s.id === Number(formData.store))?.name ||
+                  formData.store || '—'
+                }
+                disabled
+              />
+            ) : (
+              <Combobox
+                value={formData.store_name}
+                onChange={({ text, item }) =>
+                  setFormData(prev => ({
+                    ...prev,
+                    store:      item ? String(item.id) : '',
+                    store_name: item ? item.name : text,
+                  }))
+                }
+                options={stores}
+                placeholder="Type or search store…"
+                getLabel={s => s.name}
+                getValue={s => s.id}
+                disabled={false}
+              />
+            )}
           </div>
 
           {/* Voucher Name */}
