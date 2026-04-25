@@ -157,8 +157,15 @@
 }
 
 @keyframes rptDropIn {
-  from { opacity: 0; transform: translateY(-6px); }
-  to   { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .rpt-dropdown-item {
@@ -297,14 +304,6 @@
   gap: 1.5rem;
 }
 
-.rpt-chart-wide {
-  /* spans the grid cell – both are equal in a 2-col grid */
-}
-
-.rpt-chart-half {
-  /* same */
-}
-
 /* ── Donut layout ────────────────────────────────────────────────────────── */
 .rpt-donut-wrap {
   display: flex;
@@ -367,9 +366,6 @@
 }
 
 /* ── Summary Table ───────────────────────────────────────────────────────── */
-.rpt-summary-card {
-  /* inherits .rpt-chart-card */
-}
 
 .rpt-summary-table-wrap {
   overflow-x: auto;

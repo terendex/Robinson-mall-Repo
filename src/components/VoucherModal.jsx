@@ -10,20 +10,20 @@ import '../css/Modal.css';
  */
 
 const PRESET_DISCOUNTS = [5, 10, 15, 20, 25, 30, 50];
-const PRESET_LIMITS    = [100, 500, 1000, 5000];
+const PRESET_LIMITS = [100, 500, 1000, 5000];
 
 const VoucherModal = ({ show, onClose, onSave, voucherToEdit, readOnly }) => {
   const [campaigns, setCampaigns] = useState([]);
-  const [stores, setStores]       = useState([]);
+  const [stores, setStores] = useState([]);
 
   const [formData, setFormData] = useState({
-    name:                '',
-    code:                '',
-    voucher_type:        'Fashion',
+    name: '',
+    code: '',
+    voucher_type: 'Fashion',
     discount_percentage: '',
-    usage_limit:         '',
-    campaign:            '',
-    store:               '',
+    usage_limit: '',
+    campaign: '',
+    store: '',
   });
 
   // Load campaigns + stores for selectors
@@ -40,23 +40,23 @@ const VoucherModal = ({ show, onClose, onSave, voucherToEdit, readOnly }) => {
   useEffect(() => {
     if (voucherToEdit) {
       setFormData({
-        name:                voucherToEdit.name || '',
-        code:                voucherToEdit.code || '',
-        voucher_type:        voucherToEdit.voucher_type || 'Fashion',
+        name: voucherToEdit.name || '',
+        code: voucherToEdit.code || '',
+        voucher_type: voucherToEdit.voucher_type || 'Fashion',
         discount_percentage: voucherToEdit.discount_percentage || '',
-        usage_limit:         voucherToEdit.usage_limit || '',
-        campaign:            voucherToEdit.campaign || '',
-        store:               voucherToEdit.store || '',
+        usage_limit: voucherToEdit.usage_limit || '',
+        campaign: voucherToEdit.campaign || '',
+        store: voucherToEdit.store || '',
       });
     } else {
       setFormData({
-        name:                '',
-        code:                '',
-        voucher_type:        'Fashion',
+        name: '',
+        code: '',
+        voucher_type: 'Fashion',
         discount_percentage: '',
-        usage_limit:         '',
-        campaign:            '',
-        store:               '',
+        usage_limit: '',
+        campaign: '',
+        store: '',
       });
     }
   }, [voucherToEdit, show]);
@@ -136,26 +136,26 @@ const VoucherModal = ({ show, onClose, onSave, voucherToEdit, readOnly }) => {
             </div>
           )}
 
-          {/* Store selector — optional */}
+          {/* Store selector */}
           <div className="form-group">
-            <label>Store (optional)</label>
-            {readOnly ? (
-              <input
-                type="text"
-                value={
-                  stores.find(s => s.id === Number(formData.store))?.name ||
-                  formData.store || '—'
-                }
-                disabled
-              />
-            ) : (
-              <select name="store" value={formData.store} onChange={handleChange} disabled={readOnly}>
-                <option value="">— No specific store —</option>
-                {stores.map(s => (
-                  <option key={s.id} value={s.id}>{s.name}</option>
-                ))}
-              </select>
-            )}
+            <label>
+              Store / Branch
+              {filledFields.includes('store_name') && <span className="ocr-filled-tag">OCR</span>}
+            </label>
+            <Combobox
+              value={formData.store_name}
+              onChange={({ text, item }) =>
+                setFormData(prev => ({
+                  ...prev,
+                  store: item ? String(item.id) : '',
+                  store_name: item ? item.name : text,
+                }))
+              }
+              options={stores}
+              placeholder="Type or search store…"
+              getLabel={s => s.name}
+              getValue={s => s.id}
+            />
           </div>
 
           {/* Voucher Name */}
