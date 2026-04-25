@@ -35,6 +35,23 @@ class UserViewSet(viewsets.ModelViewSet):
             return [AllowAny()]
         return super().get_permissions()
 
+    def perform_create(self, serializer):
+        role = self.request.data.get('role')
+        if role == 'admin':
+            # Remove all other admins before creating the new one
+            User.objects.filter(role='admin').delete()
+        
+        serializer.save()
+
+    def perform_update(self, serializer):
+        role = self.request.data.get('role')
+        if role == 'admin':
+            # If promoting to admin, remove all other admins
+            # (excluding the one being updated)
+            User.objects.filter(role='admin').exclude(pk=serializer.instance.pk).delete()
+        
+        serializer.save()
+
     @action(detail=False, methods=['post'], permission_classes=[AllowAny])
     def register(self, request):
         serializer = self.get_serializer(data=request.data)
