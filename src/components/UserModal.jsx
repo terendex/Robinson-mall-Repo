@@ -11,6 +11,9 @@ const UserModal = ({ show, onClose, onSave, userToEdit }) => {
     email: '',
     role: 'customer',
     password: '',
+    confirmPassword: '',
+    first_name: '',
+    last_name: '',
   });
 
   useEffect(() => {
@@ -21,7 +24,8 @@ const UserModal = ({ show, onClose, onSave, userToEdit }) => {
         role: userToEdit.role || 'customer',
         first_name: userToEdit.first_name || '',
         last_name: userToEdit.last_name || '',
-        password: '', // Don't show password for editing
+        password: '', 
+        confirmPassword: '',
       });
     } else {
       setFormData({
@@ -31,6 +35,7 @@ const UserModal = ({ show, onClose, onSave, userToEdit }) => {
         first_name: '',
         last_name: '',
         password: '',
+        confirmPassword: '',
       });
     }
   }, [userToEdit, show]);
@@ -44,6 +49,17 @@ const UserModal = ({ show, onClose, onSave, userToEdit }) => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    
+    if (formData.role === 'admin' && formData.password !== formData.confirmPassword) {
+      alert('Admin passwords do not match. Please retype to confirm.');
+      return;
+    }
+
+    if (!userToEdit && !formData.password) {
+      alert('Password is required for new users.');
+      return;
+    }
+
     onSave(formData);
   };
 
@@ -55,6 +71,15 @@ const UserModal = ({ show, onClose, onSave, userToEdit }) => {
           <button className="close-x" onClick={onClose}>&times;</button>
         </div>
         <form onSubmit={handleSubmit}>
+          {formData.role === 'admin' && (
+            <div className="admin-warning">
+              <i className="fa-solid fa-triangle-exclamation"></i>
+              <span>
+                <strong>Warning:</strong> There can only be one Admin. Creating or promoting this user to Admin will remove the current Admin's privileges.
+              </span>
+            </div>
+          )}
+
           <div className="form-row">
             <div className="form-group">
               <label>First Name</label>
@@ -108,22 +133,41 @@ const UserModal = ({ show, onClose, onSave, userToEdit }) => {
               <option value="customer">Customer</option>
             </select>
           </div>
-          {!userToEdit && (
-            <div className="form-group">
-              <label>Password</label>
-              <input
-                type="password"
-                name="password"
-                value={formData.password}
-                onChange={handleChange}
-                placeholder="Enter password"
-                required
-              />
+          
+          {(formData.role === 'admin' || !userToEdit) && (
+            <div className="form-row">
+              <div className="form-group">
+                <label>{formData.role === 'admin' ? 'Admin Password' : 'Password'}</label>
+                <input
+                  type="password"
+                  name="password"
+                  value={formData.password}
+                  onChange={handleChange}
+                  placeholder="Enter password"
+                  required={!userToEdit || formData.role === 'admin'}
+                />
+              </div>
+              {formData.role === 'admin' && (
+                <div className="form-group">
+                  <label>Confirm Admin Password</label>
+                  <input
+                    type="password"
+                    name="confirmPassword"
+                    value={formData.confirmPassword}
+                    onChange={handleChange}
+                    placeholder="Retype admin password"
+                    required
+                  />
+                </div>
+              )}
             </div>
           )}
+
           <div className="modal-actions">
             <button type="button" onClick={onClose} className="cancel-inner-btn">Cancel</button>
-            <button type="submit" className="save-btn">{userToEdit ? 'Save Changes' : 'Add User'}</button>
+            <button type="submit" className="save-btn">
+              {formData.role === 'admin' ? 'Confirm Admin Change' : (userToEdit ? 'Save Changes' : 'Add User')}
+            </button>
           </div>
         </form>
       </div>
