@@ -209,74 +209,76 @@ const StaffClaims = () => {
                 <i className="fa-solid fa-spinner fa-spin fa-2xl" color="#bdbdbd"></i>
               </div>
             ) : (
-              <table className="claims-table">
-                <thead>
-                  <tr>
-                    <th>Customer</th>
-                    <th>Voucher</th>
-                    <th>Store</th>
-                    <th>Receipt No.</th>
-                    <th>Amount</th>
-                    <th>Date/Time</th>
-                    <th>Status</th>
-                    <th></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {pagedClaims.map((claim) => (
-
-                    <tr key={claim.id}>
-                      <td>
-                        <div className="customer-cell">
-                          <span className="customer-name">{claim.user_name || 'Anonymous User'}</span>
-                          <span className="customer-phone">
-                            <i className="fa-solid fa-phone"></i> {claim.user_phone || 'N/A'}
-                          </span>
-                        </div>
-                      </td>
-                      <td>
-                        <div className="voucher-cell">
-                          <span className="voucher-title">{claim.voucher_name}</span>
-                          <span className="voucher-code">{claim.voucher_code}</span>
-                        </div>
-                      </td>
-                      <td>
-                        <span className="store-name">{claim.store_name}</span>
-                      </td>
-                      <td>
-                        <span className="receipt-no">{claim.receipt_no}</span>
-                      </td>
-                      <td className="amount-cell">
-                        ₱{Number(claim.amount).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}
-                      </td>
-                      <td className="date-cell">
-                        {formatDateTime(claim.created_at)}
-                      </td>
-                      <td>
-                        <span className={`status-badge ${claim.status === 'Approved' ? 'approved-filled' : claim.status.toLowerCase()}`}>
-                          {claim.status}
-                        </span>
-                      </td>
-                      <td className="actions-cell">
-                        <button 
-                          className="view-details-btn-new"
-                          onClick={() => handleViewDetails(claim)}
-                        >
-                          <i className="fa-regular fa-eye"></i> View Details
-                        </button>
-                      </td>
+              <>
+                <table className="claims-table">
+                  <thead>
+                    <tr>
+                      <th>Customer</th>
+                      <th>Voucher</th>
+                      <th>Store</th>
+                      <th>Receipt No.</th>
+                      <th>Amount</th>
+                      <th>Date/Time</th>
+                      <th>Status</th>
+                      <th></th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {pagedClaims.map((claim) => (
 
-              <Pagination
-                currentPage={currentPage}
-                totalPages={totalPages}
-                onPageChange={setCurrentPage}
-                totalItems={filteredClaims.length}
-                pageSize={PAGE_SIZE}
-              />
+                      <tr key={claim.id}>
+                        <td>
+                          <div className="customer-cell">
+                            <span className="customer-name">{claim.user_name || 'Anonymous User'}</span>
+                            <span className="customer-phone">
+                              <i className="fa-solid fa-phone"></i> {claim.user_phone || 'N/A'}
+                            </span>
+                          </div>
+                        </td>
+                        <td>
+                          <div className="voucher-cell">
+                            <span className="voucher-title">{claim.voucher_name}</span>
+                            <span className="voucher-code">{claim.voucher_code}</span>
+                          </div>
+                        </td>
+                        <td>
+                          <span className="store-name">{claim.store_name}</span>
+                        </td>
+                        <td>
+                          <span className="receipt-no">{claim.receipt_no}</span>
+                        </td>
+                        <td className="amount-cell">
+                          ₱{Number(claim.amount).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}
+                        </td>
+                        <td className="date-cell">
+                          {formatDateTime(claim.created_at)}
+                        </td>
+                        <td>
+                          <span className={`status-badge ${claim.status === 'Approved' ? 'approved-filled' : claim.status.toLowerCase()}`}>
+                            {claim.status}
+                          </span>
+                        </td>
+                        <td className="actions-cell">
+                          <button 
+                            className="view-details-btn-new"
+                            onClick={() => handleViewDetails(claim)}
+                          >
+                            <i className="fa-regular fa-eye"></i> View Details
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+
+                <Pagination
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  onPageChange={setCurrentPage}
+                  totalItems={filteredClaims.length}
+                  pageSize={PAGE_SIZE}
+                />
+              </>
             )}
           </div>
         </div>

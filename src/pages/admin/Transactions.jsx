@@ -401,7 +401,8 @@ const Transactions = () => {
                 <i className="fa-solid fa-spinner fa-spin fa-2xl" style={{ color: '#bdbdbd' }}></i>
               </div>
             ) : (
-              <table className="transactions-table">
+              <>
+                <table className="transactions-table">
                 <thead>
                   <tr>
                     <th>Transaction ID</th>
@@ -503,6 +504,7 @@ const Transactions = () => {
                 totalItems={filteredTransactions.length}
                 pageSize={PAGE_SIZE}
               />
+            </>
             )}
           </div>
         </div>

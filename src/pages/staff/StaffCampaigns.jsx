@@ -175,7 +175,8 @@ const StaffCampaigns = () => {
                 <div className="loader"></div>
               </div>
             ) : (
-              <table className="campaigns-table">
+              <>
+                <table className="campaigns-table">
                 <thead>
                   <tr>
                     <th>Campaign</th>
@@ -230,6 +231,7 @@ const StaffCampaigns = () => {
                 totalItems={filteredCampaigns.length}
                 pageSize={PAGE_SIZE}
               />
+              </>
             )}
           </div>
         </div>

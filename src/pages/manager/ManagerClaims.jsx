@@ -210,7 +210,8 @@ const ManagerClaims = () => {
                 <i className="fa-solid fa-spinner fa-spin fa-2xl" color="#bdbdbd"></i>
               </div>
             ) : (
-              <table className="claims-table">
+              <>
+                <table className="claims-table">
                 <thead>
                   <tr>
                     <th>Customer</th>
@@ -278,6 +279,7 @@ const ManagerClaims = () => {
                 totalItems={filteredClaims.length}
                 pageSize={PAGE_SIZE}
               />
+              </>
             )}
           </div>
         </div>

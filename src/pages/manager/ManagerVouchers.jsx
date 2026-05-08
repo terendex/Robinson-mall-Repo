@@ -119,7 +119,8 @@ const ManagerVouchers = () => {
               <div className="loader"></div>
             </div>
           ) : (
-            <table className="vouchers-table">
+            <>
+              <table className="vouchers-table">
               <thead>
                 <tr>
                   <th>Voucher</th>
@@ -190,6 +191,7 @@ const ManagerVouchers = () => {
               totalItems={filteredVouchers.length}
               pageSize={PAGE_SIZE}
             />
+          </>
           )}
           </div>
         </div>
