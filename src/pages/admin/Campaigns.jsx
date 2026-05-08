@@ -3,6 +3,7 @@ import axios from 'axios';
 import CampaignModal from '../../components/CampaignModal';
 import CampaignDetailsModal from '../../components/CampaignDetailsModal';
 import NotificationContext from '../../context/NotificationContext';
+import Pagination from '../../components/Pagination';
 import '../../css/Campaigns.css';
 import '../../css/Transactions.css';
 
@@ -10,10 +11,13 @@ import '../../css/Transactions.css';
  * Campaigns Component
  * Handles the UI and data logic for the Campaigns module.
  */
+const PAGE_SIZE = 10;
+
 const Campaigns = () => {
   const [campaigns, setCampaigns] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
   
   // Status filter state
   const [statusFilters, setStatusFilters] = useState({
@@ -116,7 +120,7 @@ const Campaigns = () => {
         addNotification({ title: refreshedResponse.data.name, message: 'has been updated.', icon: 'fa-tag' });
       } else {
         const response = await axios.post('http://127.0.0.1:8000/api/campaigns/', formData);
-        setCampaigns([...campaigns, response.data]);
+        setCampaigns([response.data, ...campaigns]);
         addNotification({ title: response.data.name, message: 'has been created.', icon: 'fa-plus' });
       }
       setShowModal(false);
@@ -131,6 +135,7 @@ const Campaigns = () => {
       ...prev,
       [status]: !prev[status]
     }));
+    setCurrentPage(1);
   };
 
   const filteredCampaigns = useMemo(() => {
@@ -146,6 +151,13 @@ const Campaigns = () => {
       return matchesSearch && matchesStatus;
     });
   }, [campaigns, searchQuery, statusFilters]);
+
+  // Reset page when search changes
+  useMemo(() => { setCurrentPage(1); }, [searchQuery]);
+
+  // Pagination
+  const totalPages     = Math.ceil(filteredCampaigns.length / PAGE_SIZE);
+  const pagedCampaigns = filteredCampaigns.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
 
   const stats = useMemo(() => {
     return {
@@ -244,64 +256,80 @@ const Campaigns = () => {
                 <div className="loader"></div>
               </div>
             ) : (
-              <table className="campaigns-table">
-                <thead>
-                  <tr>
-                    <th>Campaign</th>
-                    <th>Vouchers</th>
-                    <th>Reach</th>
-                    <th>Conversions</th>
-                    <th>Timeline</th>
-                    <th>Budget</th>
-                    <th>Status</th>
-                    <th></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredCampaigns.map((campaign) => (
-                    <tr key={campaign.id}>
-                      <td className="campaign-name-cell">
-                        {campaign.name}
-                      </td>
-                      <td className="reach-cell">
-                        <span className="voucher-count-badge">
-                          {campaign.voucher_count ?? (campaign.vouchers?.length ?? 0)}
-                        </span>
-                      </td>
-                      <td className="reach-cell">{Number(campaign.reach).toLocaleString()}</td>
-                      <td className="conversions-cell">{Number(campaign.conversions).toLocaleString()}</td>
-                      <td className="timeline-cell">
-                        {formatDateLabel(campaign.start_date)} to<br />
-                        {formatDateLabel(campaign.end_date)}
-                      </td>
-                      <td className="budget-cell">₱{Number(campaign.budget).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
-                      <td>
-                        <span className={`status-badge-new ${campaign.status.toLowerCase()}`}>
-                          {campaign.status}
-                        </span>
-                      </td>
-                      <td className="actions-cell" ref={activeActions === campaign.id ? actionsRef : null}>
-                        <button 
-                          className="table-action-dot"
-                          onClick={() => setActiveActions(activeActions === campaign.id ? null : campaign.id)}
-                        >
-                          <i className="fa-solid fa-ellipsis"></i>
-                        </button>
-                        {activeActions === campaign.id && (
-                          <div className="campaign-action-dropdown show">
-                            <button onClick={() => { setSelectedCampaignForDetails(campaign); setActiveActions(null); }}>
-                              <i className="fa-regular fa-eye"></i> View Campaign Details
-                            </button>
-                            <button onClick={() => { handleEditCampaign(campaign); setActiveActions(null); }}>
-                              <i className="fa-regular fa-pen-to-square"></i> Edit Campaign Details
-                            </button>
-                          </div>
-                        )}
-                      </td>
+              <>
+                <table className="campaigns-table">
+                  <thead>
+                    <tr>
+                      <th>Campaign</th>
+                      <th>Vouchers</th>
+                      <th>Reach</th>
+                      <th>Conversions</th>
+                      <th>Timeline</th>
+                      <th>Budget</th>
+                      <th>Status</th>
+                      <th></th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {pagedCampaigns.length > 0 ? pagedCampaigns.map((campaign) => (
+                      <tr key={campaign.id}>
+                        <td className="campaign-name-cell">
+                          {campaign.name}
+                        </td>
+                        <td className="reach-cell">
+                          <span className="voucher-count-badge">
+                            {campaign.voucher_count ?? (campaign.vouchers?.length ?? 0)}
+                          </span>
+                        </td>
+                        <td className="reach-cell">{Number(campaign.reach).toLocaleString()}</td>
+                        <td className="conversions-cell">{Number(campaign.conversions).toLocaleString()}</td>
+                        <td className="timeline-cell">
+                          {formatDateLabel(campaign.start_date)} to<br />
+                          {formatDateLabel(campaign.end_date)}
+                        </td>
+                        <td className="budget-cell">₱{Number(campaign.budget).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+                        <td>
+                          <span className={`status-badge-new ${campaign.status.toLowerCase()}`}>
+                            {campaign.status}
+                          </span>
+                        </td>
+                        <td className="actions-cell" ref={activeActions === campaign.id ? actionsRef : null}>
+                          <button 
+                            className="table-action-dot"
+                            onClick={() => setActiveActions(activeActions === campaign.id ? null : campaign.id)}
+                          >
+                            <i className="fa-solid fa-ellipsis"></i>
+                          </button>
+                          {activeActions === campaign.id && (
+                            <div className="campaign-action-dropdown show">
+                              <button onClick={() => { setSelectedCampaignForDetails(campaign); setActiveActions(null); }}>
+                                <i className="fa-regular fa-eye"></i> View Campaign Details
+                              </button>
+                              <button onClick={() => { handleEditCampaign(campaign); setActiveActions(null); }}>
+                                <i className="fa-regular fa-pen-to-square"></i> Edit Campaign Details
+                              </button>
+                            </div>
+                          )}
+                        </td>
+                      </tr>
+                    )) : (
+                      <tr>
+                        <td colSpan="8" style={{ textAlign: 'center', padding: '40px', color: '#9e9e9e' }}>
+                          No campaigns found matching your criteria.
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+
+                <Pagination
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  onPageChange={setCurrentPage}
+                  totalItems={filteredCampaigns.length}
+                  pageSize={PAGE_SIZE}
+                />
+              </>
             )}
           </div>
         </div>

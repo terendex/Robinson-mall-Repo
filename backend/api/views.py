@@ -26,9 +26,12 @@ class UserViewSet(viewsets.ModelViewSet):
     API endpoint that allows users to be viewed, created or managed.
     Includes custom actions for public registration and login.
     """
-    queryset = User.objects.all()
+    queryset = User.objects.all().order_by('-date_joined')
     serializer_class = UserSerializer
     permission_classes = [IsAdmin]
+
+    def get_queryset(self):
+        return User.objects.all().order_by('-date_joined')
 
     def get_permissions(self):
         if self.action in ['register', 'login']:
@@ -296,9 +299,12 @@ class PasswordResetView(views.APIView):
 
 
 class VoucherViewSet(viewsets.ModelViewSet):
-    queryset = Voucher.objects.all()
+    queryset = Voucher.objects.all().order_by('-created_at')
     serializer_class = VoucherSerializer
     permission_classes = [IsStaff]
+
+    def get_queryset(self):
+        return Voucher.objects.all().order_by('-created_at')
 
     def get_permissions(self):
         if self.action in ['list', 'retrieve']:
@@ -384,9 +390,12 @@ class CampaignViewSet(viewsets.ModelViewSet):
         return super().get_queryset().order_by('-created_at')
 
 class StoreViewSet(viewsets.ModelViewSet):
-    queryset = Store.objects.all()
+    queryset = Store.objects.all().order_by('-created_at')
     serializer_class = StoreSerializer
     permission_classes = [IsStaff]
+
+    def get_queryset(self):
+        return Store.objects.all().order_by('-created_at')
 
     def get_permissions(self):
         if self.action in ['list', 'retrieve']:

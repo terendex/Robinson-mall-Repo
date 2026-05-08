@@ -3,7 +3,11 @@ import axios from 'axios';
 import TransactionDetailsModal from '../../components/Transactiondetailsmodal';
 import TransactionModal from '../../components/Transactionmodal';
 import { exportCSV, exportExcel, buildTransactionRows } from '../../utils/exportUtils';
+import Pagination from '../../components/Pagination';
 import '../../css/Transactions.css';
+
+const PAGE_SIZE = 10;
+
 
 const Transactions = () => {
   const user = JSON.parse(localStorage.getItem('user') || '{}');
@@ -27,6 +31,8 @@ const Transactions = () => {
 
   // Row actions
   const [activeActions, setActiveActions] = useState(null);
+  const [currentPage, setCurrentPage]     = useState(1);
+
 
   // Reject-reason inline modal state
   const [rejectTarget,       setRejectTarget]       = useState(null);  // txn being rejected
@@ -82,7 +88,7 @@ const Transactions = () => {
         ));
       } else {
         const response = await axios.post('http://127.0.0.1:8000/api/transactions/', apiPayload);
-        setTransactions([...transactions, { ...response.data, receipt_image }]);
+        setTransactions([{ ...response.data, receipt_image }, ...transactions]);
       }
       setShowFormModal(false);
       setTransactionToEdit(null);
@@ -160,6 +166,7 @@ const Transactions = () => {
 
   // ── Filtering ──────────────────────────────────────────────────────
   const filteredTransactions = useMemo(() => {
+    setCurrentPage(1);
     const now = new Date();
     return transactions.filter((t) => {
       const matchesSearch =
@@ -187,6 +194,10 @@ const Transactions = () => {
       return matchesSearch && matchesTime && matchesAmount;
     });
   }, [transactions, searchQuery, timeFilter, amountFilter]);
+
+  // Pagination slice
+  const totalPages           = Math.ceil(filteredTransactions.length / PAGE_SIZE);
+  const pagedTransactions    = filteredTransactions.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
 
   const formatAmount = (amount) => {
     if (!amount && amount !== 0) return '—';
@@ -403,8 +414,8 @@ const Transactions = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredTransactions.length > 0 ? (
-                    filteredTransactions.map((txn) => (
+                  {pagedTransactions.length > 0 ? (
+                    pagedTransactions.map((txn) => (
                       <tr key={txn.id}>
 
                         {/* Transaction ID */}
@@ -484,6 +495,14 @@ const Transactions = () => {
                   )}
                 </tbody>
               </table>
+
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={setCurrentPage}
+                totalItems={filteredTransactions.length}
+                pageSize={PAGE_SIZE}
+              />
             )}
           </div>
         </div>

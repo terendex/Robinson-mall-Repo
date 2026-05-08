@@ -1,7 +1,11 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import axios from 'axios';
 import VoucherModal from '../../components/VoucherModal';
+import Pagination from '../../components/Pagination';
 import '../../css/Vouchers.css';
+
+const PAGE_SIZE = 10;
+
 
 /**
  * StaffVouchers Component
@@ -14,6 +18,8 @@ const StaffVouchers = () => {
   const [statusFilter, setStatusFilter] = useState('All');
   const [showModal, setShowModal] = useState(false);
   const [selectedVoucher, setSelectedVoucher] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+
   
   const [isStatusDropdownOpen, setIsStatusDropdownOpen] = useState(false);
   const statusFilterRef = useRef(null);
@@ -57,6 +63,12 @@ const StaffVouchers = () => {
       return matchesSearch && matchesStatus;
     });
   }, [vouchers, searchQuery, statusFilter]);
+
+  useMemo(() => { setCurrentPage(1); }, [searchQuery, statusFilter]);
+
+  const totalPages    = Math.ceil(filteredVouchers.length / PAGE_SIZE);
+  const pagedVouchers = filteredVouchers.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
+
 
   return (
     <div className="vouchers-page">
@@ -120,7 +132,8 @@ const StaffVouchers = () => {
                 </tr>
               </thead>
               <tbody>
-                {filteredVouchers.map((voucher) => (
+                {pagedVouchers.map((voucher) => (
+
                   <tr key={voucher.id}>
                     <td>
                       <div className="voucher-info-cell">
@@ -168,6 +181,14 @@ const StaffVouchers = () => {
                 ))}
               </tbody>
             </table>
+
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={setCurrentPage}
+              totalItems={filteredVouchers.length}
+              pageSize={PAGE_SIZE}
+            />
           )}
           </div>
         </div>

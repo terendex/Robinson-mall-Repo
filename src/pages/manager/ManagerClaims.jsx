@@ -1,7 +1,11 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import axios from 'axios';
 import ClaimDetailsModal from '../../components/ClaimDetailsModal';
+import Pagination from '../../components/Pagination';
 import '../../css/Claims.css';
+
+const PAGE_SIZE = 10;
+
 
 /**
  * ManagerClaims Component
@@ -23,6 +27,8 @@ const ManagerClaims = () => {
   const [isAmountDropdownOpen, setIsAmountDropdownOpen] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [selectedClaim, setSelectedClaim] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+
   
   const statusFilterRef = useRef(null);
   const amountFilterRef = useRef(null);
@@ -91,6 +97,13 @@ const ManagerClaims = () => {
       return matchesSearch && matchesStatus && matchesAmount;
     });
   }, [claims, searchQuery, statusFilters, amountFilter]);
+
+  // Reset page on filter/search change
+  useMemo(() => { setCurrentPage(1); }, [searchQuery, statusFilters, amountFilter]);
+
+  const totalPages  = Math.ceil(filteredClaims.length / PAGE_SIZE);
+  const pagedClaims = filteredClaims.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
+
 
   const stats = useMemo(() => {
     return {
@@ -211,7 +224,8 @@ const ManagerClaims = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredClaims.map((claim) => (
+                  {pagedClaims.map((claim) => (
+
                     <tr key={claim.id}>
                       <td>
                         <div className="customer-cell">
@@ -256,6 +270,14 @@ const ManagerClaims = () => {
                   ))}
                 </tbody>
               </table>
+
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={setCurrentPage}
+                totalItems={filteredClaims.length}
+                pageSize={PAGE_SIZE}
+              />
             )}
           </div>
         </div>

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import axios from 'axios';
 import UserModal from '../../components/UserModal';
 import ResetPasswordModal from '../../components/ResetPasswordModal';
+import Pagination from '../../components/Pagination';
 import '../../css/Users.css';
 import '../../css/Transactions.css';
 
@@ -9,6 +10,8 @@ import '../../css/Transactions.css';
  * Users Component
  * Handles the UI and data logic for the Users module.
  */
+const PAGE_SIZE = 10;
+
 const Users = () => {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -16,6 +19,7 @@ const Users = () => {
   const [showModal, setShowModal] = useState(false);
   const [userToEdit, setUserToEdit] = useState(null);
   const [activeActions, setActiveActions] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
   const actionsRef = useRef(null);
 
   useEffect(() => {
@@ -71,7 +75,7 @@ const Users = () => {
       } else {
         // Create new user (explicitly set is_active to true)
         const response = await axios.post('http://127.0.0.1:8000/api/users/', { ...payload, is_active: true });
-        setUsers([...users, response.data]);
+        setUsers([response.data, ...users]);
       }
       
       setShowModal(false);
@@ -105,6 +109,7 @@ const Users = () => {
   };
 
   const filteredUsers = useMemo(() => {
+    setCurrentPage(1);
     return users.filter(user => {
       // Exclude admins from the display
       if (user.role === 'admin') return false;
@@ -118,6 +123,10 @@ const Users = () => {
       );
     });
   }, [users, searchQuery]);
+
+  // Pagination slice
+  const totalPages  = Math.ceil(filteredUsers.length / PAGE_SIZE);
+  const pagedUsers  = filteredUsers.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
 
   // Statistics (excluding admins)
   const stats = useMemo(() => {
@@ -204,64 +213,80 @@ const Users = () => {
               <div className="loader"></div>
             </div>
           ) : (
-            <table className="users-table">
-              <thead>
-                <tr>
-                  <th>User</th>
-                  <th>Role</th>
-                  <th>Date Joined</th>
-                  <th>Status</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredUsers.map((user) => (
-                  <tr key={user.id}>
-                    <td>
-                      <div className="user-info">
-                        <div className="user-avatar" style={{ backgroundColor: '#555' }}>
-                          {getInitials(user)}
-                        </div>
-                        <div className="user-details">
-                          <span className="user-name">{getDisplayName(user)}</span>
-                          <span className="user-email">{user.email}</span>
-                        </div>
-                      </div>
-                    </td>
-                    <td>
-                      <span className={`role-pill ${user.role}`}>
-                        {getRoleLabel(user.role)}
-                      </span>
-                    </td>
-                    <td>{new Date(user.date_joined || Date.now()).toISOString().split('T')[0]}</td>
-                    <td>
-                      <span className={`status-pill ${user.is_active ? 'active' : 'pending'}`}>
-                        {user.is_active ? 'Active' : 'Disabled'}
-                      </span>
-                    </td>
-                    <td style={{ position: 'relative' }} ref={activeActions === user.id ? actionsRef : null}>
-                      <button 
-                        className="action-trigger-btn" 
-                        onClick={() => setActiveActions(activeActions === user.id ? null : user.id)}
-                      >
-                        <i className="fa-solid fa-ellipsis-vertical"></i>
-                      </button>
-                      {activeActions === user.id && (
-                        <div className="action-dropdown">
-                          <button onClick={() => handleEditUser(user)}>
-                            <i className="fa-solid fa-pen-to-square"></i> Edit
-                          </button>
-                          <button onClick={() => toggleUserActive(user)}>
-                            <i className={`fa-solid ${user.is_active ? 'fa-user-slash' : 'fa-user-check'}`}></i> 
-                            {user.is_active ? 'Disable Account' : 'Enable Account'}
-                          </button>
-                        </div>
-                      )}
-                    </td>
+            <>
+              <table className="users-table">
+                <thead>
+                  <tr>
+                    <th>User</th>
+                    <th>Role</th>
+                    <th>Date Joined</th>
+                    <th>Status</th>
+                    <th>Actions</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {pagedUsers.length > 0 ? pagedUsers.map((user) => (
+                    <tr key={user.id}>
+                      <td>
+                        <div className="user-info">
+                          <div className="user-avatar" style={{ backgroundColor: '#555' }}>
+                            {getInitials(user)}
+                          </div>
+                          <div className="user-details">
+                            <span className="user-name">{getDisplayName(user)}</span>
+                            <span className="user-email">{user.email}</span>
+                          </div>
+                        </div>
+                      </td>
+                      <td>
+                        <span className={`role-pill ${user.role}`}>
+                          {getRoleLabel(user.role)}
+                        </span>
+                      </td>
+                      <td>{new Date(user.date_joined || Date.now()).toISOString().split('T')[0]}</td>
+                      <td>
+                        <span className={`status-pill ${user.is_active ? 'active' : 'pending'}`}>
+                          {user.is_active ? 'Active' : 'Disabled'}
+                        </span>
+                      </td>
+                      <td style={{ position: 'relative' }} ref={activeActions === user.id ? actionsRef : null}>
+                        <button 
+                          className="action-trigger-btn" 
+                          onClick={() => setActiveActions(activeActions === user.id ? null : user.id)}
+                        >
+                          <i className="fa-solid fa-ellipsis-vertical"></i>
+                        </button>
+                        {activeActions === user.id && (
+                          <div className="action-dropdown">
+                            <button onClick={() => handleEditUser(user)}>
+                              <i className="fa-solid fa-pen-to-square"></i> Edit
+                            </button>
+                            <button onClick={() => toggleUserActive(user)}>
+                              <i className={`fa-solid ${user.is_active ? 'fa-user-slash' : 'fa-user-check'}`}></i> 
+                              {user.is_active ? 'Disable Account' : 'Enable Account'}
+                            </button>
+                          </div>
+                        )}
+                      </td>
+                    </tr>
+                  )) : (
+                    <tr>
+                      <td colSpan="5" style={{ textAlign: 'center', padding: '40px', color: '#9e9e9e' }}>
+                        No users found matching your criteria.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={setCurrentPage}
+                totalItems={filteredUsers.length}
+                pageSize={PAGE_SIZE}
+              />
+            </>
           )}
         </div>
       </div>

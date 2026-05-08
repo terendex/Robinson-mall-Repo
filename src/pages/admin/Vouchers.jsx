@@ -1,12 +1,15 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import axios from 'axios';
 import VoucherModal from '../../components/VoucherModal';
+import Pagination from '../../components/Pagination';
 import '../../css/Vouchers.css';
 
 /**
  * Vouchers Component
  * Handles the UI and data logic for the Vouchers module.
  */
+const PAGE_SIZE = 10;
+
 const Vouchers = () => {
   const [vouchers, setVouchers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -15,6 +18,7 @@ const Vouchers = () => {
   const [showModal, setShowModal] = useState(false);
   const [voucherToEdit, setVoucherToEdit] = useState(null);
   const [activeActions, setActiveActions] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
   const actionsRef = useRef(null);
   const [isStatusDropdownOpen, setIsStatusDropdownOpen] = useState(false);
   const statusFilterRef = useRef(null);
@@ -75,7 +79,7 @@ const Vouchers = () => {
         setVouchers(vouchers.map(v => v.id === voucherToEdit.id ? response.data : v));
       } else {
         const response = await axios.post('http://127.0.0.1:8000/api/vouchers/', formData);
-        setVouchers([...vouchers, response.data]);
+        setVouchers([response.data, ...vouchers]);
       }
       setShowModal(false);
     } catch (error) {
@@ -106,6 +110,13 @@ const Vouchers = () => {
       return matchesSearch && matchesStatus;
     });
   }, [vouchers, searchQuery, statusFilter]);
+
+  // Reset to page 1 on search/filter change
+  useMemo(() => { setCurrentPage(1); }, [searchQuery, statusFilter]);
+
+  // Pagination
+  const totalPages    = Math.ceil(filteredVouchers.length / PAGE_SIZE);
+  const pagedVouchers = filteredVouchers.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
 
   return (
     <div className="vouchers-page">
@@ -141,7 +152,7 @@ const Vouchers = () => {
                     <div 
                       key={val} 
                       className="filter-option"
-                      onClick={() => { setStatusFilter(val); setIsStatusDropdownOpen(false); }}
+                      onClick={() => { setStatusFilter(val); setIsStatusDropdownOpen(false); setCurrentPage(1); }}
                     >
                       {val === statusFilter && <i className="fa-solid fa-check"></i>}
                       <span style={{ marginLeft: val === statusFilter ? 0 : 28 }}>{val === 'All' ? 'All Status' : val}</span>
@@ -158,83 +169,99 @@ const Vouchers = () => {
               <div className="loader"></div>
             </div>
           ) : (
-            <table className="vouchers-table">
-              <thead>
-                <tr>
-                  <th>Voucher</th>
-                  <th>Campaign</th>
-                  <th>Store</th>
-                  <th>Type</th>
-                  <th>Discount</th>
-                  <th>Usage</th>
-                  <th>Status</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredVouchers.map((voucher) => (
-                  <tr key={voucher.id}>
-                    <td>
-                      <div className="voucher-info-cell">
-                        <span className="voucher-name">{voucher.name}</span>
-                        <span className="voucher-code">{voucher.code}</span>
-                      </div>
-                    </td>
-                    <td className="voucher-campaign-cell">
-                      {voucher.campaign_name
-                        ? <span className="voucher-campaign-tag">{voucher.campaign_name}</span>
-                        : <span style={{ color: '#bbb', fontSize: '0.8rem' }}>—</span>
-                      }
-                    </td>
-                    <td className="voucher-store-cell">
-                      {voucher.store_name
-                        ? <span className="voucher-store-tag"><i className="fa-solid fa-store" style={{ fontSize: '0.7rem', marginRight: '0.3rem' }}></i>{voucher.store_name}</span>
-                        : <span style={{ color: '#bbb', fontSize: '0.8rem' }}>—</span>
-                      }
-                    </td>
-                    <td className="voucher-type-cell">{voucher.voucher_type}</td>
-                    <td className="discount-cell">{voucher.discount_percentage}%</td>
-                    <td className="usage-cell">
-                      <span className="usage-text">{voucher.usage_count}/{voucher.usage_limit}</span>
-                      <div className="progress-bar-container">
-                        <div 
-                          className="progress-bar-fill" 
-                          style={{ width: `${Math.min((voucher.usage_count / voucher.usage_limit) * 100, 100)}%` }}
-                        ></div>
-                      </div>
-                    </td>
-                    <td>
-                      <span className={`status-badge ${voucher.is_active ? 'active' : 'inactive'}`}>
-                        {voucher.is_active ? 'Active' : 'Inactive'}
-                      </span>
-                    </td>
-                    <td style={{ textAlign: 'center' }}>
-                      <div 
-                        style={{ position: 'relative', display: 'inline-block' }} 
-                        ref={activeActions === voucher.id ? actionsRef : null}
-                      >
-                        <button 
-                          className="triple-dot-btn" 
-                          onClick={() => setActiveActions(activeActions === voucher.id ? null : voucher.id)}
-                        >
-                          <i className="fa-solid fa-ellipsis-vertical"></i>
-                        </button>
-                        {activeActions === voucher.id && (
-                          <div className="dot-menu show">
-                            <button onClick={() => handleEditVoucher(voucher)}>
-                              <i className="fa-solid fa-pen-to-square"></i> Edit
-                            </button>
-                            <button onClick={() => toggleVoucherStatus(voucher)}>
-                              <i className={`fa-solid ${voucher.is_active ? 'fa-ban' : 'fa-check'}`}></i> {voucher.is_active ? 'Disable' : 'Active'}
-                            </button>
-                          </div>
-                        )}
-                      </div>
-                    </td>
+            <>
+              <table className="vouchers-table">
+                <thead>
+                  <tr>
+                    <th>Voucher</th>
+                    <th>Campaign</th>
+                    <th>Store</th>
+                    <th>Type</th>
+                    <th>Discount</th>
+                    <th>Usage</th>
+                    <th>Status</th>
+                    <th>Actions</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {pagedVouchers.length > 0 ? pagedVouchers.map((voucher) => (
+                    <tr key={voucher.id}>
+                      <td>
+                        <div className="voucher-info-cell">
+                          <span className="voucher-name">{voucher.name}</span>
+                          <span className="voucher-code">{voucher.code}</span>
+                        </div>
+                      </td>
+                      <td className="voucher-campaign-cell">
+                        {voucher.campaign_name
+                          ? <span className="voucher-campaign-tag">{voucher.campaign_name}</span>
+                          : <span style={{ color: '#bbb', fontSize: '0.8rem' }}>—</span>
+                        }
+                      </td>
+                      <td className="voucher-store-cell">
+                        {voucher.store_name
+                          ? <span className="voucher-store-tag"><i className="fa-solid fa-store" style={{ fontSize: '0.7rem', marginRight: '0.3rem' }}></i>{voucher.store_name}</span>
+                          : <span style={{ color: '#bbb', fontSize: '0.8rem' }}>—</span>
+                        }
+                      </td>
+                      <td className="voucher-type-cell">{voucher.voucher_type}</td>
+                      <td className="discount-cell">{voucher.discount_percentage}%</td>
+                      <td className="usage-cell">
+                        <span className="usage-text">{voucher.usage_count}/{voucher.usage_limit}</span>
+                        <div className="progress-bar-container">
+                          <div 
+                            className="progress-bar-fill" 
+                            style={{ width: `${Math.min((voucher.usage_count / voucher.usage_limit) * 100, 100)}%` }}
+                          ></div>
+                        </div>
+                      </td>
+                      <td>
+                        <span className={`status-badge ${voucher.is_active ? 'active' : 'inactive'}`}>
+                          {voucher.is_active ? 'Active' : 'Inactive'}
+                        </span>
+                      </td>
+                      <td style={{ textAlign: 'center' }}>
+                        <div 
+                          style={{ position: 'relative', display: 'inline-block' }} 
+                          ref={activeActions === voucher.id ? actionsRef : null}
+                        >
+                          <button 
+                            className="triple-dot-btn" 
+                            onClick={() => setActiveActions(activeActions === voucher.id ? null : voucher.id)}
+                          >
+                            <i className="fa-solid fa-ellipsis-vertical"></i>
+                          </button>
+                          {activeActions === voucher.id && (
+                            <div className="dot-menu show">
+                              <button onClick={() => handleEditVoucher(voucher)}>
+                                <i className="fa-solid fa-pen-to-square"></i> Edit
+                              </button>
+                              <button onClick={() => toggleVoucherStatus(voucher)}>
+                                <i className={`fa-solid ${voucher.is_active ? 'fa-ban' : 'fa-check'}`}></i> {voucher.is_active ? 'Disable' : 'Active'}
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  )) : (
+                    <tr>
+                      <td colSpan="8" style={{ textAlign: 'center', padding: '40px', color: '#9e9e9e' }}>
+                        No vouchers found matching your criteria.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={setCurrentPage}
+                totalItems={filteredVouchers.length}
+                pageSize={PAGE_SIZE}
+              />
+            </>
           )}
           </div>
         </div>

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import axios from 'axios';
+import Pagination from '../../components/Pagination';
 import '../../css/Claims.css';
 import '../../css/Transactions.css';
 
@@ -7,10 +8,13 @@ import '../../css/Transactions.css';
  * Claims Component
  * Handles the UI and data logic for the Claims module.
  */
+const PAGE_SIZE = 10;
+
 const Claims = () => {
   const [claims, setClaims] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
   
   // Filter states
   const [statusFilters, setStatusFilters] = useState({
@@ -77,6 +81,7 @@ const Claims = () => {
       ...prev,
       [status]: !prev[status]
     }));
+    setCurrentPage(1);
   };
 
   const filteredClaims = useMemo(() => {
@@ -105,6 +110,13 @@ const Claims = () => {
       return matchesSearch && matchesStatus && matchesAmount;
     });
   }, [claims, searchQuery, statusFilters, amountFilter]);
+
+  // Reset to page 1 on search/filter change
+  useMemo(() => { setCurrentPage(1); }, [searchQuery, amountFilter]);
+
+  // Pagination
+  const totalPages  = Math.ceil(filteredClaims.length / PAGE_SIZE);
+  const pagedClaims = filteredClaims.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
 
   const stats = useMemo(() => {
     return {
@@ -175,7 +187,7 @@ const Claims = () => {
                     <div 
                       key={val} 
                       className="filter-option"
-                      onClick={() => { setAmountFilter(val); setIsAmountDropdownOpen(false); }}
+                      onClick={() => { setAmountFilter(val); setIsAmountDropdownOpen(false); setCurrentPage(1); }}
                     >
                       {val === amountFilter && <i className="fa-solid fa-check"></i>}
                       <span style={{ marginLeft: val === amountFilter ? 0 : 28 }}>{val}</span>
@@ -214,89 +226,99 @@ const Claims = () => {
                 <i className="fa-solid fa-spinner fa-spin fa-2xl" color="#bdbdbd"></i>
               </div>
             ) : (
-              <table className="claims-table">
-                <thead>
-                  <tr>
-                    <th>Customer</th>
-                    <th>Voucher</th>
-                    <th>Store</th>
-                    <th>Receipt No.</th>
-                    <th>Amount</th>
-                    <th>Date/Time</th>
-                    <th>Status</th>
-                    <th></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredClaims.map((claim) => (
-                    <tr key={claim.id}>
-                      <td>
-                        <div className="customer-cell">
-                          <span className="customer-name">{claim.user_name || 'Anonymous User'}</span>
-                          <span className="customer-phone">
-                            <i className="fa-solid fa-phone"></i> {claim.user_phone || 'N/A'}
-                          </span>
-                        </div>
-                      </td>
-                      <td>
-                        <div className="voucher-cell">
-                          <span className="voucher-title">{claim.voucher_name}</span>
-                          <span className="voucher-code">{claim.voucher_code}</span>
-                        </div>
-                      </td>
-                      <td>
-                        <span className="store-name">{claim.store_name}</span>
-                      </td>
-                      <td>
-                        <span className="receipt-no">{claim.receipt_no}</span>
-                      </td>
-                      <td className="amount-cell">
-                        ₱{Number(claim.amount).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}
-                      </td>
-                      <td className="date-cell">
-                        {formatDateTime(claim.created_at)}
-                      </td>
-                      <td>
-                        <span className={`status-badge ${claim.status === 'Approved' ? 'approved-filled' : claim.status.toLowerCase()}`}>
-                          {claim.status}
-                        </span>
-                      </td>
-                      <td className="actions-cell" ref={activeActions === claim.id ? actionsRef : null}>
-                        <button 
-                          className="action-dot-btn"
-                          onClick={() => setActiveActions(activeActions === claim.id ? null : claim.id)}
-                        >
-                          <i className="fa-solid fa-ellipsis"></i>
-                        </button>
-                        {activeActions === claim.id && (
-                          <div className="action-dropdown">
-                            <button className="action-item" onClick={() => setActiveActions(null)}>
-                              <i className="fa-regular fa-eye"></i> View Claim Details
-                            </button>
-                            <button className="action-item" onClick={() => setActiveActions(null)}>
-                              <i className="fa-regular fa-pen-to-square"></i> Edit Claim Details
-                            </button>
-                            <div className="action-divider"></div>
-                            <button className="action-item approve" onClick={() => handleStatusUpdate(claim.id, 'Approved')}>
-                              <i className="fa-solid fa-check"></i> Approve Claim
-                            </button>
-                            <button className="action-item reject" onClick={() => handleStatusUpdate(claim.id, 'Rejected')}>
-                              <i className="fa-solid fa-xmark"></i> Reject Claim
-                            </button>
-                          </div>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                  {filteredClaims.length === 0 && (
+              <>
+                <table className="claims-table">
+                  <thead>
                     <tr>
-                      <td colSpan="8" style={{ textAlign: 'center', padding: '40px', color: '#9e9e9e' }}>
-                        No claims found matching your criteria.
-                      </td>
+                      <th>Customer</th>
+                      <th>Voucher</th>
+                      <th>Store</th>
+                      <th>Receipt No.</th>
+                      <th>Amount</th>
+                      <th>Date/Time</th>
+                      <th>Status</th>
+                      <th></th>
                     </tr>
-                  )}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {pagedClaims.map((claim) => (
+                      <tr key={claim.id}>
+                        <td>
+                          <div className="customer-cell">
+                            <span className="customer-name">{claim.user_name || 'Anonymous User'}</span>
+                            <span className="customer-phone">
+                              <i className="fa-solid fa-phone"></i> {claim.user_phone || 'N/A'}
+                            </span>
+                          </div>
+                        </td>
+                        <td>
+                          <div className="voucher-cell">
+                            <span className="voucher-title">{claim.voucher_name}</span>
+                            <span className="voucher-code">{claim.voucher_code}</span>
+                          </div>
+                        </td>
+                        <td>
+                          <span className="store-name">{claim.store_name}</span>
+                        </td>
+                        <td>
+                          <span className="receipt-no">{claim.receipt_no}</span>
+                        </td>
+                        <td className="amount-cell">
+                          ₱{Number(claim.amount).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}
+                        </td>
+                        <td className="date-cell">
+                          {formatDateTime(claim.created_at)}
+                        </td>
+                        <td>
+                          <span className={`status-badge ${claim.status === 'Approved' ? 'approved-filled' : claim.status.toLowerCase()}`}>
+                            {claim.status}
+                          </span>
+                        </td>
+                        <td className="actions-cell" ref={activeActions === claim.id ? actionsRef : null}>
+                          <button 
+                            className="action-dot-btn"
+                            onClick={() => setActiveActions(activeActions === claim.id ? null : claim.id)}
+                          >
+                            <i className="fa-solid fa-ellipsis"></i>
+                          </button>
+                          {activeActions === claim.id && (
+                            <div className="action-dropdown">
+                              <button className="action-item" onClick={() => setActiveActions(null)}>
+                                <i className="fa-regular fa-eye"></i> View Claim Details
+                              </button>
+                              <button className="action-item" onClick={() => setActiveActions(null)}>
+                                <i className="fa-regular fa-pen-to-square"></i> Edit Claim Details
+                              </button>
+                              <div className="action-divider"></div>
+                              <button className="action-item approve" onClick={() => handleStatusUpdate(claim.id, 'Approved')}>
+                                <i className="fa-solid fa-check"></i> Approve Claim
+                              </button>
+                              <button className="action-item reject" onClick={() => handleStatusUpdate(claim.id, 'Rejected')}>
+                                <i className="fa-solid fa-xmark"></i> Reject Claim
+                              </button>
+                            </div>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                    {filteredClaims.length === 0 && (
+                      <tr>
+                        <td colSpan="8" style={{ textAlign: 'center', padding: '40px', color: '#9e9e9e' }}>
+                          No claims found matching your criteria.
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+
+                <Pagination
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  onPageChange={setCurrentPage}
+                  totalItems={filteredClaims.length}
+                  pageSize={PAGE_SIZE}
+                />
+              </>
             )}
           </div>
         </div>

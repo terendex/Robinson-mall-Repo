@@ -1,7 +1,11 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import axios from 'axios';
 import CampaignDetailsModal from '../../components/CampaignDetailsModal';
+import Pagination from '../../components/Pagination';
 import '../../css/Campaigns.css';
+
+const PAGE_SIZE = 10;
+
 
 /**
  * ManagerCampaigns Component
@@ -20,6 +24,8 @@ const ManagerCampaigns = () => {
   const [isStatusDropdownOpen, setIsStatusDropdownOpen] = useState(false);
   const [activeActions, setActiveActions] = useState(null);
   const [selectedCampaignForDetails, setSelectedCampaignForDetails] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+
   
   const statusFilterRef = useRef(null);
   const actionsRef = useRef(null);
@@ -73,6 +79,13 @@ const ManagerCampaigns = () => {
       return matchesSearch && matchesStatus;
     });
   }, [campaigns, searchQuery, statusFilters]);
+
+  // Reset page on search/filter
+  useMemo(() => { setCurrentPage(1); }, [searchQuery, statusFilters]);
+
+  const totalPages     = Math.ceil(filteredCampaigns.length / PAGE_SIZE);
+  const pagedCampaigns = filteredCampaigns.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
+
 
   const stats = useMemo(() => {
     return {
@@ -182,7 +195,8 @@ const ManagerCampaigns = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredCampaigns.map((campaign) => (
+                  {pagedCampaigns.map((campaign) => (
+
                     <tr key={campaign.id}>
                       <td className="campaign-name-cell">{campaign.name}</td>
                       <td className="reach-cell">
@@ -214,6 +228,14 @@ const ManagerCampaigns = () => {
                   ))}
                 </tbody>
               </table>
+
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={setCurrentPage}
+                totalItems={filteredCampaigns.length}
+                pageSize={PAGE_SIZE}
+              />
             )}
           </div>
         </div>
