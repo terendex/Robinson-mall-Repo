@@ -33,33 +33,10 @@ class Store(models.Model):
     def __str__(self):
         return self.name
 
-class Voucher(models.Model):
-    """
-    Defines a generic discount type or promotional item (e.g. 50% Fashion Voucher).
-    """
-    VOUCHER_TYPES = (
-        ('Fashion', 'Fashion'),
-        ('Food & Beverage', 'Food & Beverage'),
-        ('Entertainment', 'Entertainment'),
-        ('Beauty', 'Beauty'),
-        ('Electronics', 'Electronics'),
-    )
-    name = models.CharField(max_length=100)
-    code = models.CharField(max_length=50, unique=True)
-    voucher_type = models.CharField(max_length=50, choices=VOUCHER_TYPES)
-    discount_percentage = models.IntegerField()
-    usage_limit = models.IntegerField()
-    usage_count = models.IntegerField(default=0)
-    is_active = models.BooleanField(default=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-
-    def __str__(self):
-        return f"{self.name} ({self.code})"
-
 class Campaign(models.Model):
     """
-    Wraps a Voucher with timing and budget logic. Keeps track of conversions.
+    Wraps multiple Vouchers with timing and budget logic. Keeps track of conversions.
+    A Campaign must be created before Vouchers can be added to it (1:M Campaign→Voucher).
     """
     STATUS_CHOICES = (
         ('Active', 'Active'),
@@ -68,7 +45,6 @@ class Campaign(models.Model):
         ('Inactive', 'Inactive'),
     )
     name = models.CharField(max_length=100)
-    voucher = models.ForeignKey(Voucher, on_delete=models.CASCADE, related_name='campaigns')
     status = models.CharField(max_length=50, choices=STATUS_CHOICES, default='Active')
     budget = models.DecimalField(max_digits=10, decimal_places=2)
     start_date = models.DateField()
@@ -80,6 +56,56 @@ class Campaign(models.Model):
 
     def __str__(self):
         return self.name
+
+class Voucher(models.Model):
+    """
+    Defines a specific discount type or promotional item (e.g. 50% Fashion Voucher).
+    A Voucher must belong to a Campaign (campaign is required).
+    A Voucher may also be assigned to a specific Store (optional).
+    One Campaign can have many Vouchers (1:M).
+    One Store can have many Vouchers (1:M).
+    """
+    VOUCHER_TYPES = (
+        ('Fashion', 'Fashion'),
+        ('Food & Beverage', 'Food & Beverage'),
+        ('Entertainment', 'Entertainment'),
+        ('Beauty', 'Beauty'),
+        ('Electronics', 'Electronics'),
+    )
+
+    DISCOUNT_CHOICES = (5, 10, 15, 20, 25, 30, 50)
+
+    name = models.CharField(max_length=100)
+    code = models.CharField(max_length=50, unique=True)
+    voucher_type = models.CharField(max_length=50, choices=VOUCHER_TYPES)
+    discount_percentage = models.IntegerField()
+    usage_limit = models.IntegerField()
+    usage_count = models.IntegerField(default=0)
+    is_active = models.BooleanField(default=True)
+
+    # Campaign FK — required (campaign must precede voucher)
+    campaign = models.ForeignKey(
+        Campaign,
+        on_delete=models.SET_NULL,
+        related_name='vouchers',
+        null=True,
+        blank=True,
+    )
+
+    # Store FK — optional (store can have many vouchers)
+    store = models.ForeignKey(
+        Store,
+        on_delete=models.SET_NULL,
+        related_name='vouchers',
+        null=True,
+        blank=True,
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.name} ({self.code})"
 
 class Claim(models.Model):
     """
@@ -101,6 +127,65 @@ class Claim(models.Model):
 
     def __str__(self):
         return f"Claim {self.receipt_no} - {self.status}"
+
+class Transaction(models.Model):
+    """
+    Records a single voucher redemption transaction entered by staff.
+    Acts as an audit log: stores de-normalised receipt data so it
+    remains readable even if the related Voucher is later modified.
+
+    Lifecycle: always created as Pending. Staff can then move to Redeemed or Rejected.
+    Rejected transactions require a rejection_reason.
+    """
+    STATUS_CHOICES = (
+        ('Pending',   'Pending'),
+        ('Approved',  'Approved'),
+        ('Rejected',  'Rejected'),
+        ('Expired',   'Expired'),   # legacy / read-only
+    )
+
+    # Auto-generated unique transaction reference (TXN-XXXXXX)
+    transaction_id = models.CharField(max_length=20, unique=True, blank=True)
+
+    # De-normalised receipt fields (stored as plain text, not FKs)
+    receipt_no   = models.CharField(max_length=100, blank=True, default='')
+    user_name    = models.CharField(max_length=200, blank=True, default='')
+    voucher_name = models.CharField(max_length=200, blank=True, default='')
+    voucher_code = models.CharField(max_length=100, blank=True, default='')
+
+    # Store — FK reference (preferred) + de-normalised fallback
+    store        = models.ForeignKey(
+        Store,
+        on_delete=models.SET_NULL,
+        related_name='transactions',
+        null=True,
+        blank=True,
+    )
+    store_name   = models.CharField(max_length=200, blank=True, default='')
+
+    amount       = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    expiry_date  = models.DateField(null=True, blank=True)
+    status       = models.CharField(max_length=20, choices=STATUS_CHOICES, default='Pending')
+
+    # Rejection workflow
+    rejection_reason = models.TextField(blank=True, default='')
+
+    created_at   = models.DateTimeField(auto_now_add=True)
+    updated_at   = models.DateTimeField(auto_now=True)
+
+    def save(self, *args, **kwargs):
+        """Auto-generate a short transaction_id on first save. Sync store_name from FK."""
+        if not self.transaction_id:
+            import uuid
+            self.transaction_id = 'TXN-' + uuid.uuid4().hex[:8].upper()
+        # Keep de-normalised store_name in sync with the FK
+        if self.store_id and not self.store_name:
+            self.store_name = self.store.name
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"{self.transaction_id} — {self.user_name}"
+
 
 class Notification(models.Model):
     """
@@ -159,3 +244,20 @@ def create_campaign_notification(sender, instance, created, **kwargs):
             message=f"Campaign '{instance.name}' has been created and is now {instance.status}.",
             notification_type='success'
         )
+
+@receiver(post_save, sender=Transaction)
+def update_campaign_conversions(sender, instance, created, **kwargs):
+    """
+    When a transaction is marked Approved, increment the conversions counter
+    on the associated campaign (looked up via the transaction's voucher_code).
+    Uses update_fields to avoid recursive signal triggers.
+    """
+    if not created and instance.status == 'Approved' and instance.voucher_code:
+        try:
+            voucher = Voucher.objects.get(code=instance.voucher_code)
+            if voucher.campaign_id:
+                Campaign.objects.filter(pk=voucher.campaign_id).update(
+                    conversions=models.F('conversions') + 1
+                )
+        except Voucher.DoesNotExist:
+            pass

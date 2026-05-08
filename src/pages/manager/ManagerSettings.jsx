@@ -1,19 +1,10 @@
 import React from 'react';
+import SettingsPage from '../../components/SettingsPage';
+import '../../css/Settings.css';
 
 /**
- * ManagerSettings Component
- * Handles the UI and data logic for the ManagerSettings module.
+ * ManagerSettings Component — Manager portal
  */
-const ManagerSettings = () => {
-  return (
-    <div className="placeholder-page" style={{ padding: '40px', textAlign: 'center' }}>
-      <h1>Settings</h1>
-      <p>Account and profile settings are being implemented.</p>
-      <div style={{ marginTop: '40px', fontSize: '100px', color: '#ef4444' }}>
-        <i className="fa-solid fa-gear"></i>
-      </div>
-    </div>
-  );
-};
+const ManagerSettings = () => <SettingsPage />;
 
 export default ManagerSettings;

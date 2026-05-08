@@ -72,8 +72,9 @@ const StaffCampaigns = () => {
   const stats = useMemo(() => {
     return {
       active: campaigns.filter(c => c.status === 'Active').length,
-      reach: campaigns.reduce((sum, c) => sum + (c.reach || 0), 0).toLocaleString(),
-      scheduled: campaigns.filter(c => c.status === 'Scheduled').length,
+      reach:       campaigns.reduce((sum, c) => sum + (c.reach        || 0), 0).toLocaleString(),
+      scheduled:   campaigns.filter(c => c.status === 'Scheduled').length,
+      conversions: campaigns.reduce((sum, c) => sum + (c.conversions  || 0), 0).toLocaleString(),
     };
   }, [campaigns]);
 
@@ -101,6 +102,10 @@ const StaffCampaigns = () => {
           <div className="campaign-stat-card">
             <div className="stat-title">SCHEDULED CAMPAIGNS</div>
             <div className="stat-value">{stats.scheduled}</div>
+          </div>
+          <div className="campaign-stat-card">
+            <div className="stat-title">TOTAL CONVERSIONS</div>
+            <div className="stat-value">{stats.conversions}</div>
           </div>
         </div>
 
@@ -162,6 +167,7 @@ const StaffCampaigns = () => {
                 <thead>
                   <tr>
                     <th>Campaign</th>
+                    <th>Vouchers</th>
                     <th>Reach</th>
                     <th>Conversions</th>
                     <th>Timeline</th>
@@ -174,6 +180,11 @@ const StaffCampaigns = () => {
                   {filteredCampaigns.map((campaign) => (
                     <tr key={campaign.id}>
                       <td className="campaign-name-cell">{campaign.name}</td>
+                      <td className="reach-cell">
+                        <span className="voucher-count-badge">
+                          {campaign.voucher_count ?? (campaign.vouchers?.length ?? 0)}
+                        </span>
+                      </td>
                       <td className="reach-cell">{Number(campaign.reach).toLocaleString()}</td>
                       <td className="conversions-cell">{Number(campaign.conversions).toLocaleString()}</td>
                       <td className="timeline-cell">

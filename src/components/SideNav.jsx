@@ -33,6 +33,7 @@ const SideNav = ({ user, isOpen, closeSidebar }) => {
     { to: `${pathPrefix}/claims`, icon: 'fa-gift', label: role === 'customer' ? 'My Claims' : 'Claims' },
     { to: `${pathPrefix}/transactions`, icon: 'fa-clock-rotate-left', label: 'Transactions' },
     ...(role === 'admin' ? [{ to: `${pathPrefix}/users`, icon: 'fa-user-group', label: 'Users' }] : []),
+    ...(role === 'admin' || role === 'manager' ? [{ to: `${pathPrefix}/shops`, icon: 'fa-store', label: 'Shops' }] : []),
     ...(role !== 'staff' && role !== 'customer' ? [{ to: `${pathPrefix}/reports`, icon: 'fa-chart-simple', label: 'Reports' }] : []),
     { to: `${pathPrefix}/settings`, icon: 'fa-gear', label: 'Settings' },
   ];

@@ -348,3 +348,19 @@
   width: 16px;
   text-align: center;
 }
+
+/* ─────────────────────────────────────────────────────
+   Campaign table — voucher count badge
+   ───────────────────────────────────────────────────── */
+.voucher-count-badge {
+  display: inline-block;
+  min-width: 1.75rem;
+  padding: 0.2rem 0.55rem;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #334155;
+  text-align: center;
+}

@@ -2,12 +2,252 @@
    TransactionModal — OCR-specific styles
    ───────────────────────────────────────────── */
 
+/* ─────────────────────────────────────────────
+   Voucher searchable dropdown
+   ───────────────────────────────────────────── */
+
+.voucher-select-wrapper {
+  position: relative;
+}
+
+.voucher-select-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.55rem 0.875rem;
+  background: #fff;
+  border: 1px solid #d1d5db;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  font-size: 0.875rem;
+  transition: border-color 0.15s, box-shadow 0.15s;
+  min-height: 42px;
+}
+
+.voucher-select-trigger:hover,
+.voucher-select-trigger.open {
+  border-color: #c50000;
+  box-shadow: 0 0 0 3px rgba(197, 0, 0, 0.08);
+}
+
+.voucher-select-trigger i {
+  color: #9ca3af;
+  font-size: 0.75rem;
+  flex-shrink: 0;
+  transition: color 0.15s;
+}
+
+.voucher-select-trigger.open i {
+  color: #c50000;
+}
+
+.voucher-select-placeholder {
+  color: #9ca3af;
+}
+
+.voucher-select-chosen {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.voucher-select-chosen strong {
+  color: #111827;
+  font-weight: 600;
+}
+
+.voucher-select-code {
+  font-size: 0.75rem;
+  color: #6b7280;
+  font-family: 'Courier New', monospace;
+  background: #f3f4f6;
+  padding: 0.1rem 0.4rem;
+  border-radius: 0.25rem;
+}
+
+.voucher-select-dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.625rem;
+  box-shadow: 0 10px 30px -5px rgba(0,0,0,0.15);
+  z-index: 200;
+  overflow: hidden;
+  animation: dropdownFadeIn 0.12s ease;
+}
+
+.voucher-select-search {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 0.875rem;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.voucher-select-search i {
+  color: #9ca3af;
+  font-size: 0.8rem;
+  flex-shrink: 0;
+}
+
+.voucher-select-search input {
+  border: none;
+  outline: none;
+  font-size: 0.875rem;
+  color: #111827;
+  width: 100%;
+  background: transparent;
+}
+
+.voucher-select-list {
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+.voucher-select-option {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  padding: 0.6rem 0.875rem;
+  cursor: pointer;
+  transition: background 0.12s;
+}
+
+.voucher-select-option:hover {
+  background: #fef2f2;
+}
+
+.voucher-select-option.selected {
+  background: #fff0f0;
+}
+
+.voucher-select-option.clear-option {
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.voucher-select-none {
+  color: #9ca3af;
+  font-size: 0.875rem;
+}
+
+.voucher-opt-name {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #111827;
+}
+
+.voucher-opt-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.voucher-opt-code {
+  font-size: 0.75rem;
+  color: #6b7280;
+  font-family: 'Courier New', monospace;
+  background: #f3f4f6;
+  padding: 0.1rem 0.35rem;
+  border-radius: 0.25rem;
+}
+
+.voucher-opt-discount {
+  font-size: 0.75rem;
+  color: #c50000;
+  font-weight: 600;
+}
+
+.voucher-select-empty {
+  padding: 1rem 0.875rem;
+  color: #9ca3af;
+  font-size: 0.875rem;
+  text-align: center;
+}
+
+
+
 /* ── Scan section sits between header and form ── */
 .ocr-scan-section {
   padding: 0 1.5rem 0.25rem;
 }
 
-/* ── Primary scan button ── */
+/* ── Choice wrapper (Camera vs Upload) ── */
+.ocr-choice-wrapper {
+  background: #fff5f5;
+  border: 1.5px dashed #c50000;
+  border-radius: 0.75rem;
+  padding: 1rem 1.25rem;
+}
+
+.ocr-choice-label {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #c50000;
+  margin: 0 0 0.75rem;
+  letter-spacing: 0.01em;
+}
+
+.ocr-choice-buttons {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.ocr-choice-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.65rem 1rem;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.18s, transform 0.12s, box-shadow 0.18s;
+  border: none;
+}
+
+.ocr-choice-btn:active {
+  transform: scale(0.97);
+}
+
+.ocr-choice-btn.camera {
+  background: #c50000;
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(197, 0, 0, 0.25);
+}
+
+.ocr-choice-btn.camera:hover {
+  background: #a50000;
+  box-shadow: 0 4px 14px rgba(197, 0, 0, 0.35);
+}
+
+.ocr-choice-btn.upload {
+  background: #fff;
+  color: #c50000;
+  border: 1.5px solid #c50000;
+}
+
+.ocr-choice-btn.upload:hover {
+  background: #fee2e2;
+}
+
+.ocr-choice-divider {
+  font-size: 0.75rem;
+  color: #9ca3af;
+  font-weight: 500;
+  flex-shrink: 0;
+}
+
+/* ── Primary scan button (legacy, kept for fallback) ── */
 .ocr-scan-btn {
   display: flex;
   align-items: center;
@@ -85,8 +325,8 @@
 }
 
 .ocr-thumb {
-  width: 48px;
-  height: 48px;
+  width: 52px;
+  height: 64px;
   object-fit: cover;
   border-radius: 0.375rem;
   border: 1px solid #d1fae5;
@@ -137,6 +377,28 @@
   background: #dcfce7;
 }
 
+/* ── Debug button (shows raw OCR text in console) ── */
+.ocr-debug-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.25rem 0.6rem;
+  background: transparent;
+  border: 1px solid #d1d5db;
+  border-radius: 0.375rem;
+  color: #9ca3af;
+  font-size: 0.725rem;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s, color 0.15s;
+}
+
+.ocr-debug-btn:hover {
+  background: #f3f4f6;
+  color: #6b7280;
+}
+
 /* ── OCR tag badge next to label ── */
 .ocr-filled-tag {
   display: inline-block;
@@ -149,4 +411,307 @@
   font-weight: 700;
   letter-spacing: 0.03em;
   vertical-align: middle;
+}
+
+/* ─────────────────────────────────────────────
+   TransactionDetailsModal — Receipt section
+   ───────────────────────────────────────────── */
+
+/* Receipt image thumbnail in details modal */
+.txn-audit-receipt-section {
+  padding: 0 1.5rem 0.75rem;
+}
+
+.txn-audit-receipt-heading {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin: 0 0 0.6rem;
+}
+
+.txn-audit-receipt-thumb-wrap {
+  position: relative;
+  display: inline-block;
+  cursor: zoom-in;
+  border-radius: 0.5rem;
+  overflow: hidden;
+  border: 2px solid #e5e7eb;
+  transition: border-color 0.2s;
+}
+
+.txn-audit-receipt-thumb-wrap:hover {
+  border-color: #c50000;
+}
+
+.txn-audit-receipt-thumb {
+  display: block;
+  max-height: 160px;
+  max-width: 100%;
+  object-fit: contain;
+}
+
+.txn-audit-receipt-zoom-hint {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0);
+  color: white;
+  font-size: 1.25rem;
+  opacity: 0;
+  transition: background 0.2s, opacity 0.2s;
+}
+
+.txn-audit-receipt-thumb-wrap:hover .txn-audit-receipt-zoom-hint {
+  background: rgba(0, 0, 0, 0.35);
+  opacity: 1;
+}
+
+/* Mono text for receipt/voucher codes */
+.txn-audit-mono {
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 0.82rem;
+  letter-spacing: 0.04em;
+}
+
+/* Amount highlight */
+.txn-audit-amount {
+  font-weight: 700;
+  color: #c50000;
+  font-size: 1rem;
+}
+
+/* ── Receipt lightbox overlay ── */
+.receipt-lightbox-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.75);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fadeIn 0.15s ease;
+}
+
+.receipt-lightbox-content {
+  position: relative;
+  background: white;
+  border-radius: 0.75rem;
+  padding: 1rem;
+  max-width: 90vw;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.5);
+}
+
+.receipt-lightbox-close {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  width: 32px;
+  height: 32px;
+  border-radius: 9999px;
+  background: #f3f4f6;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.875rem;
+  color: #374151;
+  transition: background 0.15s;
+  z-index: 1;
+}
+
+.receipt-lightbox-close:hover {
+  background: #e5e7eb;
+}
+
+.receipt-lightbox-img {
+  display: block;
+  max-width: 100%;
+  max-height: 80vh;
+  object-fit: contain;
+  border-radius: 0.375rem;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+/* ── Real camera viewfinder ── */
+.camera-viewfinder-wrapper {
+  width: 100%;
+  background: #000;
+  border-radius: 0.75rem;
+  overflow: hidden;
+  position: relative;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.35);
+}
+
+.camera-viewfinder {
+  width: 100%;
+  max-height: 280px;
+  object-fit: cover;
+  display: block;
+}
+
+.camera-viewfinder-controls {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1.25rem;
+  background: linear-gradient(to top, rgba(0,0,0,0.7) 0%, transparent 100%);
+}
+
+.camera-shutter-btn {
+  width: 56px;
+  height: 56px;
+  border-radius: 9999px;
+  background: #fff;
+  border: 4px solid rgba(255,255,255,0.6);
+  box-shadow: 0 0 0 3px rgba(255,255,255,0.3);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  color: #c50000;
+  transition: transform 0.12s, box-shadow 0.12s;
+}
+
+.camera-shutter-btn:active {
+  transform: scale(0.9);
+  box-shadow: 0 0 0 5px rgba(197, 0, 0, 0.3);
+}
+
+.camera-cancel-btn {
+  background: rgba(255,255,255,0.15);
+  border: 1px solid rgba(255,255,255,0.35);
+  border-radius: 0.5rem;
+  color: #fff;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  padding: 0.4rem 0.9rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  transition: background 0.15s;
+  width: 80px;
+  justify-content: center;
+}
+
+.camera-cancel-btn:hover {
+  background: rgba(255,255,255,0.28);
+}
+
+.camera-error-msg {
+  color: #b91c1c;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  margin: 0.5rem 0 0;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+/* ── Store tag inside voucher option ── */
+.voucher-opt-store {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.71rem;
+  color: #64748b;
+  background: #f1f5f9;
+  padding: 0.1rem 0.4rem;
+  border-radius: 0.25rem;
+  white-space: nowrap;
+}
+
+/* ── Status badge reused in modal ── */
+.txn-status-badge {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.txn-status-badge.pending  { background: #fef9c3; color: #a16207; }
+.txn-status-badge.redeemed { background: #dcfce7; color: #15803d; }
+.txn-status-badge.rejected { background: #fee2e2; color: #b91c1c; }
+.txn-status-badge.expired  { background: #f3f4f6; color: #6b7280; }
+
+/* ── Combobox (store + customer name) ── */
+.combobox-wrapper {
+  position: relative;
+}
+
+.combobox-wrapper input {
+  width: 100%;
+  padding: 12px 15px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 14px;
+  color: #333;
+  box-sizing: border-box;
+  transition: border-color 0.2s;
+  outline: none;
+}
+
+.combobox-wrapper input:focus {
+  border-color: #c50000;
+}
+
+.combobox-dropdown {
+  position: absolute;
+  top: calc(100% + 3px);
+  left: 0;
+  right: 0;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.625rem;
+  box-shadow: 0 10px 30px -5px rgba(0,0,0,0.15);
+  z-index: 500;
+  max-height: 200px;
+  overflow-y: auto;
+  animation: dropdownFadeIn 0.12s ease;
+}
+
+.combobox-option {
+  padding: 0.6rem 0.875rem;
+  font-size: 0.875rem;
+  color: #111827;
+  cursor: pointer;
+  transition: background 0.12s;
+}
+
+.combobox-option:hover {
+  background: #fef2f2;
+  color: #c50000;
+}
+
+.combobox-empty {
+  padding: 0.75rem 0.875rem;
+  font-size: 0.82rem;
+  color: #9ca3af;
+  font-style: italic;
 }

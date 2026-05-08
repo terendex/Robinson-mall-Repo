@@ -48,9 +48,54 @@
   transition: background 0.2s, border-color 0.2s;
 }
 
-.export-report-btn:hover {
+.export-report-btn:hover,
+.export-report-btn.active {
   background-color: #f8fafc;
-  border-color: #cbd5e1;
+  border-color: #c50000;
+  color: #c50000;
+}
+
+/* ── Export dropdown ── */
+.txn-export-wrap {
+  position: relative;
+}
+
+.txn-export-dropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.625rem;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.12);
+  min-width: 190px;
+  z-index: 150;
+  overflow: hidden;
+  animation: dropdownFadeIn 0.15s ease;
+}
+
+.txn-export-item {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  width: 100%;
+  padding: 0.65rem 1rem;
+  background: none;
+  border: none;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #334155;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.15s;
+}
+
+.txn-export-item:not(:last-child) {
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.txn-export-item:hover {
+  background: #f8fafc;
 }
 
 .new-transaction-btn {
@@ -512,4 +557,160 @@
 .txn-form-modal {
   max-width: 480px !important;
   width: 90% !important;
+}
+
+/* ── Rejected status badge ── */
+.txn-status-badge.rejected {
+  background: #fee2e2;
+  color:       #b91c1c;
+}
+
+/* ── Rejected stat card accent ── */
+.txn-stat-card--rejected .stat-value {
+  color: #b91c1c;
+}
+
+/* ── Action dropdown divider ── */
+.txn-action-divider {
+  height: 1px;
+  background: #f1f5f9;
+  margin: 0.3rem 0;
+}
+
+/* ── Redeemed action item ── */
+.txn-action-item.txn-action-redeem {
+  color: #15803d;
+}
+.txn-action-item.txn-action-redeem:hover {
+  background: #f0fdf4;
+}
+
+/* ── Rejected action item ── */
+.txn-action-item.txn-action-reject {
+  color: #b91c1c;
+}
+.txn-action-item.txn-action-reject:hover {
+  background: #fef2f2;
+}
+
+/* ── Audit modal: rejection row ── */
+.txn-audit-rejection-row {
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+
+.txn-audit-rejection-reason {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  padding: 0.5rem 0.75rem;
+  color: #7f1d1d;
+  font-size: 0.83rem;
+  font-weight: 500;
+  line-height: 1.5;
+  max-width: 220px;
+  text-align: right;
+}
+
+/* ── Audit modal: extra fields (mono) ── */
+.txn-audit-mono {
+  font-family: 'Courier New', monospace;
+  font-size: 0.82rem;
+  letter-spacing: 0.03em;
+}
+
+.txn-audit-amount {
+  color: #c40000;
+  font-size: 1rem;
+}
+
+/* ── Receipt thumbnail in audit ── */
+.txn-audit-receipt-section {
+  padding: 0 1.5rem 0.5rem;
+}
+
+.txn-audit-receipt-heading {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #64748b;
+  margin: 0 0 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.txn-audit-receipt-thumb-wrap {
+  position: relative;
+  display: inline-block;
+  cursor: pointer;
+  border-radius: 0.5rem;
+  overflow: hidden;
+}
+
+.txn-audit-receipt-thumb {
+  width: 100%;
+  max-height: 140px;
+  object-fit: cover;
+  border-radius: 0.5rem;
+  display: block;
+}
+
+.txn-audit-receipt-zoom-hint {
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 1.25rem;
+  opacity: 0;
+  transition: opacity 0.2s;
+  border-radius: 0.5rem;
+}
+
+.txn-audit-receipt-thumb-wrap:hover .txn-audit-receipt-zoom-hint {
+  opacity: 1;
+}
+
+/* ── Lightbox ── */
+.receipt-lightbox-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.75);
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.receipt-lightbox-content {
+  position: relative;
+  max-width: 90vw;
+  max-height: 90vh;
+}
+
+.receipt-lightbox-img {
+  max-width: 100%;
+  max-height: 90vh;
+  border-radius: 0.75rem;
+  display: block;
+}
+
+.receipt-lightbox-close {
+  position: absolute;
+  top: -0.75rem;
+  right: -0.75rem;
+  background: #fff;
+  border: none;
+  border-radius: 50%;
+  width: 2rem;
+  height: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  color: #334155;
 }

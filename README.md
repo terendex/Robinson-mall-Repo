@@ -8,12 +8,13 @@ A full-stack web application for Robinson Mall featuring:
 
 ## Tech Stack
 
-| Layer    | Technology                                                  |
-| -------- | ----------------------------------------------------------- |
-| Frontend | React 19, Vite, Recharts, React Router v7, Axios, Lucide/FontAwesome |
-| Backend  | Django 6, Django REST Framework, django-cors-headers         |
-| Database | SQLite (with Django Signals for automation)                 |
-| Email    | SendGrid                                                    |
+| Layer    | Technology                                                                          |
+| -------- | ----------------------------------------------------------------------------------- |
+| Frontend | React 19, Vite, Recharts, React Router v7, Axios, FontAwesome, SheetJS (xlsx)       |
+| Backend  | Django 6, Django REST Framework, django-cors-headers                                |
+| Database | SQLite (with Django Signals for automation)                                         |
+| OCR      | Tesseract.js (browser-based, no API key required)                                   |
+| Email    | SendGrid                                                                            |
 
 ---
 
@@ -45,7 +46,7 @@ npm install
 
 If you ever need to manually install the specific libraries used in this project (like for charts and routing), run:
 ```bash
-npm install recharts react-router-dom axios react-icons react-datepicker
+npm install recharts react-router-dom axios@1.14.0 react-icons react-datepicker xlsx tesseract.js
 ```
 
 ---
@@ -91,6 +92,8 @@ DEFAULT_FROM_EMAIL=your_email@example.com
 python manage.py migrate
 ```
 
+> This applies all migrations including the `Transaction` model added in migration `0014`.
+
 #### e) Create a superuser (optional — for admin access)
 
 ```bash
@@ -135,6 +138,23 @@ The app will be available at **http://localhost:5173/**
 
 ---
 
+## API Endpoints
+
+| Endpoint | Method | Description |
+|---|---|---|
+| `/api/users/` | GET / POST | User management |
+| `/api/vouchers/` | GET / POST | Voucher types |
+| `/api/campaigns/` | GET / POST | Campaigns (auto status updates) |
+| `/api/stores/` | GET / POST | Participating stores |
+| `/api/claims/` | GET / POST | Customer voucher claims |
+| `/api/transactions/` | GET / POST / PATCH | Transaction audit records |
+| `/api/notifications/` | GET / POST | System notifications |
+| `/api/dashboard-stats/` | GET | Aggregated KPIs for dashboard & reports |
+| `/api/users/login/` | POST | JWT login |
+| `/api/token/refresh/` | POST | Refresh access token |
+
+---
+
 ## Project Structure
 
 ```
@@ -146,11 +166,14 @@ Robinson-mall-Repo/
 │   ├── db.sqlite3          # SQLite database
 │   └── manage.py           # Django management script
 ├── src/                    # React frontend source
-│   ├── components/         # Reusable React components
-│   ├── pages/              # Page components (admin, manager, staff, customer)
-│   ├── styles/             # CSS stylesheets
+│   ├── components/         # Reusable components (modals, nav, etc.)
+│   ├── pages/              # Page components
+│   │   └── admin/          # Admin pages (Dashboard, Reports, Transactions, ...)
+│   ├── utils/
+│   │   └── exportUtils.js  # Shared CSV + Excel export helpers (SheetJS)
+│   ├── css/                # CSS stylesheets per page/component
 │   ├── assets/             # Static assets
-│   ├── App.jsx             # Root application component
+│   ├── App.jsx             # Root application + routing
 │   └── main.jsx            # Entry point
 ├── public/                 # Public static files
 ├── index.html              # HTML entry point

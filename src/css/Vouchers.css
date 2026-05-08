@@ -340,3 +340,43 @@
     display: none;
   }
 }
+
+/* ─────────────────────────────────────────────────────
+   Voucher table — Campaign & Store tags
+   ───────────────────────────────────────────────────── */
+.voucher-campaign-cell,
+.voucher-store-cell {
+  text-align: left !important;
+}
+
+.voucher-campaign-tag {
+  display: inline-block;
+  padding: 0.2rem 0.65rem;
+  background: #eff6ff;
+  color: #1d4ed8;
+  border: 1px solid #bfdbfe;
+  border-radius: 20px;
+  font-size: 0.76rem;
+  font-weight: 600;
+  white-space: nowrap;
+  max-width: 160px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.voucher-store-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.2rem 0.65rem;
+  background: #f0fdf4;
+  color: #15803d;
+  border: 1px solid #bbf7d0;
+  border-radius: 20px;
+  font-size: 0.76rem;
+  font-weight: 600;
+  white-space: nowrap;
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

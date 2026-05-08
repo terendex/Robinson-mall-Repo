@@ -3,7 +3,7 @@ import smtplib
 import os
 from django.conf import settings
 from django.contrib.auth.tokens import default_token_generator
-from django.core.mail import send_mail
+from django.core.mail import send_mail, EmailMultiAlternatives
 from django.shortcuts import get_object_or_404
 from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode
@@ -17,8 +17,8 @@ from django.contrib.auth import authenticate, login
 from django.db.models import Sum, Count
 from django.utils import timezone
 from datetime import datetime, timedelta
-from .models import User, Voucher, Campaign, Store, Claim, Notification
-from .serializers import UserSerializer, VoucherSerializer, CampaignSerializer, StoreSerializer, ClaimSerializer, NotificationSerializer
+from .models import User, Voucher, Campaign, Store, Claim, Notification, Transaction
+from .serializers import UserSerializer, VoucherSerializer, CampaignSerializer, StoreSerializer, ClaimSerializer, NotificationSerializer, TransactionSerializer
 
 
 class UserViewSet(viewsets.ModelViewSet):
@@ -33,7 +33,74 @@ class UserViewSet(viewsets.ModelViewSet):
     def get_permissions(self):
         if self.action in ['register', 'login']:
             return [AllowAny()]
+        if self.action == 'me':
+            return [IsAuthenticated()]
         return super().get_permissions()
+
+    @action(detail=False, methods=['get', 'patch'], permission_classes=[IsAuthenticated])
+    def me(self, request):
+        """Allows any authenticated user to view or update their own profile."""
+        user = request.user
+        if request.method == 'GET':
+            serializer = self.get_serializer(user)
+            return Response(serializer.data)
+
+        # PATCH — partial update
+        data = request.data.copy()
+        # Prevent role escalation
+        data.pop('role', None)
+        data.pop('is_staff', None)
+        data.pop('is_superuser', None)
+
+        # Handle password change separately
+        old_password = data.pop('old_password', None)
+        new_password = data.pop('new_password', None)
+
+        if new_password:
+            if not old_password:
+                return Response({'detail': 'Current password is required to set a new one.'}, status=status.HTTP_400_BAD_REQUEST)
+            if not user.check_password(old_password):
+                return Response({'detail': 'Current password is incorrect.'}, status=status.HTTP_400_BAD_REQUEST)
+            user.set_password(new_password)
+            user.save(update_fields=['password'])
+
+        # Update other profile fields
+        if data:
+            serializer = self.get_serializer(user, data=data, partial=True)
+            if serializer.is_valid():
+                serializer.save()
+            else:
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        # Return fresh user data
+        refresh = RefreshToken.for_user(user)
+        return Response({
+            'id': user.id,
+            'role': user.role,
+            'email': user.email,
+            'username': user.username,
+            'first_name': user.first_name,
+            'last_name': user.last_name,
+            'phone_number': user.phone_number,
+            'access': str(refresh.access_token),
+            'refresh': str(refresh),
+        }, status=status.HTTP_200_OK)
+    def perform_create(self, serializer):
+        role = self.request.data.get('role')
+        if role == 'admin':
+            # Remove all other admins before creating the new one
+            User.objects.filter(role='admin').delete()
+        
+        serializer.save()
+
+    def perform_update(self, serializer):
+        role = self.request.data.get('role')
+        if role == 'admin':
+            # If promoting to admin, remove all other admins
+            # (excluding the one being updated)
+            User.objects.filter(role='admin').exclude(pk=serializer.instance.pk).delete()
+        
+        serializer.save()
 
     @action(detail=False, methods=['post'], permission_classes=[AllowAny])
     def register(self, request):
@@ -90,14 +157,107 @@ class PasswordResetRequestView(views.APIView):
         # Link structure for the frontend
         reset_link = f"{settings.FRONTEND_URL}/password-reset/{uid}/{token}/"
 
+        # ── Branded HTML email body ───────────────────────────────────
+        subject = 'Password Reset Request – Robinson Mall'
+        plain_text = (
+            f"Hi {user.first_name or user.username},\n\n"
+            f"We received a request to reset the password for your Robinson Mall account.\n\n"
+            f"Click the link below to set a new password (valid for 1 hour):\n{reset_link}\n\n"
+            f"If you didn't request this, you can safely ignore this email — your password won't change.\n\n"
+            f"— The Robinson Mall Team"
+        )
+        html_body = f"""
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>Password Reset</title>
+        </head>
+        <body style="margin:0;padding:0;background:#f4f4f4;font-family:'Segoe UI',Arial,sans-serif;">
+          <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f4;padding:40px 16px;">
+            <tr>
+              <td align="center">
+                <table width="100%" style="max-width:520px;background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.09);">
+
+                  <!-- Header -->
+                  <tr>
+                    <td style="background:#C40000;padding:28px 40px;text-align:center;">
+                      <h1 style="margin:0;color:#ffffff;font-size:22px;font-weight:700;letter-spacing:0.5px;">
+                        Robinson Mall
+                      </h1>
+                      <p style="margin:4px 0 0;color:rgba(255,255,255,0.80);font-size:13px;">
+                        Loyalty &amp; Rewards Portal
+                      </p>
+                    </td>
+                  </tr>
+
+                  <!-- Body -->
+                  <tr>
+                    <td style="padding:40px 40px 32px;">
+                      <p style="margin:0 0 6px;font-size:15px;color:#1a1a1a;font-weight:600;">
+                        Hi {user.first_name or user.username},
+                      </p>
+                      <p style="margin:0 0 24px;font-size:14px;color:#555;line-height:1.7;">
+                        We received a request to reset the password for your Robinson Mall account.
+                        Click the button below to choose a new password.
+                        This link is valid for <strong>1 hour</strong>.
+                      </p>
+
+                      <!-- CTA Button -->
+                      <table width="100%" cellpadding="0" cellspacing="0">
+                        <tr>
+                          <td align="center" style="padding:8px 0 28px;">
+                            <a href="{reset_link}"
+                               style="display:inline-block;padding:14px 36px;background:#C40000;color:#ffffff;
+                                      text-decoration:none;border-radius:8px;font-size:15px;font-weight:700;
+                                      letter-spacing:0.3px;">
+                              Reset My Password
+                            </a>
+                          </td>
+                        </tr>
+                      </table>
+
+                      <p style="margin:0 0 8px;font-size:13px;color:#888;line-height:1.6;">
+                        If the button doesn't work, copy and paste this link into your browser:
+                      </p>
+                      <p style="margin:0 0 24px;word-break:break-all;">
+                        <a href="{reset_link}" style="font-size:12.5px;color:#C40000;">{reset_link}</a>
+                      </p>
+
+                      <p style="margin:0;font-size:13px;color:#aaa;line-height:1.6;">
+                        If you didn't request a password reset, you can safely ignore this email —
+                        your password will remain unchanged.
+                      </p>
+                    </td>
+                  </tr>
+
+                  <!-- Footer -->
+                  <tr>
+                    <td style="background:#fafafa;border-top:1px solid #f0f0f0;padding:20px 40px;text-align:center;">
+                      <p style="margin:0;font-size:12px;color:#bbb;">
+                        &copy; 2025 Robinson Mall. All rights reserved.
+                      </p>
+                    </td>
+                  </tr>
+
+                </table>
+              </td>
+            </tr>
+          </table>
+        </body>
+        </html>
+        """
+
         try:
-            send_mail(
-                'Password Reset Request',
-                f'Click the link to reset your password: {reset_link}',
-                settings.DEFAULT_FROM_EMAIL,
-                [email],
-                fail_silently=False,
+            msg = EmailMultiAlternatives(
+                subject=subject,
+                body=plain_text,
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                to=[email],
             )
+            msg.attach_alternative(html_body, "text/html")
+            msg.send(fail_silently=False)
         except smtplib.SMTPAuthenticationError:
             return Response({
                 'detail': 'Email service is currently unavailable. Please try again later.'
@@ -150,6 +310,9 @@ class CampaignViewSet(viewsets.ModelViewSet):
     """
     Provides CRUD for campaigns while dynamically overriding get_queryset 
     to automatically progress Scheduled -> Active -> Completed based on dates.
+
+    New campaigns are always created with status='Active' regardless of what
+    the client sends.
     """
     queryset = Campaign.objects.all()
     serializer_class = CampaignSerializer
@@ -159,6 +322,49 @@ class CampaignViewSet(viewsets.ModelViewSet):
         if self.action in ['list', 'retrieve']:
             return [IsAuthenticated()]
         return super().get_permissions()
+
+    def perform_create(self, serializer):
+        """
+        Validate start_date and auto-assign status:
+          - Past date → rejected (400)
+          - Today      → Active
+          - Future     → Scheduled
+        """
+        from datetime import date
+        start_date = serializer.validated_data.get('start_date')
+        today = timezone.localtime().date()
+
+        if start_date and start_date < today:
+            from rest_framework.exceptions import ValidationError
+            raise ValidationError(
+                {'start_date': 'Start date cannot be in the past.'}
+            )
+
+        auto_status = 'Active' if (not start_date or start_date <= today) else 'Scheduled'
+        serializer.save(status=auto_status)
+
+    def perform_update(self, serializer):
+        """
+        On edit, also re-derive status from the updated start_date
+        (unless the campaign is already Completed).
+        """
+        from datetime import date
+        instance = self.get_object()
+        start_date = serializer.validated_data.get('start_date', instance.start_date)
+        today = timezone.localtime().date()
+
+        if start_date and start_date < today:
+            from rest_framework.exceptions import ValidationError
+            raise ValidationError(
+                {'start_date': 'Start date cannot be in the past.'}
+            )
+
+        # Only re-derive status if not already Completed
+        if instance.status != 'Completed':
+            auto_status = 'Active' if start_date <= today else 'Scheduled'
+            serializer.save(status=auto_status)
+        else:
+            serializer.save()
 
     def get_queryset(self):
         today = timezone.localtime().date()
@@ -186,6 +392,15 @@ class StoreViewSet(viewsets.ModelViewSet):
         if self.action in ['list', 'retrieve']:
             return [IsAuthenticated()]
         return super().get_permissions()
+
+    @action(detail=True, methods=['get'], permission_classes=[IsAuthenticated])
+    def vouchers(self, request, pk=None):
+        """List all vouchers assigned to this store."""
+        store = self.get_object()
+        from .serializers import VoucherSerializer
+        qs = store.vouchers.all()
+        serializer = VoucherSerializer(qs, many=True)
+        return Response(serializer.data)
 
 class ClaimViewSet(viewsets.ModelViewSet):
     """
@@ -233,6 +448,80 @@ class NotificationViewSet(viewsets.ModelViewSet):
             is_read=False
         ).update(is_read=True)
         return Response({'status': 'notifications marked as read for current user'})
+
+class TransactionViewSet(viewsets.ModelViewSet):
+    """
+    CRUD endpoint for Transaction audit records.
+    - Staff/Manager/Admin: full read + write access.
+    - Customers: no access (403).
+
+    Creation rules:
+      - status is always forced to 'Pending' on creation
+      - Updates may only set status to 'Redeemed' or 'Rejected'
+      - 'Rejected' requires a non-empty rejection_reason
+
+    Supports optional query-param filters:
+      ?status=Redeemed  →  filter by status
+      ?search=keyword   →  filter by user_name, store_name, receipt_no or transaction_id
+    """
+    queryset = Transaction.objects.all().order_by('-created_at')
+    serializer_class = TransactionSerializer
+    permission_classes = [IsStaff]
+
+    def perform_create(self, serializer):
+        """Force status to Pending on all new transactions."""
+        serializer.save(status='Pending')
+
+    def get_queryset(self):
+        qs = Transaction.objects.all().order_by('-created_at')
+
+        status_param = self.request.query_params.get('status')
+        if status_param:
+            qs = qs.filter(status=status_param)
+
+        search_param = self.request.query_params.get('search')
+        if search_param:
+            from django.db.models import Q
+            qs = qs.filter(
+                Q(user_name__icontains=search_param) |
+                Q(store_name__icontains=search_param) |
+                Q(receipt_no__icontains=search_param) |
+                Q(transaction_id__icontains=search_param)
+            )
+
+        return qs
+
+    @action(detail=True, methods=['patch'], permission_classes=[IsStaff])
+    def update_status(self, request, pk=None):
+        """
+        Dedicated status-update endpoint.
+        Accepts: { "status": "Redeemed" | "Rejected", "rejection_reason": "..." }
+        Validates transition rules and rejection reason requirement.
+        """
+        transaction = self.get_object()
+        new_status = request.data.get('status')
+        rejection_reason = request.data.get('rejection_reason', '').strip()
+
+        if new_status not in ('Approved', 'Rejected'):
+            return Response(
+                {'detail': 'Status must be Approved or Rejected.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        if new_status == 'Rejected' and not rejection_reason:
+            return Response(
+                {'rejection_reason': 'A rejection reason is required when rejecting a transaction.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        transaction.status = new_status
+        if new_status == 'Rejected':
+            transaction.rejection_reason = rejection_reason
+        transaction.save(update_fields=['status', 'rejection_reason', 'updated_at'])
+
+        serializer = self.get_serializer(transaction)
+        return Response(serializer.data)
+
 
 class DashboardStatsView(views.APIView):
     """
