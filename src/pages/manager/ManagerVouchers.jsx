@@ -130,7 +130,7 @@ const ManagerVouchers = () => {
                   <th>Discount</th>
                   <th>Usage</th>
                   <th>Status</th>
-                  <th style={{ textAlign: 'right' }}>Actions</th>
+                  <th>Actions</th>
                 </tr>
               </thead>
               <tbody>

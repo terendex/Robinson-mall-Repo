@@ -163,8 +163,27 @@
   white-space: normal;
 }
 
-.vouchers-table th:nth-child(n+2):nth-child(-n+5),
-.vouchers-table td:nth-child(n+2):nth-child(-n+5) {
+/* Voucher, Campaign, Store, Type: Left align (default is left for th) */
+.vouchers-table th:nth-child(1),
+.vouchers-table td:nth-child(1),
+.vouchers-table th:nth-child(2),
+.vouchers-table td:nth-child(2),
+.vouchers-table th:nth-child(3),
+.vouchers-table td:nth-child(3),
+.vouchers-table th:nth-child(4),
+.vouchers-table td:nth-child(4) {
+  text-align: left;
+}
+
+/* Discount, Usage, Status, Actions: Center align */
+.vouchers-table th:nth-child(5),
+.vouchers-table td:nth-child(5),
+.vouchers-table th:nth-child(6),
+.vouchers-table td:nth-child(6),
+.vouchers-table th:nth-child(7),
+.vouchers-table td:nth-child(7),
+.vouchers-table th:nth-child(8),
+.vouchers-table td:nth-child(8) {
   text-align: center;
 }
 
@@ -346,7 +365,7 @@
    ───────────────────────────────────────────────────── */
 .voucher-campaign-cell,
 .voucher-store-cell {
-  text-align: left !important;
+  /* Already handled by nth-child rules above */
 }
 
 .voucher-campaign-tag {

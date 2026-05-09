@@ -129,7 +129,7 @@ const StaffVouchers = () => {
                   <th>Discount</th>
                   <th>Usage</th>
                   <th>Status</th>
-                  <th style={{ textAlign: 'right' }}></th>
+                  <th>Actions</th>
                 </tr>
               </thead>
               <tbody>
