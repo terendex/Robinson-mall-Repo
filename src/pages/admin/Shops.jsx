@@ -1,8 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import Pagination from '../../components/Pagination';
-import '../../css/Transactions.css';
-import '../../css/Vouchers.css';
+import '../../css/Shops.css';
 
 /**
  * Shops Page — Admin & Manager
@@ -114,25 +113,30 @@ const Shops = () => {
   const totalPages   = Math.ceil(filtered.length / PAGE_SIZE);
   const pagedStores  = filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
 
+  const getInitials = (name) => {
+    if (!name) return 'S';
+    return name.charAt(0).toUpperCase();
+  };
+
   return (
-    <div className="transactions-page">
-      <div className="transactions-container">
+    <div className="shops-page">
+      <div className="shops-container">
 
         {/* ── Header ── */}
-        <div className="transactions-header">
-          <h1>Shops &amp; Stores</h1>
-          <button className="new-transaction-btn" onClick={openCreate}>
+        <div className="shops-header">
+          <h1>Shops & Stores</h1>
+          <button className="add-shop-btn" onClick={openCreate}>
             <i className="fa-solid fa-plus"></i> Add Store
           </button>
         </div>
 
         {/* ── Stat Cards ── */}
-        <div className="txn-stats">
-          <div className="txn-stat-card">
+        <div className="shops-stats">
+          <div className="shop-stat-card">
             <div className="stat-title">TOTAL STORES</div>
             <div className="stat-value">{stores.length}</div>
           </div>
-          <div className="txn-stat-card">
+          <div className="shop-stat-card">
             <div className="stat-title">TOTAL VOUCHERS ASSIGNED</div>
             <div className="stat-value">
               {stores.reduce((sum, s) => sum + (s.voucher_count || 0), 0)}
@@ -141,9 +145,9 @@ const Shops = () => {
         </div>
 
         {/* ── Table Section ── */}
-        <div className="txn-table-section">
-          <div className="txn-table-controls">
-            <div className="txn-search-wrapper">
+        <div className="shop-list-section">
+          <div className="shop-table-controls">
+            <div className="shop-search-wrapper">
               <i className="fa-solid fa-magnifying-glass"></i>
               <input
                 type="text"
@@ -154,14 +158,14 @@ const Shops = () => {
             </div>
           </div>
 
-          <div className="txn-table-wrapper">
+          <div className="shop-table-wrapper">
             {loading ? (
-              <div className="txn-loading">
+              <div className="shop-loading">
                 <i className="fa-solid fa-spinner fa-spin fa-2xl" style={{ color: '#bdbdbd' }}></i>
               </div>
             ) : (
               <>
-                <table className="transactions-table">
+                <table className="shops-table">
                   <thead>
                     <tr>
                       <th>#</th>
@@ -178,32 +182,32 @@ const Shops = () => {
                         <td style={{ color: '#94a3b8', fontSize: '0.8rem' }}>
                           {(currentPage - 1) * PAGE_SIZE + idx + 1}
                         </td>
-                        <td className="txn-customer-name">{store.name}</td>
+                        <td className="store-name" style={{ textAlign: 'left', color: '#1a1a1a' }}>{store.name}</td>
                         <td style={{ color: '#64748b' }}>{store.location || '—'}</td>
                         <td>
-                          <span className="voucher-count-badge">{store.voucher_count ?? 0}</span>
+                          <span className="vouchers-badge">{store.voucher_count ?? 0} Vouchers</span>
                         </td>
-                        <td className="txn-date-cell">
+                        <td>
                           {store.created_at ? new Date(store.created_at).toISOString().split('T')[0] : '—'}
                         </td>
                         <td
-                          className="txn-actions-cell"
+                          className="shop-actions-cell"
                           ref={activeMenu === store.id ? menuRef : null}
                         >
                           <button
-                            className="txn-action-dot-btn"
+                            className="shop-action-dot-btn"
                             onClick={() => setActiveMenu(activeMenu === store.id ? null : store.id)}
                           >
-                            <i className="fa-solid fa-ellipsis"></i>
+                            <i className="fa-solid fa-ellipsis-vertical"></i>
                           </button>
                           {activeMenu === store.id && (
-                            <div className="txn-action-dropdown">
-                              <button className="txn-action-item" onClick={() => openEdit(store)}>
+                            <div className="shop-action-dropdown">
+                              <button className="shop-action-item" onClick={() => openEdit(store)}>
                                 <i className="fa-regular fa-pen-to-square"></i> Edit
                               </button>
-                              <div className="txn-action-divider"></div>
+                              <div className="shop-action-divider"></div>
                               <button
-                                className="txn-action-item txn-action-reject"
+                                className="shop-action-item delete"
                                 onClick={() => { setDeleteTarget(store); setActiveMenu(null); }}
                               >
                                 <i className="fa-solid fa-trash"></i> Delete
@@ -214,7 +218,7 @@ const Shops = () => {
                       </tr>
                     )) : (
                       <tr>
-                        <td colSpan="6" className="txn-empty-row">
+                        <td colSpan="6" className="shop-empty-row">
                           No stores found. Click "Add Store" to create one.
                         </td>
                       </tr>

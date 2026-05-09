@@ -212,6 +212,13 @@ const Transactions = () => {
     rejected: transactions.filter(t => t.status === 'Rejected').length,
   }), [transactions]);
 
+  const getInitials = (name) => {
+    if (!name) return '?';
+    const names = name.split(' ');
+    if (names.length >= 2) return (names[0][0] + names[1][0]).toUpperCase();
+    return name[0].toUpperCase();
+  };
+
   const formatTimestamp = (dateString) => {
     if (!dateString) return '';
     const d = new Date(dateString);
@@ -230,7 +237,7 @@ const Transactions = () => {
 
   const getStatusClass = (status) => {
     switch (status) {
-      case 'Approved': return 'redeemed';  // reuse green style
+      case 'Approved': return 'approved-filled'; 
       case 'Pending':  return 'pending';
       case 'Rejected': return 'rejected';
       case 'Expired':  return 'expired';
@@ -430,16 +437,15 @@ const Transactions = () => {
                         </td>
 
                         {/* Customer */}
-                        <td className="txn-customer-name">
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                            {txn.receipt_image && (
-                              <i
-                                className="fa-solid fa-receipt"
-                                title="Receipt image attached"
-                                style={{ color: '#c50000', fontSize: '0.75rem' }}
-                              />
-                            )}
-                            {txn.user_name || 'Anonymous'}
+                        <td className="txn-customer-cell">
+                          <div className="user-info">
+                            <div className="user-avatar" style={{ backgroundColor: '#555' }}>
+                              {getInitials(txn.user_name)}
+                            </div>
+                            <div className="user-details">
+                              <span className="user-name">{txn.user_name || 'Anonymous'}</span>
+                              <span className="user-email">{txn.voucher_code ? `Code: ${txn.voucher_code}` : 'Customer'}</span>
+                            </div>
                           </div>
                         </td>
 
@@ -481,7 +487,7 @@ const Transactions = () => {
                               className="txn-action-dot-btn"
                               onClick={(e) => openActionMenu(e, txn.id)}
                             >
-                              <i className="fa-solid fa-ellipsis"></i>
+                              <i className="fa-solid fa-ellipsis-vertical"></i>
                             </button>
                           )}
                         </td>

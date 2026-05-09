@@ -192,4 +192,18 @@ class TransactionSerializer(serializers.ModelSerializer):
                         {'rejection_reason': 'A rejection reason is required when rejecting a transaction.'}
                     )
 
+        # SI (receipt_no) uniqueness check on creation
+        receipt_no = data.get('receipt_no')
+        if not instance and receipt_no:
+            if Transaction.objects.filter(receipt_no=receipt_no).exists():
+                raise serializers.ValidationError({'receipt_no': 'A transaction with this SI number already exists.'})
+
+        # Ensure SI and Transaction ID cannot be the same value
+        # Note: transaction_id is auto-generated in model.save(), but if provided in data (unlikely per Meta)
+        # or if we compare against generated pattern, we should check.
+        # But most likely the user wants to prevent entering an SI that looks like a TXN ID or vice versa.
+        txn_id = data.get('transaction_id') or (instance.transaction_id if instance else None)
+        if receipt_no and txn_id and receipt_no == txn_id:
+             raise serializers.ValidationError({'receipt_no': 'SI number and Transaction ID cannot be identical.'})
+
         return data
