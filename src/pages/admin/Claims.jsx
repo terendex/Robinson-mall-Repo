@@ -142,9 +142,6 @@ const Claims = () => {
       <div className="claims-container">
         <div className="claims-header">
           <h1>Claims Management</h1>
-          <button className="new-claim-btn">
-            <i className="fa-solid fa-plus"></i> New Claim
-          </button>
         </div>
 
         <div className="txn-stats">
@@ -237,7 +234,7 @@ const Claims = () => {
                       <th>Amount</th>
                       <th>Date/Time</th>
                       <th>Status</th>
-                      <th></th>
+                      <th>Actions</th>
                     </tr>
                   </thead>
                   <tbody>

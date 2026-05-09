@@ -221,7 +221,7 @@ const ManagerClaims = () => {
                     <th>Amount</th>
                     <th>Date/Time</th>
                     <th>Status</th>
-                    <th></th>
+                    <th>Actions</th>
                   </tr>
                 </thead>
                 <tbody>

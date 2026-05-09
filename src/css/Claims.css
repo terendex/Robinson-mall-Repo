@@ -205,9 +205,30 @@
   vertical-align: middle;
 }
 
-.claims-table th:nth-child(n+2):nth-child(-n+7),
-.claims-table td:nth-child(n+2):nth-child(-n+7) {
+/* Column Alignment */
+.claims-table th:nth-child(1),
+.claims-table td:nth-child(1) {
+  text-align: left;
+}
+
+.claims-table th:nth-child(2),
+.claims-table td:nth-child(2),
+.claims-table th:nth-child(3),
+.claims-table td:nth-child(3),
+.claims-table th:nth-child(4),
+.claims-table td:nth-child(4),
+.claims-table th:nth-child(6),
+.claims-table td:nth-child(6),
+.claims-table th:nth-child(7),
+.claims-table td:nth-child(7),
+.claims-table th:nth-child(8),
+.claims-table td:nth-child(8) {
   text-align: center;
+}
+
+.claims-table th:nth-child(5),
+.claims-table td:nth-child(5) {
+  text-align: right;
 }
 
 .customer-cell {
@@ -302,10 +323,10 @@
 
 .actions-cell {
   position: relative;
-  text-align: right;
+  text-align: center;
 }
 
-.action-dot-btn {
+.table-action-dot, .action-dot-btn {
   background: none;
   border: none;
   color: #bdbdbd;
@@ -313,9 +334,12 @@
   padding: 8px;
   font-size: 18px;
   transition: color 0.2s;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.action-dot-btn:hover {
+.table-action-dot:hover, .action-dot-btn:hover {
   color: #757575;
 }
 

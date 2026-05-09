@@ -267,7 +267,7 @@ const Campaigns = () => {
                       <th>Timeline</th>
                       <th>Budget</th>
                       <th>Status</th>
-                      <th></th>
+                      <th>Actions</th>
                     </tr>
                   </thead>
                   <tbody>

@@ -231,9 +231,34 @@
   color: #888;
 }
 
-.campaigns-table th:nth-child(n+2):nth-child(-n+6),
-.campaigns-table td:nth-child(n+2):nth-child(-n+6) {
+/* Column Alignment */
+.campaigns-table th:nth-child(1),
+.campaigns-table td:nth-child(1) {
+  text-align: left;
+}
+
+.campaigns-table th:nth-child(2),
+.campaigns-table td:nth-child(2),
+.campaigns-table th:nth-child(3),
+.campaigns-table td:nth-child(3),
+.campaigns-table th:nth-child(4),
+.campaigns-table td:nth-child(4),
+.campaigns-table th:nth-child(7),
+.campaigns-table td:nth-child(7),
+.campaigns-table th:nth-child(8),
+.campaigns-table td:nth-child(8) {
   text-align: center;
+}
+
+.campaigns-table th:nth-child(5),
+.campaigns-table td:nth-child(5) {
+  text-align: center;
+  min-width: 150px;
+}
+
+.campaigns-table th:nth-child(6),
+.campaigns-table td:nth-child(6) {
+  text-align: right;
 }
 
 .campaigns-table tbody tr:hover {
@@ -288,8 +313,7 @@
 /* Actions Cell */
 .actions-cell {
   position: relative;
-  text-align: right;
-  padding-right: 24px;
+  text-align: center;
 }
 
 .table-action-dot {
@@ -300,6 +324,9 @@
   padding: 8px;
   font-size: 16px;
   transition: color 0.2s;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .table-action-dot:hover {
@@ -310,7 +337,7 @@
 .campaign-action-dropdown {
   position: absolute;
   top: 100%;
-  right: 24px;
+  right: 0;
   background: white;
   border: 1px solid #eef0f3;
   border-radius: 8px;
