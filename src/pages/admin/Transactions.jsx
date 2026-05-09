@@ -11,7 +11,14 @@ const PAGE_SIZE = 10;
 
 const Transactions = () => {
   const user = JSON.parse(localStorage.getItem('user') || '{}');
-  const isViewOnly = user.role === 'manager';
+  const isAdmin = user.role === 'admin';
+  const isStaff = user.role === 'staff';
+  const isManager = user.role === 'manager';
+  const isCustomer = user.role === 'customer';
+
+  // Admin and Staff have full control. Managers are view-only.
+  const canManage = isAdmin || isStaff;
+  const isViewOnly = isManager; 
 
   const [transactions, setTransactions]         = useState([]);
   const [loading, setLoading]                   = useState(true);
@@ -95,6 +102,22 @@ const Transactions = () => {
     } catch (error) {
       console.error('Error saving transaction:', error);
       alert('Error saving transaction.');
+    }
+  };
+
+  const handleDeleteTransaction = async (txnId) => {
+    if (!window.confirm('Are you sure you want to delete this transaction record? This action cannot be undone.')) return;
+    
+    setStatusLoading(txnId);
+    setActiveActions(null);
+    try {
+      await axios.delete(`http://127.0.0.1:8000/api/transactions/${txnId}/`);
+      setTransactions(prev => prev.filter(t => t.id !== txnId));
+    } catch (err) {
+      console.error('Error deleting transaction:', err);
+      alert('Failed to delete transaction.');
+    } finally {
+      setStatusLoading(null);
     }
   };
 
@@ -268,7 +291,7 @@ const Transactions = () => {
 
         {/* ── Header ── */}
         <div className="transactions-header">
-          <h1>Transaction History</h1>
+          <h1>{isCustomer ? 'My Transactions' : 'Transaction History'}</h1>
           <div className="txn-header-actions">
 
             {/* Export dropdown */}
@@ -308,9 +331,9 @@ const Transactions = () => {
               )}
             </div>
 
-            {!isViewOnly && (
+            {(canManage || isCustomer) && (
               <button className="new-transaction-btn" onClick={openNewModal}>
-                <i className="fa-solid fa-plus"></i> New Transaction
+                <i className="fa-solid fa-plus"></i> {isCustomer ? 'Submit Transaction' : 'New Transaction'}
               </button>
             )}
           </div>
@@ -536,15 +559,15 @@ const Transactions = () => {
               <i className="fa-regular fa-eye"></i> View Details
             </button>
 
-            {/* Edit — non-view-only */}
-            {!isViewOnly && (
+            {/* Edit — non-view-only and not customer */}
+            {canManage && (
               <button className="txn-action-item" onClick={() => openEditModal(txn)}>
                 <i className="fa-regular fa-pen-to-square"></i> Edit Transaction
               </button>
             )}
 
             {/* Status actions — Pending only */}
-            {!isViewOnly && txn.status === 'Pending' && (
+            {canManage && txn.status === 'Pending' && (
               <>
                 <div className="txn-action-divider"></div>
                 <button
@@ -558,6 +581,20 @@ const Transactions = () => {
                   onClick={() => openRejectModal(txn)}
                 >
                   <i className="fa-solid fa-circle-xmark"></i> Mark as Rejected
+                </button>
+              </>
+            )}
+
+            {/* Delete — Admin/Staff only */}
+            {canManage && (
+              <>
+                <div className="txn-action-divider"></div>
+                <button 
+                  className="txn-action-item txn-action-reject" 
+                  onClick={() => handleDeleteTransaction(txn.id)}
+                  style={{ color: '#c40000' }}
+                >
+                  <i className="fa-regular fa-trash-can"></i> Delete Transaction
                 </button>
               </>
             )}

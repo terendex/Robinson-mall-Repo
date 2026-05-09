@@ -475,14 +475,29 @@ class TransactionViewSet(viewsets.ModelViewSet):
     """
     queryset = Transaction.objects.all().order_by('-created_at')
     serializer_class = TransactionSerializer
-    permission_classes = [IsStaff]
+    permission_classes = [IsAuthenticated]
+
+    def get_permissions(self):
+        if self.action in ['update', 'partial_update', 'destroy']:
+            return [IsStaff()]
+        return super().get_permissions()
 
     def perform_create(self, serializer):
-        """Force status to Pending on all new transactions."""
-        serializer.save(status='Pending')
+        """Force status to Pending and link to current user if customer."""
+        user = self.request.user
+        if user.role == 'customer':
+            serializer.save(status='Pending', user=user)
+        else:
+            serializer.save(status='Pending')
 
     def get_queryset(self):
-        qs = Transaction.objects.all().order_by('-created_at')
+        user = self.request.user
+        if user.role in ['admin', 'manager', 'staff']:
+            qs = Transaction.objects.all()
+        else:
+            qs = Transaction.objects.filter(user=user)
+
+        qs = qs.order_by('-created_at')
 
         status_param = self.request.query_params.get('status')
         if status_param:

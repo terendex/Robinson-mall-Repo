@@ -205,7 +205,7 @@ function App() {
           {/* Customer Routes */}
           <Route path="/customer" element={user && user.role === 'customer' ? <CustomerLayout user={user} onLogout={handleLogout} /> : <Navigate to="/login" />}>
             <Route path="dashboard" element={<CustomerDashboard user={user} />} />
-            <Route path="vouchers" element={<CustomerVouchers user={user} />} />
+            <Route path="vouchers" element={<Navigate to="/customer/claims" />} />
             <Route path="campaigns" element={<CustomerCampaigns user={user} />} />
             <Route path="claims" element={<CustomerClaims user={user} />} />
             <Route path="transactions" element={<CustomerTransactions />} />

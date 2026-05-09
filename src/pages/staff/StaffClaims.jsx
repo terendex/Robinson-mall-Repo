@@ -258,10 +258,11 @@ const StaffClaims = () => {
                             {claim.status}
                           </span>
                         </td>
-                        <td className="actions-cell">
+                        <td className="actions-cell" style={{ textAlign: 'center' }}>
                           <button 
                             className="view-details-btn-new"
                             onClick={() => handleViewDetails(claim)}
+                            style={{ margin: '0 auto' }}
                           >
                             <i className="fa-regular fa-eye"></i> View Details
                           </button>

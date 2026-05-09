@@ -76,6 +76,10 @@ class CampaignSerializer(serializers.ModelSerializer):
 
     budget = serializers.DecimalField(max_digits=10, decimal_places=2, min_value=0)
 
+    voucher_type     = serializers.SerializerMethodField()
+    voucher_discount = serializers.SerializerMethodField()
+    voucher_id       = serializers.SerializerMethodField()
+
     class Meta:
         model = Campaign
         fields = (
@@ -83,9 +87,22 @@ class CampaignSerializer(serializers.ModelSerializer):
             'start_date', 'end_date',
             'reach', 'conversions',
             'vouchers', 'voucher_count',
+            'voucher_type', 'voucher_discount', 'voucher_id',
             'created_at', 'updated_at',
         )
         read_only_fields = ('reach', 'conversions', 'created_at', 'updated_at')
+
+    def get_voucher_type(self, obj):
+        first = obj.vouchers.first()
+        return first.voucher_type if first else 'N/A'
+
+    def get_voucher_discount(self, obj):
+        first = obj.vouchers.first()
+        return first.discount_percentage if first else 0
+
+    def get_voucher_id(self, obj):
+        first = obj.vouchers.first()
+        return first.id if first else None
 
     def get_reach(self, obj):
         """Reach = total Claims made against any voucher in this campaign."""
@@ -112,6 +129,8 @@ class CampaignSerializer(serializers.ModelSerializer):
                 'voucher_type': v.voucher_type,
                 'discount_percentage': v.discount_percentage,
                 'is_active': v.is_active,
+                'store_id': v.store_id,
+                'store_name': v.store.name if v.store else 'All Stores',
             }
             for v in obj.vouchers.all()
         ]
@@ -151,7 +170,7 @@ class TransactionSerializer(serializers.ModelSerializer):
         model = Transaction
         fields = (
             'id', 'transaction_id', 'transaction_id_short',
-            'receipt_no', 'user_name',
+            'receipt_no', 'user', 'user_name',
             'store', 'store_name', 'store_display_name',
             'voucher_name', 'voucher_code',
             'amount', 'expiry_date',

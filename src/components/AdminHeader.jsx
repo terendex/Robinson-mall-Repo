@@ -26,11 +26,12 @@ const AdminHeader = ({ toggleSidebar, user, isSidebarOpen, onLogout }) => {
 
   const availablePages = [
     ...(role !== 'staff' ? [{ name: 'Dashboard', path: `${pathPrefix}/dashboard`, icon: 'fa-table-cells-large' }] : []),
-    { name: role === 'customer' ? 'My Vouchers' : 'Vouchers', path: `${pathPrefix}/vouchers`, icon: 'fa-ticket-simple' },
     { name: role === 'customer' ? 'Active Campaigns' : 'Campaigns', path: `${pathPrefix}/campaigns`, icon: 'fa-tag' },
+    { name: role === 'customer' ? 'My Vouchers' : 'Vouchers', path: `${pathPrefix}/vouchers`, icon: 'fa-ticket-simple' },
+    ...(role === 'admin' || role === 'manager' ? [{ name: 'Shops', path: `${pathPrefix}/shops`, icon: 'fa-store' }] : []),
     { name: role === 'customer' ? 'My Claims' : 'Claims', path: `${pathPrefix}/claims`, icon: 'fa-gift' },
-    { name: 'Transactions', path: `${pathPrefix}/transactions`, icon: 'fa-clock-rotate-left' },
     ...(role === 'admin' ? [{ name: 'Users', path: `${pathPrefix}/users`, icon: 'fa-user-group' }] : []),
+    { name: 'Transactions', path: `${pathPrefix}/transactions`, icon: 'fa-clock-rotate-left' },
     ...(role !== 'staff' && role !== 'customer' ? [{ name: 'Reports', path: `${pathPrefix}/reports`, icon: 'fa-chart-simple' }] : []),
     { name: 'Settings', path: `${pathPrefix}/settings`, icon: 'fa-gear' },
   ];

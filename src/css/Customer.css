@@ -726,3 +726,1234 @@
   flex-shrink: 0;
 }
 
+/* ── Dashboard Row (Recent + CTA) ─────────────────────── */
+.customer-dashboard-row {
+  display: grid;
+  grid-template-columns: 1fr 400px;
+  gap: 2rem;
+  align-items: start;
+}
+
+.dashboard-recent-activity {
+  background: var(--white);
+  border-radius: var(--radius-lg);
+  border: 1.5px solid var(--border-light);
+  padding: 1.75rem 2rem;
+  box-shadow: var(--shadow-sm);
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.section-header h3 {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--primary-dark);
+}
+
+.view-all-btn {
+  background: none;
+  border: none;
+  color: var(--primary-red);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0.4rem 0.8rem;
+  border-radius: var(--radius-sm);
+  transition: var(--transition-fast);
+}
+
+.view-all-btn:hover {
+  background: var(--primary-red-light);
+}
+
+.activity-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.activity-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 0;
+  border-bottom: 1px solid var(--bg-soft);
+}
+
+.activity-item:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.activity-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.activity-dot.pending  { background: #f97316; }
+.activity-dot.approved { background: #22c55e; }
+.activity-dot.rejected { background: #ef4444; }
+
+.activity-details {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.activity-name {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--primary-dark);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.activity-time {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.activity-status {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 0.25rem 0.6rem;
+  border-radius: 6px;
+}
+
+.activity-status.pending  { color: #c2410c; background: #fff7ed; }
+.activity-status.approved { color: #15803d; background: #f0fdf4; }
+.activity-status.rejected { color: #b91c1c; background: #fef2f2; }
+
+@media (max-width: 1100px) {
+  .customer-dashboard-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ── Customer Premium Table ────────────────────────── */
+.customer-table-wrapper {
+  background: var(--white);
+  border-radius: var(--radius-lg);
+  border: 1.5px solid var(--border-light);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+  animation: fadeInUp 0.4s ease-out both;
+  margin-bottom: 2rem;
+}
+
+.customer-premium-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.customer-premium-table th {
+  background: #fdfdfd;
+  padding: 1.25rem 1.5rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  border-bottom: 1.5px solid var(--border-light);
+}
+
+.customer-premium-table td {
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid var(--bg-soft);
+  color: var(--text-main);
+  font-size: 0.95rem;
+  vertical-align: middle;
+}
+
+.customer-premium-table tr:last-child td {
+  border-bottom: none;
+}
+
+.table-voucher-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.v-name {
+  font-weight: 700;
+  color: var(--primary-dark);
+}
+
+.v-code {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  font-family: 'Courier New', monospace;
+  font-weight: 600;
+}
+
+.receipt-code {
+  font-family: 'Courier New', monospace;
+  background: var(--bg-soft);
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.85rem;
+}
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.4rem 0.9rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.status-badge.pending  { background: #fff7ed; color: #c2410c; border: 1px solid #fed7aa; }
+.status-badge.approved { background: #f0fdf4; color: #15803d; border: 1px solid #bbf7d0; }
+.status-badge.rejected { background: #fef2f2; color: #b91c1c; border: 1px solid #fecaca; }
+
+@media (max-width: 768px) {
+  .customer-premium-table thead { display: none; }
+  .customer-premium-table td {
+    display: block;
+    padding: 0.75rem 1.5rem;
+    border: none;
+  }
+  .customer-premium-table td:first-child { padding-top: 1.5rem; }
+  .customer-premium-table td:last-child { 
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid var(--bg-soft);
+  }
+  .customer-premium-table td::before {
+    content: attr(data-label);
+    font-weight: 700;
+    text-transform: uppercase;
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    display: block;
+    margin-bottom: 0.25rem;
+  }
+}
+
+/* ── Premium Voucher Card (Ticket Style) ────────────── */
+.premium-voucher-card {
+  position: relative;
+  border: 1.5px solid var(--border-light);
+  background: var(--white);
+  display: flex !important;
+  flex-direction: row !important;
+  min-height: 200px;
+  overflow: visible !important;
+}
+
+.voucher-left-accent {
+  width: 12px;
+  background: linear-gradient(to bottom, #22c55e, #15803d);
+  flex-shrink: 0;
+}
+
+.premium-voucher-card .campaign-card-content {
+  padding: 1.5rem 1.75rem !important;
+  flex-grow: 1;
+}
+
+.voucher-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+}
+
+.voucher-type-tag {
+  font-size: 0.65rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  color: var(--text-subtle);
+  letter-spacing: 0.05em;
+}
+
+.voucher-status-icon {
+  color: #22c55e;
+  font-size: 1.1rem;
+}
+
+.premium-voucher-card h3 {
+  font-size: 1.25rem;
+  margin-bottom: 0.25rem !important;
+  margin-top: 0;
+}
+
+.voucher-store-loc {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-bottom: 1.5rem;
+}
+
+.voucher-ticket-divider {
+  position: relative;
+  height: 20px;
+  margin: 0 -1.75rem 1.5rem;
+  display: flex;
+  align-items: center;
+}
+
+.divider-line {
+  flex-grow: 1;
+  height: 1.5px;
+  border-top: 1.5px dashed var(--border-light);
+}
+
+.cutout {
+  width: 20px;
+  height: 20px;
+  background: var(--bg-page);
+  border-radius: 50%;
+  position: absolute;
+  top: 0;
+  border: 1.5px solid var(--border-light);
+}
+
+.cutout-left {
+  left: -11px;
+  clip-path: circle(50% at 100% 50%);
+}
+
+.cutout-right {
+  right: -11px;
+  clip-path: circle(50% at 0% 50%);
+}
+
+.voucher-code-display {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--bg-soft);
+  padding: 1rem 1.25rem;
+  border-radius: var(--radius-sm);
+  margin-bottom: 1.5rem;
+}
+
+.v-code-wrap {
+  display: flex;
+  flex-direction: column;
+}
+
+.v-code-label {
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: var(--text-subtle);
+  text-transform: uppercase;
+  margin-bottom: 0.15rem;
+}
+
+.v-code-text {
+  font-size: 1.2rem;
+  font-weight: 900;
+  color: var(--primary-dark);
+  letter-spacing: 0.1em;
+  font-family: 'Courier New', monospace;
+}
+
+.voucher-use-btn {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-sm);
+  background: var(--white);
+  border: 1.5px solid var(--border-light);
+  color: var(--primary-dark);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+  cursor: pointer;
+  transition: var(--transition-fast);
+}
+
+.voucher-use-btn:hover {
+  background: var(--primary-dark);
+  color: var(--white);
+  border-color: var(--primary-dark);
+  transform: scale(1.05);
+}
+
+.voucher-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: auto;
+}
+
+.valid-until {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--text-subtle);
+}
+
+.voucher-valid-pill {
+  font-size: 0.65rem;
+  font-weight: 800;
+  padding: 0.25rem 0.6rem;
+  background: #dcfce7;
+  color: #15803d;
+  border-radius: 4px;
+}
+
+/* ── Campaign Card Polish ────────────────────────────── */
+.campaign-card-overlay {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  z-index: 2;
+}
+
+.overlay-badge {
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(8px);
+  color: white;
+  padding: 0.35rem 0.75rem;
+  border-radius: 999px;
+  font-size: 0.65rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.campaign-card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+}
+
+.campaign-card-date {
+  font-size: 0.75rem !important;
+  font-weight: 600;
+  color: var(--text-subtle);
+  margin: 0 !important;
+}
+
+.campaign-card-date i {
+  font-size: 0.7rem;
+  margin-right: 0.3rem;
+}
+
+.campaign-card-discount {
+  display: flex;
+  flex-direction: column;
+  line-height: 1;
+}
+
+.discount-label {
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: var(--text-muted);
+}
+
+.discount-value {
+  font-size: 2.2rem;
+  font-weight: 900;
+  color: var(--primary-red);
+  margin: 0.1rem 0;
+}
+
+.discount-off {
+  font-size: 0.8rem;
+  font-weight: 800;
+  color: var(--primary-red);
+}
+
+@media (max-width: 480px) {
+  .discount-value {
+    font-size: 1.8rem;
+  }
+}
+
+/* ── Customer Cards Container ────────────────────────── */
+.customer-cards-container {
+  background: var(--white);
+  border-radius: var(--radius-lg);
+  border: 1.5px solid var(--border-light);
+  padding: 2.5rem;
+  box-shadow: var(--shadow-sm);
+  animation: fadeInUp 0.5s ease-out both;
+  margin-bottom: 2rem;
+}
+
+.customer-cards-container .campaign-grid {
+  margin-top: 0;
+  margin-bottom: 2.5rem;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+}
+
+@media (max-width: 768px) {
+  .customer-cards-container {
+    padding: 1.5rem;
+    background: transparent;
+    border: none;
+    box-shadow: none;
+  }
+}
+
+/* ── Campaign Ticket Specifics ──────────────────────── */
+.campaign-accent {
+  background: linear-gradient(to bottom, #cc2c2c, #7c1a1a) !important;
+}
+
+.campaign-ticket-btn {
+  padding: 0.8rem 1.75rem !important;
+  border-radius: var(--radius-sm) !important;
+  font-size: 1rem !important;
+}
+
+.promo-pill {
+  background: #fef2f2 !important;
+  color: #cc2c2c !important;
+}
+
+.campaign-ticket .voucher-store-loc i {
+  color: var(--primary-red);
+}
+
+/* ── Ticket Status Specifics ────────────────────────── */
+.approved-ticket .voucher-left-accent {
+  background: linear-gradient(to bottom, #22c55e, #15803d) !important;
+}
+
+.pending-ticket .voucher-left-accent {
+  background: linear-gradient(to bottom, #f97316, #c2410c) !important;
+}
+
+.rejected-ticket .voucher-left-accent {
+  background: linear-gradient(to bottom, #ef4444, #b91c1c) !important;
+}
+
+.voucher-valid-pill.status-pending { background: #fff7ed; color: #c2410c; }
+.voucher-valid-pill.status-approved { background: #dcfce7; color: #15803d; }
+.voucher-valid-pill.status-rejected { background: #fef2f2; color: #b91c1c; }
+
+.pending-ticket .voucher-status-icon { color: #f97316; }
+.approved-ticket .voucher-status-icon { color: #22c55e; }
+.rejected-ticket .voucher-status-icon { color: #ef4444; }
+
+/* ── Campaign Details Modal ────────────────────────── */
+.campaign-details-modal {
+  max-width: 700px !important;
+}
+
+.details-grid {
+  display: grid;
+  grid-template-columns: 1.5fr 1fr;
+  gap: 2rem;
+  padding: 1rem 0;
+}
+
+.store-name-large {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--primary-red);
+  margin-top: 0.5rem;
+}
+
+.campaign-desc {
+  color: var(--text-subtle);
+  line-height: 1.6;
+  font-size: 0.95rem;
+}
+
+.validity-box {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--bg-light);
+  padding: 1rem;
+  border-radius: var(--radius-md);
+  margin-top: 0.5rem;
+  border: 1px solid var(--border-light);
+}
+
+.valid-tag {
+  font-size: 0.7rem;
+  font-weight: 800;
+  color: #15803d;
+  background: #dcfce7;
+  padding: 0.2rem 0.6rem;
+  border-radius: 4px;
+}
+
+.offer-highlight-card {
+  background: linear-gradient(135deg, #cc2c2c, #7c1a1a);
+  color: white;
+  padding: 2rem;
+  border-radius: var(--radius-lg);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  box-shadow: var(--shadow-md);
+}
+
+.hl-label { font-size: 0.75rem; font-weight: 700; opacity: 0.8; }
+.hl-value { font-size: 3.5rem; font-weight: 900; line-height: 1; margin: 0.5rem 0; }
+.hl-off { font-size: 1.2rem; font-weight: 800; }
+
+.claim-action-btn {
+  padding: 1rem 2rem !important;
+  font-weight: 700 !important;
+  font-size: 1.1rem !important;
+  box-shadow: 0 4px 15px rgba(204, 44, 44, 0.3);
+}
+
+@media (max-width: 600px) {
+  .details-grid {
+    grid-template-columns: 1fr;
+  }
+  .details-sidebar {
+    order: -1;
+  }
+}
+
+/* ── Clean & Airy Campaign Modal ────────────────────── */
+.campaign-details-modal {
+  max-width: 750px !important;
+  background: var(--white);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+
+.detail-section {
+  margin-bottom: 2.5rem;
+}
+
+.detail-label {
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.detail-label i {
+  color: var(--primary-red);
+  font-size: 0.8rem;
+}
+
+.store-name-refined {
+  font-size: 1.75rem;
+  font-weight: 900;
+  color: var(--text-main);
+  margin: 0;
+  line-height: 1.2;
+}
+
+.store-meta {
+  font-size: 0.9rem;
+  color: var(--text-subtle);
+  margin-top: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.offer-description-text {
+  font-size: 1rem;
+  color: var(--text-main);
+  line-height: 1.6;
+  margin: 0;
+  opacity: 0.85;
+}
+
+.redeem-list-refined {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.redeem-step-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.step-circle {
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  background: var(--bg-light);
+  border: 1px solid var(--border-light);
+  color: var(--text-main);
+  font-size: 0.75rem;
+  font-weight: 800;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.redeem-step-item p {
+  font-size: 0.95rem;
+  color: var(--text-subtle);
+  margin: 0;
+  line-height: 1.4;
+}
+
+.terms-refined-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.term-item {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.term-item i {
+  font-size: 0.6rem;
+  color: var(--primary-red);
+}
+
+.offer-highlight-card {
+  background: var(--primary-red);
+  color: var(--white);
+  padding: 2.5rem 1.5rem;
+  border-radius: var(--radius-lg);
+  text-align: center;
+  margin-bottom: 1.5rem;
+}
+
+.hl-label { font-size: 0.75rem; font-weight: 700; opacity: 0.8; text-transform: uppercase; }
+.hl-value { font-size: 4rem; font-weight: 900; line-height: 1; margin: 0.5rem 0; }
+.hl-off { font-size: 1.25rem; font-weight: 800; }
+
+.availability-card {
+  padding: 1.5rem;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+}
+
+.avail-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0;
+}
+
+.avail-item:first-child { border-bottom: 1px solid var(--border-light); }
+
+.avail-label { font-size: 0.8rem; font-weight: 600; color: var(--text-subtle); }
+.avail-val { font-size: 0.85rem; font-weight: 800; color: var(--text-main); margin-left: 1rem; }
+.status-active { color: #15803d; }
+
+@media (max-width: 650px) {
+  .details-grid {
+    grid-template-columns: 1fr;
+  }
+}
+/* ── Campaigns Header Premium ────────────────────────── */
+.campaigns-header-premium {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 2rem;
+  text-align: left !important;
+  margin-bottom: 3rem;
+  border-bottom: 1.5px solid var(--border-light);
+  padding-bottom: 2rem;
+}
+
+.header-text-content {
+  flex: 1;
+}
+
+.header-search-box {
+  position: relative;
+  width: 350px;
+}
+
+.header-search-box i {
+  position: absolute;
+  left: 1.25rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-subtle);
+  font-size: 0.9rem;
+}
+
+.header-search-box input {
+  width: 100%;
+  padding: 0.85rem 1rem 0.85rem 3rem;
+  border-radius: var(--radius-md);
+  border: 1.5px solid var(--border-light);
+  background: var(--white);
+  font-size: 0.95rem;
+  font-family: inherit;
+  transition: var(--transition-std);
+  box-shadow: var(--shadow-xs);
+}
+
+.header-search-box input:focus {
+  outline: none;
+  border-color: var(--primary-red);
+  box-shadow: 0 0 0 4px rgba(204, 44, 44, 0.08);
+  width: 380px;
+}
+
+.campaigns-filter-bar {
+  display: flex;
+  gap: 0.75rem;
+  margin-bottom: 2.5rem;
+  flex-wrap: wrap;
+  animation: fadeInDown 0.5s ease-out both;
+}
+
+.filter-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 1.25rem;
+  border-radius: 999px;
+  background: var(--white);
+  border: 1.5px solid var(--border-light);
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition-fast);
+  box-shadow: var(--shadow-xs);
+}
+
+.filter-pill i {
+  font-size: 0.8rem;
+  opacity: 0.7;
+}
+
+.filter-pill:hover {
+  border-color: var(--primary-red);
+  color: var(--primary-red);
+  transform: translateY(-1px);
+}
+
+.filter-pill.active {
+  background: var(--primary-red);
+  color: var(--white);
+  border-color: var(--primary-red);
+  box-shadow: var(--shadow-red);
+}
+
+.filter-pill.active i {
+  opacity: 1;
+}
+
+/* ── Card Improvements ───────────────────────────────── */
+.animate-fade-in {
+  animation: fadeInUp 0.5s ease-out both;
+}
+
+.discount-row {
+  display: flex;
+  align-items: baseline;
+  gap: 0.25rem;
+}
+
+.promo-name-small {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--text-subtle);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  max-width: 150px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.promo-pill {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.promo-pill i {
+  font-size: 0.65rem;
+}
+
+/* ── Responsive ──────────────────────────────────────── */
+@media (max-width: 900px) {
+  .campaigns-header-premium {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1.5rem;
+  }
+  
+  .header-search-box {
+    width: 100%;
+  }
+
+  .header-search-box input:focus {
+    width: 100%;
+  }
+}
+/* ── Premium Details Modal (Fixed & Compact) ──────── */
+.premium-details-modal {
+  max-width: 420px !important;
+  max-height: 85vh !important;
+  background: var(--white) !important;
+  border-radius: var(--radius-lg) !important;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25) !important;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden !important;
+  animation: slideUp 0.3s ease-out;
+}
+
+.modal-blur {
+  backdrop-filter: blur(8px);
+  background: rgba(15, 23, 42, 0.6) !important;
+}
+
+.modal-header-premium {
+  padding: 1.25rem 1.5rem 0.75rem;
+  background: linear-gradient(to bottom, #fdfdfd, #ffffff);
+  border-bottom: 1px solid var(--bg-soft);
+  flex-shrink: 0;
+}
+
+.voucher-type-pill {
+  font-size: 0.55rem;
+  font-weight: 800;
+  color: var(--primary-red);
+  background: #fef2f2;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border: 1px solid #fecaca;
+}
+
+.header-main-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 0.5rem;
+}
+
+.header-main-row h2 {
+  font-size: 1.2rem;
+  font-weight: 900;
+  color: var(--text-main);
+  margin: 0;
+  line-height: 1.2;
+}
+
+.close-btn-round {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 1.5px solid var(--border-light);
+  background: var(--white);
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: var(--transition-fast);
+}
+
+.modal-body-premium {
+  padding: 1.25rem 1.5rem;
+  overflow-y: auto;
+  flex-grow: 1;
+  /* Custom Scrollbar */
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-light) transparent;
+}
+
+.modal-body-premium::-webkit-scrollbar {
+  width: 4px;
+}
+
+.modal-body-premium::-webkit-scrollbar-thumb {
+  background: var(--border-light);
+  border-radius: 10px;
+}
+
+.details-grid-refined {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.info-section {
+  margin-bottom: 1.25rem;
+}
+
+.section-label {
+  font-size: 0.6rem;
+  font-weight: 800;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-bottom: 0.75rem;
+}
+
+.section-label i {
+  color: var(--primary-red);
+}
+
+/* Store Identity */
+.store-identity {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  background: var(--bg-soft);
+  padding: 0.6rem 0.85rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-light);
+}
+
+.store-avatar {
+  width: 32px;
+  height: 32px;
+  background: var(--white);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--primary-red);
+  font-size: 1rem;
+}
+
+.store-name-bold {
+  font-size: 0.9rem;
+  font-weight: 800;
+  color: var(--text-main);
+  margin: 0;
+}
+
+.store-location {
+  font-size: 0.75rem;
+  color: var(--text-subtle);
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+/* Offer Desc */
+.offer-desc-box {
+  background: #fdfdfd;
+  padding: 0.75rem;
+  border-left: 3px solid var(--primary-red);
+  border-radius: 0 4px 4px 0;
+  font-size: 0.85rem;
+  line-height: 1.4;
+  color: var(--text-main);
+}
+
+/* Stepper Guide */
+.stepper-guide {
+  padding-left: 0.15rem;
+}
+
+.step-item-refined {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.step-marker {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 20px;
+}
+
+.step-number {
+  width: 20px;
+  height: 20px;
+  background: var(--white);
+  border: 2px solid var(--primary-red);
+  color: var(--primary-red);
+  font-size: 0.65rem;
+  font-weight: 800;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2;
+}
+
+.step-line {
+  width: 1.5px;
+  flex-grow: 1;
+  background: var(--border-light);
+  margin: 3px 0;
+}
+
+.step-content {
+  padding-bottom: 1rem;
+}
+
+.step-content p {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--text-main);
+}
+
+/* Terms Checklist */
+.terms-checklist {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.terms-checklist li {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.8rem;
+  color: var(--text-subtle);
+  margin-bottom: 0.4rem;
+}
+
+.terms-checklist li i {
+  color: #10b981;
+}
+
+/* Reward Card Compact */
+.reward-highlight-card {
+  background: linear-gradient(135deg, #cc2c2c, #991b1b);
+  padding: 1.25rem;
+  border-radius: var(--radius-md);
+  color: var(--white);
+  text-align: center;
+  box-shadow: 0 10px 20px rgba(204, 44, 44, 0.3);
+  margin-bottom: 0.75rem;
+}
+
+.reward-label {
+  font-size: 0.6rem;
+  font-weight: 700;
+  opacity: 0.8;
+  letter-spacing: 0.1em;
+}
+
+.reward-value-display {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 0.3rem;
+  margin-top: 0.4rem;
+}
+
+.r-val {
+  font-size: 2.4rem;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.r-off {
+  font-size: 1rem;
+  font-weight: 800;
+}
+
+.status-info-card {
+  background: var(--white);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  padding: 0.75rem;
+  display: flex;
+  justify-content: space-around;
+  gap: 0.75rem;
+}
+
+.status-row {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.s-label {
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: var(--text-subtle);
+}
+
+.s-val {
+  font-size: 0.8rem;
+  font-weight: 800;
+  color: var(--text-main);
+}
+
+/* Footer Premium */
+.modal-footer-premium {
+  padding: 0.75rem 1.5rem;
+  background: var(--bg-soft);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-top: 1px solid var(--border-light);
+  flex-shrink: 0;
+}
+
+.back-btn-minimal {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  font-weight: 600;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+
+
+
+
+
+
+
+
+@media (max-width: 750px) {
+  .details-grid-refined {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+  }
+  
+  .details-sidebar-refined {
+    order: -1;
+  }
+  
+  .premium-details-modal {
+    margin: 1rem;
+    max-height: 90vh;
+    overflow-y: auto !important;
+  }
+  
+  .modal-header-premium, .modal-body-premium {
+    padding: 1.5rem;
+  }
+}

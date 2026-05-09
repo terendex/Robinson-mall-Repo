@@ -1,88 +1,154 @@
-import React from 'react';
-import '../css/Modal.css';
-
 /**
  * CampaignDetailsModal Component
- * Handles the UI and data logic for the CampaignDetailsModal module.
+ * Shows expanded details for a specific store offer with a premium, high-fidelity UI.
  */
-const CampaignDetailsModal = ({ show, onClose, campaign }) => {
-  if (!show || !campaign) return null;
+const CampaignDetailsModal = ({ show, onClose, offer, onClaim, claiming }) => {
+  if (!show || !offer) return null;
 
   return (
-    <div className="modal-overlay">
-      <div className="modal-content user-modal details-modal scrollable-modal">
-        <div className="modal-header">
-          <div className="header-info-group" style={{ display: 'flex', alignItems: 'center', gap: '30px' }}>
-            <div className="header-title-complex">
-              <span className="label-tiny">CAMPAIGN NAME</span>
-              <h2 className="large-title">{campaign.name}</h2>
-            </div>
-            <div className="header-status-complex" style={{ alignItems: 'flex-start' }}>
-              <span className="label-tiny">CURRENT STATUS</span>
-              <span className={`campaign-badge-pill ${campaign.status.toLowerCase()}`}>{campaign.status}</span>
-            </div>
+    <div className="modal-overlay modal-blur" onClick={onClose}>
+      <div className="modal-content campaign-details-modal premium-details-modal animate-slide-up" onClick={e => e.stopPropagation()}>
+        <div className="modal-header-premium">
+          <div className="header-badge-row">
+            <span className="voucher-type-pill">{offer.voucher_type}</span>
           </div>
-          <button className="close-x" onClick={onClose}>&times;</button>
+          <div className="header-main-row">
+            <h2>{offer.name}</h2>
+            <button className="close-btn-round" onClick={onClose}>
+              <i className="fa-solid fa-xmark"></i>
+            </button>
+          </div>
         </div>
-        <div className="modal-body-padded">
-          <div className="budget-summary-box">
-             <div className="detail-box-refined highlight">
-               <span className="label-box">TOTAL BUDGET</span>
-               <span className="value-box primary">₱{Number(campaign.budget).toLocaleString()}</span>
-             </div>
-          </div>
 
-          <div className="details-grid-pop-refined">
-            <div className="detail-box-refined">
-              <span className="label-box">START DATE</span>
-              <span className="value-box">{new Date(campaign.start_date).toLocaleDateString()}</span>
-            </div>
-            <div className="detail-box-refined">
-              <span className="label-box">END DATE</span>
-              <span className="value-box">{new Date(campaign.end_date).toLocaleDateString()}</span>
-            </div>
-            <div className="detail-box-refined">
-              <span className="label-box">REACH</span>
-              <span className="value-box">{Number(campaign.reach).toLocaleString()}</span>
-            </div>
-            <div className="detail-box-refined">
-              <span className="label-box">CONVERSIONS</span>
-              <span className="value-box">{Number(campaign.conversions).toLocaleString()}</span>
-            </div>
-          </div>
+        <div className="modal-body-premium">
+          <div className="details-grid-refined">
+            <div className="details-main-content">
+              {/* Store Section */}
+              <section className="info-section">
+                <h4 className="section-label">
+                  <i className="fa-solid fa-store"></i> Participating Store
+                </h4>
+                <div className="store-identity">
+                  <div className="store-avatar">
+                    <i className="fa-solid fa-shop"></i>
+                  </div>
+                  <div className="store-text">
+                    <p className="store-name-bold">{offer.store_name}</p>
+                    <span className="store-location">
+                      <i className="fa-solid fa-location-dot"></i> Ground Floor, Robinsons Mall
+                    </span>
+                  </div>
+                </div>
+              </section>
 
-          <div className="voucher-details-section-refined">
-            <h3 className="section-title-refined">Connected Voucher</h3>
-            <div className="voucher-card-mini-refined">
-              <div className="v-icon-box">
-                <i className="fa-solid fa-ticket"></i>
-              </div>
-              <div className="v-info-group">
-                <div className="v-field">
-                  <span className="v-label-mini">VOUCHER NAME</span>
-                  <span className="v-value-mini">{campaign.voucher_name || 'N/A'}</span>
+              {/* Offer Description */}
+              <section className="info-section">
+                <h4 className="section-label">
+                  <i className="fa-solid fa-circle-info"></i> About this Offer
+                </h4>
+                <div className="offer-desc-box">
+                  <p>
+                    Enjoy an exclusive <strong>{offer.discount_percentage}% discount</strong> on your next purchase at <strong>{offer.store_name}</strong>. 
+                    This reward is part of our <strong>{offer.campaign_name}</strong> promotion, curated just for you.
+                  </p>
                 </div>
-                <div className="v-field">
-                  <span className="v-label-mini">VOUCHER CODE</span>
-                  <span className="v-value-mini code-red">{campaign.voucher_code || 'N/A'}</span>
+              </section>
+
+              {/* Redemption Steps - Stepper Look */}
+              <section className="info-section">
+                <h4 className="section-label">
+                  <i className="fa-solid fa-list-check"></i> Redemption Guide
+                </h4>
+                <div className="stepper-guide">
+                  <div className="step-item-refined">
+                    <div className="step-marker">
+                      <div className="step-number">1</div>
+                      <div className="step-line"></div>
+                    </div>
+                    <div className="step-content">
+                      <p>Visit <strong>{offer.store_name}</strong> at their mall location.</p>
+                    </div>
+                  </div>
+                  <div className="step-item-refined">
+                    <div className="step-marker">
+                      <div className="step-number">2</div>
+                      <div className="step-line"></div>
+                    </div>
+                    <div className="step-content">
+                      <p>Make a purchase and keep your official receipt.</p>
+                    </div>
+                  </div>
+                  <div className="step-item-refined">
+                    <div className="step-marker">
+                      <div className="step-number">3</div>
+                      <div className="step-line"></div>
+                    </div>
+                    <div className="step-content">
+                      <p>Submit your receipt through the <strong>Transactions</strong> page.</p>
+                    </div>
+                  </div>
+                  <div className="step-item-refined">
+                    <div className="step-marker">
+                      <div className="step-number">4</div>
+                    </div>
+                    <div className="step-content">
+                      <p>Once verified, your discount will be applied automatically!</p>
+                    </div>
+                  </div>
+                </div>
+              </section>
+
+              {/* Terms & Conditions */}
+              <section className="info-section">
+                <h4 className="section-label">
+                  <i className="fa-solid fa-scale-balanced"></i> Terms & Conditions
+                </h4>
+                <ul className="terms-checklist">
+                  <li><i className="fa-solid fa-check-double"></i> Valid for one-time use per customer.</li>
+                  <li><i className="fa-solid fa-check-double"></i> Cannot be combined with other store promos.</li>
+                  <li><i className="fa-solid fa-check-double"></i> Receipt must be clear and fully legible.</li>
+                </ul>
+              </section>
+            </div>
+
+            <div className="details-sidebar-refined">
+              <div className="sticky-sidebar-content">
+                <div className="reward-highlight-card">
+                  <span className="reward-label">REWARD VALUE</span>
+                  <div className="reward-value-display">
+                    <span className="r-val">{offer.discount_percentage}%</span>
+                    <span className="r-off">OFF</span>
+                  </div>
+                  <div className="reward-glow"></div>
+                </div>
+                
+                <div className="status-info-card">
+                  <div className="status-row">
+                    <span className="s-label">Expires On</span>
+                    <span className="s-val">{new Date(offer.campaign_end_date).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+                  </div>
+                  <div className="status-row">
+                    <span className="s-label">Availability</span>
+                    <span className="s-val active-status">
+                      <i className="fa-solid fa-circle"></i> Active Now
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
-          
-          <div className="performance-summary-refined">
-            <h3 className="section-title-refined">Performance Summary</h3>
-            <p className="summary-text-refined">
-              This campaign is currently <strong>{campaign.status}</strong>. 
-              It has reached <strong>{Number(campaign.reach).toLocaleString()}</strong> users 
-              with <strong>{Number(campaign.conversions).toLocaleString()}</strong> conversions recorded since 
-              <strong> {new Date(campaign.start_date).toLocaleDateString()}</strong>.
-            </p>
-          </div>
+        </div>
+
+        <div className="modal-footer-premium">
+          <button className="back-btn-minimal" onClick={onClose}>
+            Back to Browse
+          </button>
         </div>
       </div>
     </div>
   );
 };
 
+
 export default CampaignDetailsModal;
+
