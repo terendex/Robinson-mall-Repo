@@ -572,6 +572,116 @@
   }
 }
 
+@media (max-width: 768px) {
+  .modal-content {
+    width: 95%;
+    max-width: none;
+    border-radius: 12px;
+  }
+
+  .modal-header {
+    padding: 15px 20px;
+  }
+
+  .modal-header h2 {
+    font-size: 17px;
+  }
+
+  .modal-content form {
+    padding: 20px;
+  }
+
+  .form-row {
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .form-row .form-group {
+    margin-bottom: 20px;
+  }
+
+  .details-header-info {
+    padding: 15px 20px;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .detail-main .value.title {
+    font-size: 24px;
+  }
+
+  .details-grid-pop {
+    grid-template-columns: repeat(2, 1fr);
+    padding: 15px 20px;
+    gap: 10px;
+  }
+
+  .details-grid-pop-refined {
+    grid-template-columns: repeat(2, 1fr);
+    padding: 15px 20px;
+    gap: 10px;
+  }
+
+  .voucher-details-section,
+  .voucher-details-section-refined {
+    padding: 0 20px 20px;
+  }
+
+  .v-details-content,
+  .v-info-group {
+    flex-wrap: wrap;
+    gap: 15px;
+  }
+
+  .performance-summary,
+  .performance-summary-refined {
+    margin: 0 20px 20px;
+  }
+
+  .modal-actions,
+  .modal-actions-refined {
+    padding: 15px 20px;
+  }
+
+  .modal-actions {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .cancel-inner-btn,
+  .save-btn {
+    width: 100%;
+    text-align: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .modal-content {
+    width: calc(100% - 1.5rem);
+    margin: 0.75rem;
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+
+  .modal-overlay {
+    align-items: flex-end;
+  }
+
+  .details-grid-pop,
+  .details-grid-pop-refined {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .modal-header h2 {
+    font-size: 15px;
+  }
+
+  .header-status-complex {
+    align-items: flex-start;
+  }
+}
+
 .campaign-badge-pill {
   padding: 6px 18px;
   border-radius: 20px;

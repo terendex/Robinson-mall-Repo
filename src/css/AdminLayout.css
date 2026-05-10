@@ -3,12 +3,12 @@
   padding: 20px;
   padding-top: 80px;
   transition: margin-left 0.3s ease;
-  min-height: calc(100vh - 80px);
+  min-height: calc(100vh - 60px);
   background-color: #f4f7f6;
 }
 
 .admin-layout-main.sidebar-open {
-  margin-left: 290px; /* Revert to match 290px sidebar */
+  margin-left: 290px; /* Full desktop sidebar width */
 }
 
 .view-details-btn-new {
@@ -39,16 +39,46 @@
   font-size: 14px;
 }
 
-@media (max-width: 1024px) {
+/* ── TABLET / iPad (768px – 1024px) ── */
+/* Sidebar slides in/out via JS .open class (defaults OPEN on load via window.innerWidth) */
+@media (min-width: 768px) and (max-width: 1024px) {
+  .admin-layout-main {
+    padding: 15px;
+    padding-top: 75px;
+    margin-left: 0; /* Sidebar closed — no margin */
+    transition: margin-left 0.3s ease;
+  }
+
   .admin-layout-main.sidebar-open {
-    margin-left: 290px;
+    margin-left: 230px; /* Tablet sidebar is 230px wide */
   }
 }
 
-@media (max-width: 768px) {
-  .admin-layout-main, .admin-layout-main.sidebar-open {
-    margin-left: 0; /* On mobile, sidebar overlays content */
+/* ── PHONE (≤767px) ── */
+/* Sidebar is an overlay — content takes full width */
+@media (max-width: 767px) {
+  .admin-layout-main,
+  .admin-layout-main.sidebar-open {
+    margin-left: 0; /* Sidebar overlays content — no shift needed */
     padding: 15px;
     padding-top: 75px;
   }
 }
+
+@media (max-width: 480px) {
+  .admin-layout-main,
+  .admin-layout-main.sidebar-open {
+    padding: 12px;
+    padding-top: 72px;
+  }
+}
+
+@media (max-width: 390px) {
+  .admin-layout-main,
+  .admin-layout-main.sidebar-open {
+    padding: 10px;
+    padding-top: 70px;
+  }
+}
+
+

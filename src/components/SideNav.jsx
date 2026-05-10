@@ -21,7 +21,8 @@ const SideNav = ({ user, isOpen, closeSidebar }) => {
   const displayEmail = user?.email || 'admin@example.com';
 
   const handleNavLinkClick = () => {
-    if (window.innerWidth <= 768) {
+    // Close the sidebar drawer on phones (≤767px) after navigation
+    if (window.innerWidth <= 767) {
       closeSidebar();
     }
   };

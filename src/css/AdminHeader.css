@@ -6,10 +6,12 @@
   position: fixed;
   top: 0;
   left: 0;
-  z-index: 1005;
-  /* Above sidebar overlay */
+  right: 0; /* Ensure full width on ALL screen sizes */
+  z-index: 1005; /* Above sidebar overlay */
   box-shadow: 0 1px 15px rgba(0, 0, 0, 0.08);
-  /* Crisp and bright */
+  -webkit-transform: translateZ(0); /* Force GPU layer — fixes iOS Safari fixed position bug */
+  transform: translateZ(0);
+  will-change: transform;
 }
 
 .admin-logo-section {
@@ -433,7 +435,26 @@
   }
 }
 
-@media (max-width: 768px) {
+/* ── Tablet (768px – 1024px) — sidebar ALWAYS visible at 230px ── */
+@media (min-width: 768px) and (max-width: 1024px) {
+  /* Show the red logo section but sized to match 230px sidebar */
+  .admin-logo-section {
+    display: flex;
+    width: 230px;
+    min-width: 230px;
+  }
+
+  .admin-header-main {
+    padding: 0 16px;
+  }
+
+  .admin-header-logo {
+    height: 40px;
+  }
+}
+
+/* ── Phone (≤767px) — compact header, overlay sidebar ── */
+@media (max-width: 767px) {
   .admin-logo-section {
     display: none;
   }
@@ -445,21 +466,17 @@
   .admin-header-left {
     gap: 8px;
     flex-grow: 1;
-    /* Allow left section to expand and take more scroll space */
   }
 
   .header-search-container {
-    width: 200px;
-    /* Increased from 160px */
+    width: auto;
     padding: 6px 10px;
     flex-grow: 1;
-    /* Allow it to take up available space */
-    max-width: 240px;
+    max-width: 220px;
   }
 
   .search-results-dropdown {
     min-width: 260px;
-    /* Make results readable even if input is narrow */
     left: 0;
     width: auto;
   }
@@ -472,7 +489,12 @@
     font-size: 28px;
   }
 
-  /* Make sure header is NOT dimmed or different color on mobile */
+  .notification-dropdown {
+    width: calc(100vw - 20px);
+    right: -10px;
+    max-width: 360px;
+  }
+
   .admin-header {
     background-color: #ffffff;
     opacity: 1 !important;
@@ -482,6 +504,28 @@
 @media (max-width: 480px) {
   .admin-logo-section {
     display: none;
-    /* Hide logo box on very small screens to fit search/icons */
+  }
+
+  .header-search-container {
+    display: none; /* Hide search on very small screens — accessible via sidebar */
+  }
+
+  .admin-header-left {
+    gap: 4px;
+  }
+
+  .admin-header-right {
+    gap: 8px;
+  }
+
+  .notification-dropdown {
+    width: calc(100vw - 16px);
+    right: -8px;
+  }
+
+  .profile-dropdown {
+    width: 180px;
+    right: 0;
   }
 }
+

@@ -288,6 +288,8 @@
   font-size: 12px;
   color: #757575;
   line-height: 1.4;
+  white-space: nowrap; /* Prevent date/time from wrapping to 2 lines */
+  min-width: 120px;
 }
 
 .status-badge {
@@ -398,4 +400,94 @@
   display: flex;
   justify-content: center;
   padding: 40px;
+}
+
+/* -- Mobile Responsive -- */
+@media (max-width: 768px) {
+  .claims-page {
+    padding: 1.25rem;
+  }
+
+  .claims-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+
+  .claims-header h1 {
+    font-size: 1.5rem;
+  }
+
+  .new-claim-btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .claim-stats {
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+  }
+
+  .claim-stat-card {
+    padding: 1.25rem;
+  }
+
+  .stat-value {
+    font-size: 1.5rem;
+  }
+
+  .claim-table-section {
+    padding: 16px;
+  }
+
+  /* Fix overflowing controls bar */
+  .claim-table-controls {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .claim-search-wrapper {
+    width: 100%;
+    flex: 1 1 100%;
+  }
+
+  /* Remove min-width that causes overflow on small screens */
+  .filter-button {
+    min-width: 0;
+    flex-shrink: 0;
+  }
+
+  .claim-table-wrapper {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Min-width fits all 7 columns (Customer, Store, Receipt, Amount, Date, Status, Actions) */
+  .claims-table {
+    min-width: 750px;
+  }
+}
+
+@media (max-width: 480px) {
+  .claims-page {
+    padding: 1rem;
+  }
+
+  .claims-header h1 {
+    font-size: 1.25rem;
+  }
+
+  .claim-stats {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .claim-stat-card .stat-value {
+    font-size: 1.35rem;
+  }
+}
+
+@media (max-width: 360px) {
+  .claim-stats {
+    grid-template-columns: 1fr;
+  }
 }

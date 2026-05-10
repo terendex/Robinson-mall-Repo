@@ -274,10 +274,12 @@
 
 .budget-cell {
   color: #888;
+  white-space: nowrap;
 }
 
 .timeline-cell {
   line-height: 1.6;
+  white-space: nowrap; /* Prevent date ranges wrapping to 2 lines */
 }
 
 /* Status Badges */
@@ -390,4 +392,86 @@
   font-weight: 700;
   color: #334155;
   text-align: center;
+}
+
+/* -- Mobile Responsive -- */
+@media (max-width: 768px) {
+  .campaigns-page {
+    padding: 1.25rem;
+  }
+
+  .campaigns-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .campaigns-header h1 {
+    font-size: 1.5rem;
+  }
+
+  .create-campaign-btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .campaign-stats {
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+  }
+
+  .campaign-table-section {
+    padding: 16px;
+    border-radius: 12px;
+  }
+
+  .campaign-table-controls {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  /* Search bar takes full width on mobile */
+  .campaign-search-wrapper {
+    flex: 1 1 100%;
+    width: 100%;
+  }
+
+  .campaign-table-wrapper {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Wide enough to show all 8 columns without clipping */
+  .campaigns-table {
+    min-width: 820px;
+  }
+}
+
+@media (max-width: 480px) {
+  .campaigns-page {
+    padding: 1rem;
+  }
+
+  .campaigns-header h1 {
+    font-size: 1.25rem;
+  }
+
+  .campaign-stats {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .campaign-stat-card {
+    padding: 1.25rem;
+  }
+
+  .stat-value {
+    font-size: 1.5rem;
+  }
+}
+
+@media (max-width: 360px) {
+  .campaign-stats {
+    grid-template-columns: 1fr;
+  }
 }

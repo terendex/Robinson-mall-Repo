@@ -347,16 +347,55 @@
 }
 
 @media (max-width: 768px) {
+  .vouchers-container {
+    padding: 1.25rem;
+    gap: 1.25rem;
+  }
+
+  .vouchers-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+
+  .vouchers-header h1 {
+    font-size: 1.5rem;
+  }
+
+  .create-voucher-btn {
+    width: 100%;
+    justify-content: center;
+  }
+
   .vouchers-controls {
     flex-direction: column;
     align-items: stretch;
   }
   
+  .vouchers-table-wrapper {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .vouchers-table {
+    min-width: 700px;
+  }
+
   .vouchers-table th:nth-child(2),
   .vouchers-table td:nth-child(2),
   .vouchers-table th:nth-child(4),
   .vouchers-table td:nth-child(4) {
     display: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .vouchers-container {
+    padding: 1rem;
+  }
+
+  .vouchers-header h1 {
+    font-size: 1.25rem;
   }
 }
 
