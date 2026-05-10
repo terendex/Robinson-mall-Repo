@@ -9,9 +9,9 @@ body {
 .register-container {
   display: flex;
   justify-content: center;
-  align-items: center;
-  min-height: calc(100dvh - 50px);
-  padding: 100px 20px 20px 20px;
+  align-items: flex-start;
+  min-height: 100vh;
+  padding: 80px 20px 40px 20px;
 }
 
 .register-card {
@@ -250,7 +250,8 @@ body {
 /* Tablet styles */
 @media (max-width: 768px) {
   .register-container {
-    padding: 80px 20px 20px 20px;
+    padding: 80px 20px 40px 20px;
+    align-items: flex-start;
   }
 
   .register-card {
@@ -265,10 +266,9 @@ body {
 /* Mobile styles */
 @media (max-width: 480px) {
   .register-container {
-    /* Top-aligned on mobile so no dead space below the form */
     align-items: flex-start;
     padding: 80px 16px 28px 16px;
-    min-height: 100dvh;
+    min-height: 100vh;
   }
 
   .register-card {
@@ -322,4 +322,4 @@ body {
   .register-card {
     padding: 24px 16px;
   }
-}
+}

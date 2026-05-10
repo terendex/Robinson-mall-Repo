@@ -163,7 +163,10 @@ const AdminHeader = ({ toggleSidebar, user, isSidebarOpen, onLogout }) => {
                 <div className="notification-list">
                   {filteredNotifications.length > 0 ? (
                     filteredNotifications.map((notification) => (
-                      <div key={notification.id} className="notification-item" onClick={() => navigate(`${pathPrefix}/notifications`)}>
+                      <div key={notification.id} className="notification-item" onClick={() => {
+                        setIsNotificationDropdownOpen(false);
+                        navigate(`${pathPrefix}/notifications`);
+                      }}>
                         <div className="notification-item-main">
                           <div className="notification-item-title-row">
                             <span className="notification-item-title">{notification.title || 'Notification'}</span>
@@ -181,7 +184,10 @@ const AdminHeader = ({ toggleSidebar, user, isSidebarOpen, onLogout }) => {
                     </div>
                   )}
                 </div>
-                <div className="notification-dropdown-footer" onClick={() => navigate(`${pathPrefix}/notifications`)}>
+                <div className="notification-dropdown-footer" onClick={() => {
+                  setIsNotificationDropdownOpen(false);
+                  navigate(`${pathPrefix}/notifications`);
+                }}>
                   <span>View all notifications</span>
                 </div>
               </div>

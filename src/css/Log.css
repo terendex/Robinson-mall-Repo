@@ -9,9 +9,9 @@ body {
 .log-container {
   display: flex;
   justify-content: center;
-  align-items: center;
-  min-height: calc(100dvh - 50px);
-  padding: 50px 20px 20px 20px;
+  align-items: flex-start;
+  min-height: 100vh;
+  padding: 80px 20px 40px 20px;
 }
 
 .log-card {
@@ -175,6 +175,10 @@ body {
 
 /* Tablet styles */
 @media (max-width: 768px) {
+  .log-container {
+    padding: 80px 20px 40px 20px;
+    align-items: flex-start;
+  }
   .log-card {
     padding: 30px 25px;
   }
@@ -186,10 +190,9 @@ body {
 /* Mobile styles */
 @media (max-width: 480px) {
   .log-container {
-    /* Align to top on mobile — no dead space below short forms */
     align-items: flex-start;
     padding: 80px 16px 24px 16px;
-    min-height: 100dvh;
+    min-height: 100vh;
   }
 
   .log-card {
