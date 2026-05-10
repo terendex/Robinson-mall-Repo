@@ -276,6 +276,18 @@ class PasswordResetView(views.APIView):
     permission_classes = [AllowAny]
     throttle_scope = 'password_reset'
 
+    def get(self, request, uidb64, token):
+        """Validates the token without resetting the password (for UI feedback)."""
+        try:
+            from django.utils.http import urlsafe_base64_decode
+            uid = urlsafe_base64_decode(uidb64).decode()
+            user = User.objects.get(pk=uid)
+            if not default_token_generator.check_token(user, token):
+                return Response({'detail': 'This password reset link has expired or is invalid.'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'detail': 'Token is valid.'}, status=status.HTTP_200_OK)
+        except (TypeError, ValueError, OverflowError, User.DoesNotExist):
+            return Response({'detail': 'Invalid or expired token link.'}, status=status.HTTP_400_BAD_REQUEST)
+
     def post(self, request, uidb64, token):
         password = request.data.get('password')
         if not password:
