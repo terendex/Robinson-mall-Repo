@@ -26,7 +26,7 @@ const ForgotPassword = () => {
         { email }
       );
       if (response.status === 200) {
-        setMessage('If an account with that email exists, a password reset link has been sent. Please check your inbox (and spam folder).');
+        setMessage('A password reset link has been sent to your email. Please check your inbox (and spam folder).');
         setEmail('');
       }
     } catch (err) {

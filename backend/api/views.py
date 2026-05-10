@@ -150,8 +150,7 @@ class PasswordResetRequestView(views.APIView):
         try:
             user = User.objects.get(email=email)
         except User.DoesNotExist:
-            # We return 200 OK to prevent email enumeration
-            return Response({'detail': 'If a user with that email exists, a password reset link has been sent.'}, status=status.HTTP_200_OK)
+            return Response({'detail': 'No account associated with this email address was found.'}, status=status.HTTP_400_BAD_REQUEST)
 
         # Generate standard secure token and uid
         token = default_token_generator.make_token(user)
