@@ -88,6 +88,7 @@
   color: #c50000;
 }
 
+
 /* Vertical Separator */
 .header-separator {
   width: 1px;
@@ -435,6 +436,7 @@
 }
 
 /* ── Tablet (768px – 1024px) — sidebar ALWAYS visible at 230px ── */
+/* ── Tablet (768px – 1024px) — sidebar ALWAYS visible at 230px ── */
 @media (min-width: 768px) and (max-width: 1024px) {
   /* Show the red logo section but sized to match 230px sidebar */
   .admin-logo-section {
@@ -443,12 +445,12 @@
     min-width: 230px;
   }
 
-  .admin-header-main {
-    padding: 0 16px;
+  .admin-logo-section.sidebar-closed {
+    display: none;
   }
 
-  .admin-header-logo {
-    height: 40px;
+  .admin-header-main {
+    padding: 0 16px;
   }
 }
 
@@ -472,26 +474,6 @@
     padding: 6px 10px;
     flex-grow: 1;
     max-width: 220px;
-  }
-
-  .search-results-dropdown {
-    min-width: 260px;
-    left: 0;
-    width: auto;
-  }
-
-  .header-icon-btn {
-    font-size: 20px;
-  }
-
-  .profile-avatar {
-    font-size: 28px;
-  }
-
-  .notification-dropdown {
-    width: calc(100vw - 20px);
-    right: -10px;
-    max-width: 360px;
   }
 
   .admin-header {

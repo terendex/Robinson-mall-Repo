@@ -15,7 +15,7 @@
     --brand-red-light: #fee2e2;
 }
 
-.dashboard-container {
+.dashboard-container, .campaigns-page {
     padding: 2.5rem;
     background-color: var(--dash-bg);
     min-height: 100vh;
@@ -301,7 +301,7 @@
 
 @media (max-width: 768px) {
     .dashboard-container {
-        padding: 1.25rem;
+        padding: 1.25rem 0.5rem; /* Reduced side padding */
     }
     
     .dashboard-header h1 {

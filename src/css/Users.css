@@ -348,7 +348,7 @@
 
 @media (max-width: 768px) {
   .users-page {
-    padding: 1.25rem;
+    padding: 1.25rem 0.5rem; /* Removed side white space */
   }
 
   .users-header {

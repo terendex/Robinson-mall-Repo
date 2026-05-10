@@ -405,7 +405,7 @@
 /* -- Mobile Responsive -- */
 @media (max-width: 768px) {
   .campaigns-page {
-    padding: 1.25rem;
+    padding: 1.25rem 0.5rem; /* Removed side white space */
   }
 
   .campaigns-header {

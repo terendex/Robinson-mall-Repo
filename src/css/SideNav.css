@@ -139,7 +139,7 @@
     font-size: 11px;
   }
 
-  /* On tablets the overlay is never shown — content shifts instead */
+  /* On tablets the overlay is never shown */
   .sidenav-overlay {
     display: none !important;
   }
