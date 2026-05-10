@@ -164,7 +164,7 @@ class PasswordResetRequestView(views.APIView):
         plain_text = (
             f"Hi {user.first_name or user.username},\n\n"
             f"We received a request to reset the password for your Robinson Mall account.\n\n"
-            f"Click the link below to set a new password (valid for 1 hour):\n{reset_link}\n\n"
+            f"Click the link below to set a new password (valid for 5 minutes):\n{reset_link}\n\n"
             f"If you didn't request this, you can safely ignore this email — your password won't change.\n\n"
             f"— The Robinson Mall Team"
         )
@@ -203,7 +203,7 @@ class PasswordResetRequestView(views.APIView):
                       <p style="margin:0 0 24px;font-size:14px;color:#555;line-height:1.7;">
                         We received a request to reset the password for your Robinson Mall account.
                         Click the button below to choose a new password.
-                        This link is valid for <strong>1 hour</strong>.
+                        This link is valid for <strong>5 minutes</strong>.
                       </p>
 
                       <!-- CTA Button -->
