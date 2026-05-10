@@ -206,7 +206,7 @@
 .campaign-table-wrapper {
   overflow-x: auto;
   min-height: 400px;
-  padding-bottom: 50px;
+  padding-bottom: 20px;
 }
 
 .campaigns-table {
@@ -224,9 +224,17 @@
   background-color: transparent;
 }
 
+.campaigns-table tbody tr {
+  border-bottom: 1px solid #eeeeee;
+  transition: background-color 0.2s;
+}
+
+.campaigns-table tbody tr:last-child {
+  border-bottom: none;
+}
+
 .campaigns-table td {
   padding: 16px;
-  border-bottom: 1px solid #eeeeee;
   vertical-align: middle;
   color: #888;
 }
