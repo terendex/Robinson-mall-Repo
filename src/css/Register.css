@@ -10,7 +10,7 @@ body {
   display: flex;
   justify-content: center;
   align-items: center;
-  min-height: calc(100vh - 50px);
+  min-height: calc(100dvh - 50px);
   padding: 100px 20px 20px 20px;
 }
 
@@ -249,6 +249,10 @@ body {
 
 /* Tablet styles */
 @media (max-width: 768px) {
+  .register-container {
+    padding: 80px 20px 20px 20px;
+  }
+
   .register-card {
     padding: 30px 25px;
   }
@@ -261,17 +265,21 @@ body {
 /* Mobile styles */
 @media (max-width: 480px) {
   .register-container {
-    padding: 60px 15px 15px 15px;
+    /* Top-aligned on mobile so no dead space below the form */
+    align-items: flex-start;
+    padding: 80px 16px 28px 16px;
+    min-height: 100dvh;
   }
 
   .register-card {
-    padding: 25px 20px;
-    border-radius: 12px;
+    padding: 28px 20px;
+    border-radius: 14px;
+    width: 100%;
   }
 
   .register-card h2 {
     font-size: 20px;
-    margin-bottom: 25px;
+    margin-bottom: 22px;
   }
 
   .form-group label {
@@ -280,7 +288,7 @@ body {
 
   .form-group input {
     padding: 11px;
-    font-size: 13px;
+    font-size: 15px;
   }
 
   .form-group i {
@@ -292,11 +300,11 @@ body {
   }
 
   .form-check {
-    font-size: 11px;
+    font-size: 12px;
   }
 
   .signup-btn {
-    padding: 11px;
+    padding: 13px;
     font-size: 15px;
   }
 
@@ -305,3 +313,13 @@ body {
     margin-top: 22px;
   }
 }
+
+@media (max-width: 360px) {
+  .register-container {
+    padding: 75px 12px 24px 12px;
+  }
+
+  .register-card {
+    padding: 24px 16px;
+  }
+}

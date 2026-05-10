@@ -545,7 +545,7 @@
 
 .txn-audit-modal {
   max-width: 420px !important;
-  width: 90% !important;
+  width: 95% !important;
 }
 
 .txn-audit-qr-wrapper {
@@ -629,7 +629,7 @@
 
 .txn-form-modal {
   max-width: 480px !important;
-  width: 90% !important;
+  width: 95% !important;
 }
 
 /* ── Rejected status badge ── */
@@ -872,16 +872,11 @@
     font-size: 1.35rem;
   }
 
-  .txn-audit-modal {
-    max-width: 100% !important;
-    width: calc(100vw - 2rem) !important;
-    margin: 1rem;
-  }
-
+  /* Transaction modals — let Modal.css handle layout */
+  .txn-audit-modal,
   .txn-form-modal {
+    width: 100% !important;
     max-width: 100% !important;
-    width: calc(100vw - 2rem) !important;
-    margin: 1rem;
   }
 
   .txn-export-dropdown {

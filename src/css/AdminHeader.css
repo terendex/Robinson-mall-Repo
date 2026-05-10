@@ -9,9 +9,8 @@
   right: 0; /* Ensure full width on ALL screen sizes */
   z-index: 1005; /* Above sidebar overlay */
   box-shadow: 0 1px 15px rgba(0, 0, 0, 0.08);
-  -webkit-transform: translateZ(0); /* Force GPU layer — fixes iOS Safari fixed position bug */
-  transform: translateZ(0);
-  will-change: transform;
+  /* NOTE: Do NOT add transform/will-change here — it creates a new stacking
+     context that traps position:fixed modals and causes them to clip. */
 }
 
 .admin-logo-section {
