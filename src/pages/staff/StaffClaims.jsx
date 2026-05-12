@@ -107,8 +107,8 @@ const StaffClaims = () => {
   const stats = useMemo(() => {
     return {
       total: claims.length,
-      approved: claims.filter(c => c.status === 'Approved').length,
-      pending: claims.filter(c => c.status === 'Pending').length
+      claimed:    claims.filter(c => c.status === 'Approved').length,
+      notClaimed: claims.filter(c => c.status === 'Pending').length,
     };
   }, [claims]);
 
@@ -136,12 +136,12 @@ const StaffClaims = () => {
             <div className="stat-value">{stats.total}</div>
           </div>
           <div className="claim-stat-card">
-            <div className="stat-title">APPROVED CLAIMS</div>
-            <div className="stat-value">{stats.approved}</div>
+            <div className="stat-title">CLAIMED</div>
+            <div className="stat-value">{stats.claimed}</div>
           </div>
           <div className="claim-stat-card">
-            <div className="stat-title">PENDING REVIEW</div>
-            <div className="stat-value">{stats.pending}</div>
+            <div className="stat-title">NOT CLAIMED</div>
+            <div className="stat-value">{stats.notClaimed}</div>
           </div>
         </div>
 
@@ -189,13 +189,13 @@ const StaffClaims = () => {
               </button>
               {isStatusDropdownOpen && (
                 <div className="filter-dropdown-menu">
-                  {['Approved', 'Rejected', 'Pending'].map(status => (
-                    <label key={status} className="filter-option">
-                      <input 
-                        type="checkbox" 
-                        checked={statusFilters[status]} 
-                        onChange={() => handleFilterToggle(status)} 
-                      /> {status}
+                  {[{ val: 'Approved', lbl: 'Claimed' }, { val: 'Pending', lbl: 'Not Claimed' }, { val: 'Rejected', lbl: 'Expired' }].map(({ val, lbl }) => (
+                    <label key={val} className="filter-option">
+                      <input
+                        type="checkbox"
+                        checked={statusFilters[val]}
+                        onChange={() => handleFilterToggle(val)}
+                      /> {lbl}
                     </label>
                   ))}
                 </div>
@@ -213,10 +213,10 @@ const StaffClaims = () => {
                 <table className="claims-table">
                   <thead>
                     <tr>
+                      <th>Claim No.</th>
                       <th>Customer</th>
                       <th>Voucher</th>
                       <th>Store</th>
-                      <th>Receipt No.</th>
                       <th>Amount</th>
                       <th>Date/Time</th>
                       <th>Status</th>
@@ -227,6 +227,9 @@ const StaffClaims = () => {
                     {pagedClaims.map((claim) => (
 
                       <tr key={claim.id}>
+                        <td>
+                          <span className="receipt-no">{claim.receipt_no || `CLM-${String(claim.id).padStart(4, '0')}`}</span>
+                        </td>
                         <td>
                           <div className="customer-cell">
                             <span className="customer-name">{claim.user_name || 'Anonymous User'}</span>
@@ -244,20 +247,17 @@ const StaffClaims = () => {
                         <td>
                           <span className="store-name">{claim.store_name}</span>
                         </td>
-                        <td>
-                          <span className="receipt-no">{claim.receipt_no}</span>
-                        </td>
                         <td className="amount-cell">
                           ₱{Number(claim.amount).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}
                         </td>
                         <td className="date-cell">
                           {formatDateTime(claim.created_at)}
                         </td>
-                        <td>
-                          <span className={`status-badge ${claim.status === 'Approved' ? 'approved-filled' : claim.status.toLowerCase()}`}>
-                            {claim.status}
-                          </span>
-                        </td>
+                         <td>
+                           <span className={`status-badge ${claim.status === 'Approved' ? 'approved-filled' : claim.status.toLowerCase()}`}>
+                             {({ Pending: 'Not Claimed', Approved: 'Claimed', Rejected: 'Expired' })[claim.status] || claim.status}
+                           </span>
+                         </td>
                         <td className="actions-cell" style={{ textAlign: 'center' }}>
                           <button 
                             className="view-details-btn-new"

@@ -693,6 +693,11 @@
   cursor: pointer;
   transition: var(--transition-fast);
   font-family: 'Inter', system-ui, sans-serif;
+  white-space: nowrap;
+}
+
+.filter-pill i {
+  font-size: 0.72rem;
 }
 
 .filter-pill:hover {
@@ -701,12 +706,47 @@
   background: var(--primary-red-light);
 }
 
+/* ── Base active (overridden per status below) ─ */
 .filter-pill.active {
-  background: var(--primary-red);
   color: var(--white);
-  border-color: var(--primary-red);
-  box-shadow: 0 4px 12px rgba(204, 44, 44, 0.25);
+  box-shadow: 0 4px 14px rgba(0,0,0,0.18);
 }
+
+/* All — brand red */
+.filter-pill.active.active-all {
+  background: var(--primary-red);
+  border-color: var(--primary-red);
+  box-shadow: 0 4px 12px rgba(204, 44, 44, 0.30);
+}
+
+/* Pending — amber/orange */
+.filter-pill.active.active-pending {
+  background: #ea580c;
+  border-color: #ea580c;
+  box-shadow: 0 4px 12px rgba(234, 88, 12, 0.30);
+  color: var(--white);
+}
+
+/* Approved — emerald */
+.filter-pill.active.active-approved {
+  background: #16a34a;
+  border-color: #16a34a;
+  box-shadow: 0 4px 12px rgba(22, 163, 74, 0.30);
+  color: var(--white);
+}
+
+/* Rejected — deep red */
+.filter-pill.active.active-rejected {
+  background: #b91c1c;
+  border-color: #b91c1c;
+  box-shadow: 0 4px 12px rgba(185, 28, 28, 0.30);
+  color: var(--white);
+}
+
+/* ── Hover overrides per status ─────────────── */
+.filter-pill.filter-pill-pending:hover  { border-color: #ea580c; color: #ea580c; background: #fff7ed; }
+.filter-pill.filter-pill-approved:hover { border-color: #16a34a; color: #16a34a; background: #f0fdf4; }
+.filter-pill.filter-pill-rejected:hover { border-color: #b91c1c; color: #b91c1c; background: #fef2f2; }
 
 .claim-status i {
   margin-right: 0.3rem;
@@ -1197,9 +1237,54 @@
   font-size: 0.65rem;
   font-weight: 800;
   padding: 0.25rem 0.6rem;
-  background: #dcfce7;
-  color: #15803d;
   border-radius: 4px;
+}
+
+/* ── Claim status pill variants (footer of each voucher card) ── */
+.claim-pill-claimed    { background: #dcfce7; color: #15803d; }
+.claim-pill-notclaimed { background: #fff7ed; color: #c2410c; }
+.claim-pill-expired    { background: #fef2f2; color: #b91c1c; }
+
+/* ── Voucher-type tag per status ────────────────────────────── */
+.claim-tag-approved { color: #15803d; }
+.claim-tag-pending  { color: #c2410c; }
+.claim-tag-rejected { color: #b91c1c; }
+
+/* ── Status icon per status ─────────────────────────────────── */
+.claim-icon-approved { color: #22c55e !important; }
+.claim-icon-pending  { color: #f97316 !important; }
+.claim-icon-rejected { color: #ef4444 !important; }
+
+/* ── Claim card border accent per status ─────────────────────── */
+.claim-card-approved { border-color: rgba(34, 197, 94, 0.25) !important; }
+.claim-card-pending  { border-color: rgba(249, 115, 22, 0.25) !important; }
+.claim-card-rejected { border-color: rgba(239, 68, 68, 0.25) !important; }
+
+/* ── Filter pill: All (brand red) ───────────────────────────── */
+.filter-pill.active.active-all {
+  background: var(--primary-red);
+  border-color: var(--primary-red);
+  box-shadow: 0 4px 12px rgba(204, 44, 44, 0.30);
+}
+
+/* ── Filter pills for new status labels ─────────────────────── */
+/* Pending = Not Claimed → orange */
+.filter-pill.filter-pill-pending:hover  { border-color: #ea580c; color: #ea580c; background: #fff7ed; }
+.filter-pill.active.active-pending {
+  background: #ea580c; border-color: #ea580c;
+  box-shadow: 0 4px 12px rgba(234, 88, 12, 0.30);
+}
+/* Approved = Claimed → green */
+.filter-pill.filter-pill-approved:hover { border-color: #16a34a; color: #16a34a; background: #f0fdf4; }
+.filter-pill.active.active-approved {
+  background: #16a34a; border-color: #16a34a;
+  box-shadow: 0 4px 12px rgba(22, 163, 74, 0.30);
+}
+/* Rejected = Expired → red */
+.filter-pill.filter-pill-rejected:hover { border-color: #b91c1c; color: #b91c1c; background: #fef2f2; }
+.filter-pill.active.active-rejected {
+  background: #b91c1c; border-color: #b91c1c;
+  box-shadow: 0 4px 12px rgba(185, 28, 28, 0.30);
 }
 
 /* ── Campaign Card Polish ────────────────────────────── */

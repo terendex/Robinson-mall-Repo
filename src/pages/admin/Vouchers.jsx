@@ -17,6 +17,7 @@ const Vouchers = () => {
   const [statusFilter, setStatusFilter] = useState('All');
   const [showModal, setShowModal] = useState(false);
   const [voucherToEdit, setVoucherToEdit] = useState(null);
+  const [viewOnly, setViewOnly] = useState(false);
   const [activeActions, setActiveActions] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const actionsRef = useRef(null);
@@ -52,11 +53,20 @@ const Vouchers = () => {
 
   const handleAddVoucher = () => {
     setVoucherToEdit(null);
+    setViewOnly(false);
     setShowModal(true);
   };
 
   const handleEditVoucher = (voucher) => {
     setVoucherToEdit(voucher);
+    setViewOnly(false);
+    setShowModal(true);
+    setActiveActions(null);
+  };
+
+  const handleViewVoucher = (voucher) => {
+    setVoucherToEdit(voucher);
+    setViewOnly(true);
     setShowModal(true);
     setActiveActions(null);
   };
@@ -170,9 +180,10 @@ const Vouchers = () => {
             </div>
           ) : (
             <>
-              <table className="vouchers-table">
+                <table className="vouchers-table">
                 <thead>
                   <tr>
+                    <th>Voucher ID</th>
                     <th>Voucher</th>
                     <th>Campaign</th>
                     <th>Store</th>
@@ -186,6 +197,20 @@ const Vouchers = () => {
                 <tbody>
                   {pagedVouchers.length > 0 ? pagedVouchers.map((voucher) => (
                     <tr key={voucher.id}>
+                      <td>
+                        <span style={{
+                          fontFamily: 'monospace',
+                          fontWeight: '700',
+                          fontSize: '0.8rem',
+                          color: '#64748b',
+                          background: '#f1f5f9',
+                          padding: '3px 8px',
+                          borderRadius: '5px',
+                          letterSpacing: '0.04em',
+                        }}>
+                          VCH-{String(voucher.id).padStart(4, '0')}
+                        </span>
+                      </td>
                       <td>
                         <div className="voucher-info-cell">
                           <span className="voucher-name">{voucher.name}</span>
@@ -233,11 +258,14 @@ const Vouchers = () => {
                           </button>
                           {activeActions === voucher.id && (
                             <div className="dot-menu show">
+                              <button onClick={() => handleViewVoucher(voucher)}>
+                                <i className="fa-regular fa-eye"></i> View Details
+                              </button>
                               <button onClick={() => handleEditVoucher(voucher)}>
                                 <i className="fa-solid fa-pen-to-square"></i> Edit
                               </button>
                               <button onClick={() => toggleVoucherStatus(voucher)}>
-                                <i className={`fa-solid ${voucher.is_active ? 'fa-ban' : 'fa-check'}`}></i> {voucher.is_active ? 'Disable' : 'Active'}
+                                <i className={`fa-solid ${voucher.is_active ? 'fa-ban' : 'fa-check'}`}></i> {voucher.is_active ? 'Disable' : 'Activate'}
                               </button>
                             </div>
                           )}
@@ -246,7 +274,7 @@ const Vouchers = () => {
                     </tr>
                   )) : (
                     <tr>
-                      <td colSpan="8" style={{ textAlign: 'center', padding: '40px', color: '#9e9e9e' }}>
+                      <td colSpan="9" style={{ textAlign: 'center', padding: '40px', color: '#9e9e9e' }}>
                         No vouchers found matching your criteria.
                       </td>
                     </tr>
@@ -269,9 +297,10 @@ const Vouchers = () => {
 
       <VoucherModal 
         show={showModal}
-        onClose={() => setShowModal(false)}
+        onClose={() => { setShowModal(false); setViewOnly(false); }}
         onSave={handleSaveVoucher}
         voucherToEdit={voucherToEdit}
+        readOnly={viewOnly}
       />
     </div>
   );

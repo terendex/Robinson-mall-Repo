@@ -243,8 +243,10 @@ const TransactionModal = ({ show, onClose, onSave, transactionToEdit }) => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    // created_at is read-only on the backend (auto_now_add), strip it from the payload
+    const { created_at, ...submitPayload } = formData;
     onSave({
-      ...formData,
+      ...submitPayload,
       receipt_image: ocrPreview || null,
     });
   };
@@ -570,7 +572,7 @@ const TransactionModal = ({ show, onClose, onSave, transactionToEdit }) => {
           {/* Timestamp */}
           <div className="form-group">
             <label>
-              Timestamp
+              Receipt Date
               {filledFields.includes('created_at') && <span className="ocr-filled-tag">OCR</span>}
             </label>
             <input
@@ -578,6 +580,7 @@ const TransactionModal = ({ show, onClose, onSave, transactionToEdit }) => {
               name="created_at"
               value={formData.created_at}
               onChange={handleChange}
+              title="Informational only — date is set automatically by the server"
             />
           </div>
 

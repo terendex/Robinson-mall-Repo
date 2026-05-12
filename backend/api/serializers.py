@@ -170,7 +170,7 @@ class TransactionSerializer(serializers.ModelSerializer):
         model = Transaction
         fields = (
             'id', 'transaction_id', 'transaction_id_short',
-            'receipt_no', 'user', 'user_name',
+            'receipt_no', 'user_name',
             'store', 'store_name', 'store_display_name',
             'voucher_name', 'voucher_code',
             'amount', 'expiry_date',

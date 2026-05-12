@@ -122,6 +122,7 @@ const StaffVouchers = () => {
               <table className="vouchers-table">
               <thead>
                 <tr>
+                  <th>Voucher ID</th>
                   <th>Voucher</th>
                   <th>Campaign</th>
                   <th>Store</th>
@@ -136,6 +137,20 @@ const StaffVouchers = () => {
                 {pagedVouchers.map((voucher) => (
 
                   <tr key={voucher.id}>
+                    <td>
+                      <span style={{
+                        fontFamily: 'monospace',
+                        fontWeight: '700',
+                        fontSize: '0.8rem',
+                        color: '#64748b',
+                        background: '#f1f5f9',
+                        padding: '3px 8px',
+                        borderRadius: '5px',
+                        letterSpacing: '0.04em',
+                      }}>
+                        VCH-{String(voucher.id).padStart(4, '0')}
+                      </span>
+                    </td>
                     <td>
                       <div className="voucher-info-cell">
                         <span className="voucher-name">{voucher.name}</span>

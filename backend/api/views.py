@@ -38,6 +38,8 @@ class UserViewSet(viewsets.ModelViewSet):
             return [AllowAny()]
         if self.action == 'me':
             return [IsAuthenticated()]
+        if self.action in ['list', 'retrieve']:
+            return [IsAuthenticated()]
         return super().get_permissions()
 
     @action(detail=False, methods=['get', 'patch'], permission_classes=[IsAuthenticated])

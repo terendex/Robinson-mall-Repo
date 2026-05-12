@@ -101,7 +101,13 @@ const Transactions = () => {
       setTransactionToEdit(null);
     } catch (error) {
       console.error('Error saving transaction:', error);
-      alert('Error saving transaction.');
+      const errData = error.response?.data;
+      const msg =
+        (errData?.receipt_no && errData.receipt_no[0]) ||
+        (errData?.user_name  && errData.user_name[0])  ||
+        errData?.detail ||
+        'Error saving transaction. Please check the form and try again.';
+      alert(msg);
     }
   };
 
@@ -331,7 +337,7 @@ const Transactions = () => {
               )}
             </div>
 
-            {(canManage || isCustomer) && (
+            {(canManage || isManager || isCustomer) && (
               <button className="new-transaction-btn" onClick={openNewModal}>
                 <i className="fa-solid fa-plus"></i> {isCustomer ? 'Submit Transaction' : 'New Transaction'}
               </button>
