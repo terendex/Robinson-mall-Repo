@@ -496,11 +496,27 @@
 
 @media (max-width: 768px) {
   .rpt-page {
-    padding: 1.5rem;
+    padding: 1.25rem;
   }
 
   .rpt-stats {
     grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+  }
+
+  .rpt-stat-card {
+    padding: 1.25rem 1rem;
+    gap: 0.75rem;
+  }
+
+  .rpt-stat-icon-wrap {
+    width: 40px;
+    height: 40px;
+    font-size: 1rem;
+  }
+
+  .rpt-stat-value {
+    font-size: 1.6rem;
   }
 
   .rpt-header {
@@ -511,10 +527,69 @@
   .rpt-header-left h1 {
     font-size: 1.5rem;
   }
+
+  .rpt-header-actions {
+    width: 100%;
+  }
+
+  .rpt-chart-card {
+    padding: 1.25rem;
+  }
+
+  /* Table summary scrollable on tablet */
+  .rpt-summary-table-wrap {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .rpt-summary-table {
+    min-width: 560px;
+  }
 }
 
 @media (max-width: 480px) {
+  .rpt-page {
+    padding: 1rem;
+  }
+
+  .rpt-stats {
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+  }
+
+  .rpt-stat-card {
+    padding: 1rem 0.875rem;
+    gap: 0.625rem;
+    flex-direction: column; /* Stack icon above text on very narrow screens */
+    align-items: flex-start;
+  }
+
+  .rpt-stat-icon-wrap {
+    width: 36px;
+    height: 36px;
+    font-size: 0.9rem;
+  }
+
+  .rpt-header-left h1 {
+    font-size: 1.25rem;
+  }
+
+  .rpt-stat-value {
+    font-size: 1.35rem; /* Scale down so values like '100.0%' don't overflow */
+  }
+
+  .rpt-stat-label {
+    font-size: 0.65rem;
+  }
+
+  .rpt-stat-sub {
+    font-size: 0.75rem;
+  }
+}
+
+@media (max-width: 360px) {
   .rpt-stats {
     grid-template-columns: 1fr;
   }
 }
+

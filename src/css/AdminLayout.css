@@ -3,12 +3,12 @@
   padding: 20px;
   padding-top: 80px;
   transition: margin-left 0.3s ease;
-  min-height: calc(100vh - 80px);
+  min-height: calc(100vh - 60px);
   background-color: #f4f7f6;
 }
 
 .admin-layout-main.sidebar-open {
-  margin-left: 290px; /* Revert to match 290px sidebar */
+  margin-left: 290px; /* Full desktop sidebar width */
 }
 
 .view-details-btn-new {
@@ -39,16 +39,47 @@
   font-size: 14px;
 }
 
-@media (max-width: 1024px) {
+/* ── TABLET / iPad (768px – 1024px) ── */
+/* Sidebar slides in/out via JS .open class (defaults OPEN on load via window.innerWidth) */
+@media (min-width: 768px) and (max-width: 1024px) {
+  .admin-layout-main,
   .admin-layout-main.sidebar-open {
-    margin-left: 290px;
+    padding: 1.25rem 0.5rem;
+    padding-top: 110px; /* Fixed underlap after removing Customer.css pollution */
+    margin-left: 0; 
+    transition: margin-left 0.3s ease;
+  }
+
+  /* Ensure title is visible on smaller tablets if they use overlay (rare but safe) */
+  /* Removed title shift logic to keep page stationary */
+}
+
+@media (max-width: 767px) {
+  .admin-layout-main,
+  .admin-layout-main.sidebar-open {
+    margin-left: 0; 
+    padding: 15px;
+    padding-top: 110px; /* Fixed underlap */
+    transition: none; 
+  }
+
+  /* Removed title shift logic to keep page stationary */
+}
+
+@media (max-width: 480px) {
+  .admin-layout-main,
+  .admin-layout-main.sidebar-open {
+    padding: 12px;
+    padding-top: 110px; /* Fixed underlap */
   }
 }
 
-@media (max-width: 768px) {
-  .admin-layout-main, .admin-layout-main.sidebar-open {
-    margin-left: 0; /* On mobile, sidebar overlays content */
-    padding: 15px;
-    padding-top: 75px;
+@media (max-width: 390px) {
+  .admin-layout-main,
+  .admin-layout-main.sidebar-open {
+    padding: 10px;
+    padding-top: 110px; /* Fixed underlap */
   }
 }
+
+

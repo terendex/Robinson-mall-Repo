@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
 import { FaEye, FaEyeSlash } from 'react-icons/fa';
@@ -17,7 +17,25 @@ const PasswordReset = () => {
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [isValidating, setIsValidating] = useState(true);
+  const [tokenValid, setTokenValid] = useState(false);
   const navigate = useNavigate();
+
+  // Validate token on component mount
+  useEffect(() => {
+    const validateToken = async () => {
+      try {
+        await axios.get(`${import.meta.env.VITE_API_URL}/api/users/password-reset/${uidb64}/${token}/`);
+        setTokenValid(true);
+      } catch (err) {
+        setError(err.response?.data?.detail || 'This password reset link is invalid or has expired.');
+        setTokenValid(false);
+      } finally {
+        setIsValidating(false);
+      }
+    };
+    validateToken();
+  }, [uidb64, token]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -91,7 +109,12 @@ const PasswordReset = () => {
             </div>
           )}
 
-          {!message && (
+          {isValidating ? (
+            <div className="pr-loading-state">
+              <span className="spinner"></span>
+              <p>Verifying reset link...</p>
+            </div>
+          ) : tokenValid && !message ? (
             <form onSubmit={handleSubmit}>
               <div className="form-group">
                 <label htmlFor="pr-password">New Password</label>
@@ -154,7 +177,7 @@ const PasswordReset = () => {
                 )}
               </button>
             </form>
-          )}
+          ) : null}
 
           <div className="back-link">
             <Link to="/forgot-password">← Request a new link</Link>

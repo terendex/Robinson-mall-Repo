@@ -10,7 +10,8 @@ import '../../css/AdminLayout.css';
  * Handles the UI and data logic for the CustomerLayout module.
  */
 const CustomerLayout = ({ user, onLogout }) => {
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  // On tablets/desktop (≥768px) sidebar is open by default; on phones it's closed
+  const [isSidebarOpen, setIsSidebarOpen] = useState(() => window.innerWidth >= 768);
 
   const toggleSidebar = () => setIsSidebarOpen((prev) => !prev);
   const closeSidebar = () => setIsSidebarOpen(false);

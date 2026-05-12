@@ -715,3 +715,82 @@
   color: #9ca3af;
   font-style: italic;
 }
+
+/* ── Mobile responsive for Transaction Modal ── */
+@media (max-width: 768px) {
+  .ocr-scan-section {
+    padding: 0 1.25rem 0.25rem;
+  }
+
+  .ocr-choice-wrapper {
+    padding: 0.875rem 1rem;
+  }
+
+  .ocr-choice-buttons {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .ocr-choice-btn {
+    flex: 1 1 40%;
+    min-width: 120px;
+    padding: 0.6rem 0.875rem;
+    font-size: 0.825rem;
+  }
+
+  .ocr-choice-divider {
+    flex: 0 0 auto;
+  }
+
+  .camera-viewfinder {
+    max-height: 220px;
+  }
+}
+
+@media (max-width: 480px) {
+  .ocr-scan-section {
+    padding: 0 0.875rem 0.25rem;
+  }
+
+  .ocr-choice-wrapper {
+    padding: 0.75rem 0.875rem;
+  }
+
+  /* Stack camera/upload buttons vertically on phone */
+  .ocr-choice-buttons {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .ocr-choice-btn {
+    flex: 1 1 100%;
+    width: 100%;
+    justify-content: center;
+  }
+
+  .ocr-choice-divider {
+    text-align: center;
+    font-size: 0.7rem;
+  }
+
+  .camera-viewfinder {
+    max-height: 180px;
+  }
+
+  .camera-shutter-btn {
+    width: 48px;
+    height: 48px;
+    font-size: 1.25rem;
+  }
+
+  /* Result banner wraps on small screen */
+  .ocr-result-banner {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .ocr-rescan-btn {
+    width: 100%;
+    justify-content: center;
+  }
+}

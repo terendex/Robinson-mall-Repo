@@ -12,7 +12,8 @@ const CustomerDashboard = ({ user }) => {
     activeCampaigns: 0,
     totalClaims: 0,
     pendingClaims: 0,
-    approvedRedemptions: 0
+    approvedRedemptions: 0,
+    recentClaims: []
   });
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
@@ -34,7 +35,8 @@ const CustomerDashboard = ({ user }) => {
           activeCampaigns: activeCount,
           totalClaims: claims.length,
           pendingClaims: pendingCount,
-          approvedRedemptions: approvedCount
+          approvedRedemptions: approvedCount,
+          recentClaims: claims.slice(0, 5) // Last 5 claims
         });
       } catch (error) {
         console.error('Error fetching dashboard stats:', error);
@@ -110,19 +112,48 @@ const CustomerDashboard = ({ user }) => {
         ))}
       </div>
 
-      <div className="dashboard-call-to-action">
-        <div className="cta-icon">
-          <i className="fa-solid fa-qrcode"></i>
+      <div className="customer-dashboard-row">
+        <div className="dashboard-recent-activity">
+          <div className="section-header">
+            <h3>Recent Activity</h3>
+            <button className="view-all-btn" onClick={() => navigate('/customer/claims')}>View All</button>
+          </div>
+          {stats.recentClaims.length === 0 ? (
+            <div className="mini-empty-state">
+              <p>No recent activity found.</p>
+            </div>
+          ) : (
+            <div className="activity-list">
+              {stats.recentClaims.map(claim => (
+                <div key={claim.id} className="activity-item">
+                  <div className={`activity-dot ${claim.status.toLowerCase()}`}></div>
+                  <div className="activity-details">
+                    <span className="activity-name">{claim.voucher_name}</span>
+                    <span className="activity-time">
+                      {new Date(claim.created_at).toLocaleDateString()} • {claim.store_name}
+                    </span>
+                  </div>
+                  <span className={`activity-status ${claim.status.toLowerCase()}`}>{claim.status}</span>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
-        <h2>Ready to Save?</h2>
-        <p>Scan your receipt and claim exclusive vouchers today.</p>
-        <button
-          className="cta-browse-btn"
-          onClick={() => navigate('/customer/campaigns')}
-        >
-          <i className="fa-solid fa-arrow-right" style={{ marginRight: '0.5rem' }}></i>
-          Browse Offers
-        </button>
+
+        <div className="dashboard-call-to-action">
+          <div className="cta-icon">
+            <i className="fa-solid fa-qrcode"></i>
+          </div>
+          <h2>Ready to Save?</h2>
+          <p>Scan your receipt and claim exclusive vouchers today.</p>
+          <button
+            className="cta-browse-btn"
+            onClick={() => navigate('/customer/campaigns')}
+          >
+            <i className="fa-solid fa-arrow-right" style={{ marginRight: '0.5rem' }}></i>
+            Browse Offers
+          </button>
+        </div>
       </div>
     </div>
   );

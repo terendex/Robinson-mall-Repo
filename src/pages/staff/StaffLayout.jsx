@@ -10,7 +10,7 @@ import '../../css/AdminLayout.css';
  * Handles the UI and data logic for the StaffLayout module.
  */
 const StaffLayout = ({ user, onLogout }) => {
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(() => window.innerWidth >= 768);
 
   const toggleSidebar = () => setIsSidebarOpen((prev) => !prev);
   const closeSidebar = () => setIsSidebarOpen(false);

@@ -26,14 +26,19 @@ class UserViewSet(viewsets.ModelViewSet):
     API endpoint that allows users to be viewed, created or managed.
     Includes custom actions for public registration and login.
     """
-    queryset = User.objects.all()
+    queryset = User.objects.all().order_by('-date_joined')
     serializer_class = UserSerializer
     permission_classes = [IsAdmin]
+
+    def get_queryset(self):
+        return User.objects.all().order_by('-date_joined')
 
     def get_permissions(self):
         if self.action in ['register', 'login']:
             return [AllowAny()]
         if self.action == 'me':
+            return [IsAuthenticated()]
+        if self.action in ['list', 'retrieve']:
             return [IsAuthenticated()]
         return super().get_permissions()
 
@@ -147,8 +152,7 @@ class PasswordResetRequestView(views.APIView):
         try:
             user = User.objects.get(email=email)
         except User.DoesNotExist:
-            # We return 200 OK to prevent email enumeration
-            return Response({'detail': 'If a user with that email exists, a password reset link has been sent.'}, status=status.HTTP_200_OK)
+            return Response({'detail': 'No account associated with this email address was found.'}, status=status.HTTP_400_BAD_REQUEST)
 
         # Generate standard secure token and uid
         token = default_token_generator.make_token(user)
@@ -162,7 +166,7 @@ class PasswordResetRequestView(views.APIView):
         plain_text = (
             f"Hi {user.first_name or user.username},\n\n"
             f"We received a request to reset the password for your Robinson Mall account.\n\n"
-            f"Click the link below to set a new password (valid for 1 hour):\n{reset_link}\n\n"
+            f"Click the link below to set a new password (valid for 5 minutes):\n{reset_link}\n\n"
             f"If you didn't request this, you can safely ignore this email — your password won't change.\n\n"
             f"— The Robinson Mall Team"
         )
@@ -201,7 +205,7 @@ class PasswordResetRequestView(views.APIView):
                       <p style="margin:0 0 24px;font-size:14px;color:#555;line-height:1.7;">
                         We received a request to reset the password for your Robinson Mall account.
                         Click the button below to choose a new password.
-                        This link is valid for <strong>1 hour</strong>.
+                        This link is valid for <strong>5 minutes</strong>.
                       </p>
 
                       <!-- CTA Button -->
@@ -274,6 +278,18 @@ class PasswordResetView(views.APIView):
     permission_classes = [AllowAny]
     throttle_scope = 'password_reset'
 
+    def get(self, request, uidb64, token):
+        """Validates the token without resetting the password (for UI feedback)."""
+        try:
+            from django.utils.http import urlsafe_base64_decode
+            uid = urlsafe_base64_decode(uidb64).decode()
+            user = User.objects.get(pk=uid)
+            if not default_token_generator.check_token(user, token):
+                return Response({'detail': 'This password reset link has expired or is invalid.'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'detail': 'Token is valid.'}, status=status.HTTP_200_OK)
+        except (TypeError, ValueError, OverflowError, User.DoesNotExist):
+            return Response({'detail': 'Invalid or expired token link.'}, status=status.HTTP_400_BAD_REQUEST)
+
     def post(self, request, uidb64, token):
         password = request.data.get('password')
         if not password:
@@ -296,9 +312,12 @@ class PasswordResetView(views.APIView):
 
 
 class VoucherViewSet(viewsets.ModelViewSet):
-    queryset = Voucher.objects.all()
+    queryset = Voucher.objects.all().order_by('-created_at')
     serializer_class = VoucherSerializer
     permission_classes = [IsStaff]
+
+    def get_queryset(self):
+        return Voucher.objects.all().order_by('-created_at')
 
     def get_permissions(self):
         if self.action in ['list', 'retrieve']:
@@ -384,9 +403,12 @@ class CampaignViewSet(viewsets.ModelViewSet):
         return super().get_queryset().order_by('-created_at')
 
 class StoreViewSet(viewsets.ModelViewSet):
-    queryset = Store.objects.all()
+    queryset = Store.objects.all().order_by('-created_at')
     serializer_class = StoreSerializer
     permission_classes = [IsStaff]
+
+    def get_queryset(self):
+        return Store.objects.all().order_by('-created_at')
 
     def get_permissions(self):
         if self.action in ['list', 'retrieve']:
@@ -466,14 +488,29 @@ class TransactionViewSet(viewsets.ModelViewSet):
     """
     queryset = Transaction.objects.all().order_by('-created_at')
     serializer_class = TransactionSerializer
-    permission_classes = [IsStaff]
+    permission_classes = [IsAuthenticated]
+
+    def get_permissions(self):
+        if self.action in ['update', 'partial_update', 'destroy']:
+            return [IsStaff()]
+        return super().get_permissions()
 
     def perform_create(self, serializer):
-        """Force status to Pending on all new transactions."""
-        serializer.save(status='Pending')
+        """Force status to Pending and link to current user if customer."""
+        user = self.request.user
+        if user.role == 'customer':
+            serializer.save(status='Pending', user=user)
+        else:
+            serializer.save(status='Pending')
 
     def get_queryset(self):
-        qs = Transaction.objects.all().order_by('-created_at')
+        user = self.request.user
+        if user.role in ['admin', 'manager', 'staff']:
+            qs = Transaction.objects.all()
+        else:
+            qs = Transaction.objects.filter(user=user)
+
+        qs = qs.order_by('-created_at')
 
         status_param = self.request.query_params.get('status')
         if status_param:

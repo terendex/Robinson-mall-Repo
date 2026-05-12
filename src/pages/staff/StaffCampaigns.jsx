@@ -1,7 +1,11 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import axios from 'axios';
 import CampaignDetailsModal from '../../components/CampaignDetailsModal';
+import Pagination from '../../components/Pagination';
 import '../../css/Campaigns.css';
+
+const PAGE_SIZE = 10;
+
 
 /**
  * StaffCampaigns Component
@@ -19,6 +23,8 @@ const StaffCampaigns = () => {
   });
   const [isStatusDropdownOpen, setIsStatusDropdownOpen] = useState(false);
   const [selectedCampaignForDetails, setSelectedCampaignForDetails] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+
   
   const statusFilterRef = useRef(null);
   
@@ -68,6 +74,12 @@ const StaffCampaigns = () => {
       return matchesSearch && matchesStatus;
     });
   }, [campaigns, searchQuery, statusFilters]);
+
+  useMemo(() => { setCurrentPage(1); }, [searchQuery, statusFilters]);
+
+  const totalPages     = Math.ceil(filteredCampaigns.length / PAGE_SIZE);
+  const pagedCampaigns = filteredCampaigns.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
+
 
   const stats = useMemo(() => {
     return {
@@ -163,7 +175,8 @@ const StaffCampaigns = () => {
                 <div className="loader"></div>
               </div>
             ) : (
-              <table className="campaigns-table">
+              <>
+                <table className="campaigns-table">
                 <thead>
                   <tr>
                     <th>Campaign</th>
@@ -173,11 +186,12 @@ const StaffCampaigns = () => {
                     <th>Timeline</th>
                     <th>Budget</th>
                     <th>Status</th>
-                    <th></th>
+                    <th>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredCampaigns.map((campaign) => (
+                  {pagedCampaigns.map((campaign) => (
+
                     <tr key={campaign.id}>
                       <td className="campaign-name-cell">{campaign.name}</td>
                       <td className="reach-cell">
@@ -209,6 +223,15 @@ const StaffCampaigns = () => {
                   ))}
                 </tbody>
               </table>
+
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={setCurrentPage}
+                totalItems={filteredCampaigns.length}
+                pageSize={PAGE_SIZE}
+              />
+              </>
             )}
           </div>
         </div>

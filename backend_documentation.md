@@ -26,8 +26,8 @@ The backend is built with Django and Django REST Framework (DRF) to provide a ro
 ### Authentication
 - `POST /api/users/login/` - Issues Access and Refresh tokens (Customized response to include role).
 - `POST /api/users/register/` - Registers a new user.
-- `POST /api/users/password-reset-request/` - Accepts an email, generates token, sends email link via SMTP.
-- `POST /api/users/password-reset/<token>/` - Updates password according to token.
+- `POST /api/users/password-reset-request/` - Accepts an email. Returns 200 and sends a link if the user exists; returns 400 if the email is not found. Links expire in 5 minutes.
+- `POST /api/users/password-reset/<uidb64>/<token>/` - Updates password according to token and user ID.
 
 ### Primary Resources (CRUD via ViewSets)
 | ViewSet / Path | Description |

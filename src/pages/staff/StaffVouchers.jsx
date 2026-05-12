@@ -1,7 +1,11 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import axios from 'axios';
 import VoucherModal from '../../components/VoucherModal';
+import Pagination from '../../components/Pagination';
 import '../../css/Vouchers.css';
+
+const PAGE_SIZE = 10;
+
 
 /**
  * StaffVouchers Component
@@ -14,6 +18,8 @@ const StaffVouchers = () => {
   const [statusFilter, setStatusFilter] = useState('All');
   const [showModal, setShowModal] = useState(false);
   const [selectedVoucher, setSelectedVoucher] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+
   
   const [isStatusDropdownOpen, setIsStatusDropdownOpen] = useState(false);
   const statusFilterRef = useRef(null);
@@ -57,6 +63,12 @@ const StaffVouchers = () => {
       return matchesSearch && matchesStatus;
     });
   }, [vouchers, searchQuery, statusFilter]);
+
+  useMemo(() => { setCurrentPage(1); }, [searchQuery, statusFilter]);
+
+  const totalPages    = Math.ceil(filteredVouchers.length / PAGE_SIZE);
+  const pagedVouchers = filteredVouchers.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
+
 
   return (
     <div className="vouchers-page">
@@ -106,9 +118,11 @@ const StaffVouchers = () => {
               <div className="loader"></div>
             </div>
           ) : (
-            <table className="vouchers-table">
+            <>
+              <table className="vouchers-table">
               <thead>
                 <tr>
+                  <th>Voucher ID</th>
                   <th>Voucher</th>
                   <th>Campaign</th>
                   <th>Store</th>
@@ -116,12 +130,27 @@ const StaffVouchers = () => {
                   <th>Discount</th>
                   <th>Usage</th>
                   <th>Status</th>
-                  <th style={{ textAlign: 'right' }}></th>
+                  <th>Actions</th>
                 </tr>
               </thead>
               <tbody>
-                {filteredVouchers.map((voucher) => (
+                {pagedVouchers.map((voucher) => (
+
                   <tr key={voucher.id}>
+                    <td>
+                      <span style={{
+                        fontFamily: 'monospace',
+                        fontWeight: '700',
+                        fontSize: '0.8rem',
+                        color: '#64748b',
+                        background: '#f1f5f9',
+                        padding: '3px 8px',
+                        borderRadius: '5px',
+                        letterSpacing: '0.04em',
+                      }}>
+                        VCH-{String(voucher.id).padStart(4, '0')}
+                      </span>
+                    </td>
                     <td>
                       <div className="voucher-info-cell">
                         <span className="voucher-name">{voucher.name}</span>
@@ -168,6 +197,15 @@ const StaffVouchers = () => {
                 ))}
               </tbody>
             </table>
+
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={setCurrentPage}
+              totalItems={filteredVouchers.length}
+              pageSize={PAGE_SIZE}
+            />
+          </>
           )}
           </div>
         </div>

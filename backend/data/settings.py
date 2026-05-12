@@ -142,6 +142,9 @@ EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER')
 EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD')  # Gmail App Password
 DEFAULT_FROM_EMAIL = os.environ.get('EMAIL_HOST_USER')
 
+# Password Reset Timeout (5 minutes)
+PASSWORD_RESET_TIMEOUT = 300
+
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',

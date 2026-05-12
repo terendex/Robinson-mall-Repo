@@ -83,6 +83,10 @@ const Register = () => {
     <div className="register-page">
       <div className="register-container">
         <div className="register-card">
+          <div className="system-title">
+            <p className="system-title-main">VOUCHER GENERATION AND CLAIMING MANAGEMENT</p>
+            <p className="system-title-sub">INFORMATION SYSTEM</p>
+          </div>
           <h2>Create Account</h2>
           {error && <p className="error-message">{error}</p>}
           <form onSubmit={handleSubmit}>

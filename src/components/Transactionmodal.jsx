@@ -151,6 +151,9 @@ const Combobox = ({ value, onChange, options, placeholder, getLabel, getValue, d
 // Main Component
 // ─────────────────────────────────────────────────────
 const TransactionModal = ({ show, onClose, onSave, transactionToEdit }) => {
+  const user = JSON.parse(localStorage.getItem('user') || '{}');
+  const isCustomer = user.role === 'customer';
+
   const [formData, setFormData] = useState({
     receipt_no: '',
     user_name:  '',
@@ -206,7 +209,7 @@ const TransactionModal = ({ show, onClose, onSave, transactionToEdit }) => {
       };
       setFormData({
         receipt_no: transactionToEdit.receipt_no  || '',
-        user_name:  transactionToEdit.user_name   || '',
+        user_name:  transactionToEdit.user_name   || (isCustomer ? `${user.first_name} ${user.last_name}`.trim() || user.username : ''),
         store:      transactionToEdit.store        || '',
         store_name: transactionToEdit.store_display_name || transactionToEdit.store_name || '',
         amount:     transactionToEdit.amount       || '',
@@ -216,7 +219,7 @@ const TransactionModal = ({ show, onClose, onSave, transactionToEdit }) => {
     } else {
       setFormData({
         receipt_no: '',
-        user_name:  '',
+        user_name:  isCustomer ? `${user.first_name} ${user.last_name}`.trim() || user.username : '',
         store:      '',
         store_name: '',
         amount:     '',
@@ -240,8 +243,10 @@ const TransactionModal = ({ show, onClose, onSave, transactionToEdit }) => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    // created_at is read-only on the backend (auto_now_add), strip it from the payload
+    const { created_at, ...submitPayload } = formData;
     onSave({
-      ...formData,
+      ...submitPayload,
       receipt_image: ocrPreview || null,
     });
   };
@@ -368,7 +373,7 @@ const TransactionModal = ({ show, onClose, onSave, transactionToEdit }) => {
       <div className="modal-content txn-form-modal">
 
         <div className="modal-header">
-          <h2>{transactionToEdit ? 'Edit Transaction' : 'Record New Transaction'}</h2>
+          <h2>{transactionToEdit ? (isCustomer ? 'Transaction Details' : 'Edit Transaction') : (isCustomer ? 'Submit New Transaction' : 'Record New Transaction')}</h2>
           <button className="close-x" onClick={onClose}>&times;</button>
         </div>
 
@@ -498,28 +503,30 @@ const TransactionModal = ({ show, onClose, onSave, transactionToEdit }) => {
             />
           </div>
 
-          {/* Customer name combobox */}
-          <div className="form-group">
-            <label>
-              Customer Name
-              {filledFields.includes('user_name') && <span className="ocr-filled-tag">OCR</span>}
-            </label>
-            <Combobox
-              value={formData.user_name}
-              onChange={({ text, item }) =>
-                setFormData(prev => ({
-                  ...prev,
-                  user_name: item
-                    ? `${item.first_name} ${item.last_name}`.trim() || item.username
-                    : text,
-                }))
-              }
-              options={users}
-              placeholder="Type or search customer name…"
-              getLabel={u => `${u.first_name} ${u.last_name}`.trim() || u.username}
-              getValue={u => u.id}
-            />
-          </div>
+          {/* Customer name combobox — only for staff/admin */}
+          {!isCustomer && (
+            <div className="form-group">
+              <label>
+                Customer Name
+                {filledFields.includes('user_name') && <span className="ocr-filled-tag">OCR</span>}
+              </label>
+              <Combobox
+                value={formData.user_name}
+                onChange={({ text, item }) =>
+                  setFormData(prev => ({
+                    ...prev,
+                    user_name: item
+                      ? `${item.first_name} ${item.last_name}`.trim() || item.username
+                      : text,
+                  }))
+                }
+                options={users}
+                placeholder="Type or search customer name…"
+                getLabel={u => `${u.first_name} ${u.last_name}`.trim() || u.username}
+                getValue={u => u.id}
+              />
+            </div>
+          )}
 
           <div className="form-row">
             {/* Store combobox — type OR pick from dropdown */}
@@ -565,7 +572,7 @@ const TransactionModal = ({ show, onClose, onSave, transactionToEdit }) => {
           {/* Timestamp */}
           <div className="form-group">
             <label>
-              Timestamp
+              Receipt Date
               {filledFields.includes('created_at') && <span className="ocr-filled-tag">OCR</span>}
             </label>
             <input
@@ -573,6 +580,7 @@ const TransactionModal = ({ show, onClose, onSave, transactionToEdit }) => {
               name="created_at"
               value={formData.created_at}
               onChange={handleChange}
+              title="Informational only — date is set automatically by the server"
             />
           </div>
 
@@ -594,7 +602,7 @@ const TransactionModal = ({ show, onClose, onSave, transactionToEdit }) => {
           <div className="modal-actions">
             <button type="button" className="cancel-inner-btn" onClick={onClose}>Cancel</button>
             <button type="submit" className="save-btn">
-              {transactionToEdit ? 'Save Changes' : 'Record Transaction'}
+              {transactionToEdit ? 'Save Changes' : (isCustomer ? 'Submit for Review' : 'Record Transaction')}
             </button>
           </div>
         </form>

@@ -76,6 +76,10 @@ export default function Log({ onLogin }) {
     <div className="log-page">
       <div className="log-container">
         <div className="log-card">
+          <div className="system-title">
+            <p className="system-title-main">VOUCHER GENERATION AND CLAIMING MANAGEMENT</p>
+            <p className="system-title-sub">INFORMATION SYSTEM</p>
+          </div>
           <h2>Account Login</h2>
           {error && (
             <div className="error-container">
@@ -125,7 +129,7 @@ export default function Log({ onLogin }) {
               <label htmlFor="rememberMe">Remember Me</label>
             </div>
             <div className="forgot-password">
-                <Link to="/forgot-password">Forgot Password</Link>
+              <Link to="/forgot-password">Forgot Password</Link>
             </div>
             <button type="submit" className="login-btn">Login</button>
           </form>

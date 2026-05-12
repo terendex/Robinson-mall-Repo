@@ -76,6 +76,10 @@ class CampaignSerializer(serializers.ModelSerializer):
 
     budget = serializers.DecimalField(max_digits=10, decimal_places=2, min_value=0)
 
+    voucher_type     = serializers.SerializerMethodField()
+    voucher_discount = serializers.SerializerMethodField()
+    voucher_id       = serializers.SerializerMethodField()
+
     class Meta:
         model = Campaign
         fields = (
@@ -83,9 +87,22 @@ class CampaignSerializer(serializers.ModelSerializer):
             'start_date', 'end_date',
             'reach', 'conversions',
             'vouchers', 'voucher_count',
+            'voucher_type', 'voucher_discount', 'voucher_id',
             'created_at', 'updated_at',
         )
         read_only_fields = ('reach', 'conversions', 'created_at', 'updated_at')
+
+    def get_voucher_type(self, obj):
+        first = obj.vouchers.first()
+        return first.voucher_type if first else 'N/A'
+
+    def get_voucher_discount(self, obj):
+        first = obj.vouchers.first()
+        return first.discount_percentage if first else 0
+
+    def get_voucher_id(self, obj):
+        first = obj.vouchers.first()
+        return first.id if first else None
 
     def get_reach(self, obj):
         """Reach = total Claims made against any voucher in this campaign."""
@@ -112,6 +129,8 @@ class CampaignSerializer(serializers.ModelSerializer):
                 'voucher_type': v.voucher_type,
                 'discount_percentage': v.discount_percentage,
                 'is_active': v.is_active,
+                'store_id': v.store_id,
+                'store_name': v.store.name if v.store else 'All Stores',
             }
             for v in obj.vouchers.all()
         ]
@@ -191,5 +210,19 @@ class TransactionSerializer(serializers.ModelSerializer):
                     raise serializers.ValidationError(
                         {'rejection_reason': 'A rejection reason is required when rejecting a transaction.'}
                     )
+
+        # SI (receipt_no) uniqueness check on creation
+        receipt_no = data.get('receipt_no')
+        if not instance and receipt_no:
+            if Transaction.objects.filter(receipt_no=receipt_no).exists():
+                raise serializers.ValidationError({'receipt_no': 'A transaction with this SI number already exists.'})
+
+        # Ensure SI and Transaction ID cannot be the same value
+        # Note: transaction_id is auto-generated in model.save(), but if provided in data (unlikely per Meta)
+        # or if we compare against generated pattern, we should check.
+        # But most likely the user wants to prevent entering an SI that looks like a TXN ID or vice versa.
+        txn_id = data.get('transaction_id') or (instance.transaction_id if instance else None)
+        if receipt_no and txn_id and receipt_no == txn_id:
+             raise serializers.ValidationError({'receipt_no': 'SI number and Transaction ID cannot be identical.'})
 
         return data

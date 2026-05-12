@@ -16,6 +16,7 @@ The frontend is a single-page application (SPA) built with **React**, utilizing 
 - **Authentication Interceptor**: Globally configures Axios to automatically attach the `accessToken` (from LocalStorage) as a Bearer Token to all outgoing requests (except for `/login` and `/register`).
 - **Route Protection**: The router verifies if `user` state exists and matches the required role for `/admin`, `/manager`, `/staff`, and `/customer` paths. If not authenticated, unauthenticated paths are triggered, or redirect to `/login` occurs.
 - **Login Flow**: An `handleLogin` function resides here which connects to the backend and saves `accessToken` and `refreshToken` upon success.
+- **Password Reset**: The `ForgotPassword.jsx` component manages the reset request, providing real-time feedback if an email doesn't exist (via backend 400 response) and displaying a 5-minute expiry warning.
 
 ---
 

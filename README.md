@@ -4,7 +4,7 @@ A full-stack web application for Robinson Mall featuring:
 - **Performance Dashboard**: Real-time KPI tracking (Total Claims, Redemption Rate, etc.) and data visualization with **Recharts**.
 - **Automated Notification System**: Database-persistent notifications triggered automatically by system events (New Claims, New Customers).
 - **Role-based Dashboards**: Tailored experiences for Admin, Manager, Staff, and Customer.
-- **User Management**: Authentication, profile management, and password reset via SendGrid.
+- **User Management**: Authentication, profile management, and password reset via Gmail SMTP.
 
 ## Tech Stack
 
@@ -14,7 +14,7 @@ A full-stack web application for Robinson Mall featuring:
 | Backend  | Django 6, Django REST Framework, django-cors-headers                                |
 | Database | SQLite (with Django Signals for automation)                                         |
 | OCR      | Tesseract.js (browser-based, no API key required)                                   |
-| Email    | SendGrid                                                                            |
+| Email    | Gmail SMTP                                                                         |
 
 ---
 
@@ -74,16 +74,15 @@ Activate it:
 #### b) Install Python dependencies
 
 ```bash
-pip install django djangorestframework django-cors-headers python-dotenv django-sendgrid-v5 djangorestframework-simplejwt
+pip install django djangorestframework django-cors-headers python-dotenv djangorestframework-simplejwt
 ```
 
 #### c) Configure environment variables
 
 Create a `.env` file inside the `backend/` directory (if one doesn't already exist):
 
-```env
-SENDGRID_API_KEY=your_sendgrid_api_key_here
-DEFAULT_FROM_EMAIL=your_email@example.com
+EMAIL_HOST_USER=your_gmail_address@gmail.com
+EMAIL_HOST_PASSWORD=your_gmail_app_password
 ```
 
 #### d) Run database migrations
@@ -162,7 +161,7 @@ Robinson-mall-Repo/
 ├── backend/                # Django backend
 │   ├── api/                # REST API app (models, views, serializers, urls)
 │   ├── data/               # Django project settings (settings.py, urls.py)
-│   ├── .env                # Environment variables (SendGrid keys)
+│   ├── .env                # Environment variables (Gmail credentials)
 │   ├── db.sqlite3          # SQLite database
 │   └── manage.py           # Django management script
 ├── src/                    # React frontend source
