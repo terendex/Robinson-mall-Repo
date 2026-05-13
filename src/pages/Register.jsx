@@ -90,14 +90,14 @@ const Register = () => {
     }
 
     try {
-      const response = await axios.post('http://127.0.0.1:8000/api/users/register/', {
+      const response = await axios.post(`${import.meta.env.VITE_API_URL}/api/users/register/`, {
         first_name: firstName,
         last_name: lastName,
         email: email,
         birthday: birthday ? birthday.toISOString().split('T')[0] : null,
         password: password,
         role: 'customer',
-        username: `${firstName.replace(/\s+/g, '')}${lastName.replace(/\s+/g, '')}`,
+        username: email,
       });
 
       if (response.status === 201) {
@@ -300,7 +300,8 @@ const Register = () => {
         show={showModal}
         onClose={() => setShowModal(false)}
         title="Agreement Required"
-        message="You must agree to the terms and privacy policy to sign up."
+        type="alert"
+        message="To complete your registration at Robinson Mall, please review and agree to our advertising promotions and privacy policy. This ensures you stay updated on the latest rewards and your data remains protected."
       />
     </div>
   );

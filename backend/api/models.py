@@ -14,6 +14,7 @@ class User(AbstractUser):
         ('staff', 'Staff'),
         ('customer', 'Customer'),
     )
+    email = models.EmailField(unique=True, blank=False)
     role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='customer')
     phone_number = models.CharField(max_length=15, blank=True, null=True, default='')
     birthday = models.DateField(blank=True, null=True)

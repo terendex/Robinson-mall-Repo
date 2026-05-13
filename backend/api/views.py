@@ -109,7 +109,15 @@ class UserViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['post'], permission_classes=[AllowAny])
     def register(self, request):
-        serializer = self.get_serializer(data=request.data)
+        """Strictly registers a new customer. Role escalation is prevented."""
+        data = request.data.copy()
+        
+        # Security: Force role to customer and prevent superuser/staff creation
+        data['role'] = 'customer'
+        data.pop('is_staff', None)
+        data.pop('is_superuser', None)
+        
+        serializer = self.get_serializer(data=data)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
