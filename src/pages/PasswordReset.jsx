@@ -262,9 +262,11 @@ const PasswordReset = () => {
             </form>
           ) : null}
 
-          <div className="back-link">
-            <Link to="/forgot-password">← Request a new link</Link>
-          </div>
+          {!message && (
+            <div className="back-link">
+              <Link to="/forgot-password">← Request a new link</Link>
+            </div>
+          )}
         </div>
       </div>
     </div>

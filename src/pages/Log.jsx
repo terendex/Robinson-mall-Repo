@@ -82,11 +82,11 @@ export default function Log({ onLogin }) {
           <form onSubmit={handleSubmit}>
             {/* Email / Username */}
             <div className="form-group">
-              <label htmlFor="email">Email or Username *</label>
+              <label htmlFor="email">Email Address *</label>
               <input
                 type="text"
                 id="email"
-                placeholder="adminuser@gmail.com or adminuser"
+                placeholder="Enter your registered email address"
                 value={email}
                 onChange={(e) => {
                   const val = e.target.value;
