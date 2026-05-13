@@ -47,6 +47,7 @@ class Campaign(models.Model):
     name = models.CharField(max_length=100)
     status = models.CharField(max_length=50, choices=STATUS_CHOICES, default='Active')
     budget = models.DecimalField(max_digits=10, decimal_places=2)
+    spending_target = models.DecimalField(max_digits=10, decimal_places=2, default=0, null=True, blank=True)
     start_date = models.DateField()
     end_date = models.DateField()
     reach = models.IntegerField(default=0)
@@ -146,6 +147,15 @@ class Transaction(models.Model):
 
     # Auto-generated unique transaction reference (TXN-XXXXXX)
     transaction_id = models.CharField(max_length=20, unique=True, blank=True)
+
+    # Link to the customer who owns this transaction (nullable for legacy records)
+    user = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        related_name='transactions',
+        null=True,
+        blank=True,
+    )
 
     # De-normalised receipt fields (stored as plain text, not FKs)
     receipt_no   = models.CharField(max_length=100, blank=True, default='')

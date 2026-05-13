@@ -1256,9 +1256,42 @@
 .claim-icon-rejected { color: #ef4444 !important; }
 
 /* ── Claim card border accent per status ─────────────────────── */
-.claim-card-approved { border-color: rgba(34, 197, 94, 0.25) !important; }
-.claim-card-pending  { border-color: rgba(249, 115, 22, 0.25) !important; }
-.claim-card-rejected { border-color: rgba(239, 68, 68, 0.25) !important; }
+.claim-card-approved    { border-color: rgba(34, 197, 94, 0.25) !important; }
+.claim-card-pending     { border-color: rgba(249, 115, 22, 0.25) !important; }
+.claim-card-rejected    { border-color: rgba(239, 68, 68, 0.25) !important; }
+
+/* ── Locked display-status variants ─────────────────────────────── */
+.claim-pill-locked      { background: #f1f5f9; color: #64748b; }
+.claim-tag-locked       { color: #64748b; }
+.claim-icon-locked      { color: #94a3b8 !important; }
+.claim-card-locked      { border-color: rgba(148, 163, 184, 0.30) !important; }
+
+/* ── Not-Claimed / Claimed / Expired (new key names) ─────────────── */
+.claim-pill-not_claimed  { background: #fff7ed; color: #c2410c; }
+.claim-tag-not_claimed   { color: #c2410c; }
+.claim-icon-not_claimed  { color: #f97316 !important; }
+.claim-card-not_claimed  { border-color: rgba(249, 115, 22, 0.25) !important; }
+
+.claim-pill-claimed      { background: #dcfce7; color: #15803d; }
+.claim-tag-claimed       { color: #15803d; }
+.claim-icon-claimed      { color: #22c55e !important; }
+.claim-card-claimed      { border-color: rgba(34, 197, 94, 0.25) !important; }
+
+.claim-pill-expired      { background: #fef2f2; color: #b91c1c; }
+.claim-tag-expired       { color: #b91c1c; }
+.claim-icon-expired      { color: #ef4444 !important; }
+.claim-card-expired      { border-color: rgba(239, 68, 68, 0.25) !important; }
+
+/* Filter pills for new key values */
+.filter-pill.filter-pill-locked:hover      { border-color: #64748b; color: #64748b; background: #f1f5f9; }
+.filter-pill.active.active-locked          { background: #475569; border-color: #475569; box-shadow: 0 4px 12px rgba(71,85,105,0.30); }
+.filter-pill.filter-pill-not_claimed:hover { border-color: #ea580c; color: #ea580c; background: #fff7ed; }
+.filter-pill.active.active-not_claimed     { background: #ea580c; border-color: #ea580c; box-shadow: 0 4px 12px rgba(234,88,12,0.30); }
+.filter-pill.filter-pill-claimed:hover     { border-color: #16a34a; color: #16a34a; background: #f0fdf4; }
+.filter-pill.active.active-claimed         { background: #16a34a; border-color: #16a34a; box-shadow: 0 4px 12px rgba(22,163,74,0.30); }
+.filter-pill.filter-pill-expired:hover     { border-color: #b91c1c; color: #b91c1c; background: #fef2f2; }
+.filter-pill.active.active-expired         { background: #b91c1c; border-color: #b91c1c; box-shadow: 0 4px 12px rgba(185,28,28,0.30); }
+
 
 /* ── Filter pill: All (brand red) ───────────────────────────── */
 .filter-pill.active.active-all {

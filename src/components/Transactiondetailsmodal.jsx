@@ -5,18 +5,15 @@ const TransactionDetailsModal = ({ show, onClose, transaction }) => {
 
   if (!show || !transaction) return null;
 
-  const qrValue = transaction.qr_code_id || transaction.transaction_id || `TXN-${transaction.id}`;
-  const qrImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&color=c50000&bgcolor=ffffff&data=${encodeURIComponent(qrValue)}`;
-
   const formatDate = (d) => d ? new Date(d).toISOString().split('T')[0] : 'N/A';
   const formatAmount = (a) => (a || a === 0) ? `₱${Number(a).toLocaleString('en-PH', { minimumFractionDigits: 2 })}` : 'N/A';
   const storeName = transaction.store_display_name || transaction.store_name || null;
 
   const statusColors = {
-    Approved: { bg: 'rgba(34,197,94,0.15)',  text: '#16a34a', border: 'rgba(34,197,94,0.3)' },
-    Pending:  { bg: 'rgba(234,88,12,0.12)',  text: '#ea580c', border: 'rgba(234,88,12,0.3)' },
-    Rejected: { bg: 'rgba(185,28,28,0.12)',  text: '#b91c1c', border: 'rgba(185,28,28,0.3)' },
-    Expired:  { bg: 'rgba(100,116,139,0.12)', text: '#475569', border: 'rgba(100,116,139,0.3)' },
+    Approved: { bg: 'rgba(34,197,94,0.15)', text: '#16a34a', border: 'rgba(34,197,94,0.3)' },
+    Pending: { bg: 'rgba(234,88,12,0.12)', text: '#ea580c', border: 'rgba(234,88,12,0.3)' },
+    Rejected: { bg: 'rgba(185,28,28,0.12)', text: '#b91c1c', border: 'rgba(185,28,28,0.3)' },
+    Expired: { bg: 'rgba(100,116,139,0.12)', text: '#475569', border: 'rgba(100,116,139,0.3)' },
   };
   const sc = statusColors[transaction.status] || { bg: '#f1f5f9', text: '#64748b', border: '#e2e8f0' };
   const txnShort = transaction.transaction_id_short || transaction.transaction_id || `TXN-${transaction.id}`;
@@ -66,14 +63,6 @@ const TransactionDetailsModal = ({ show, onClose, transaction }) => {
             </div>
           </div>
 
-          {/* ── QR Code ── */}
-          <div className="txn-audit-qr-wrapper">
-            <img src={qrImageUrl} alt="QR Code" className="txn-audit-qr-img" />
-            <p className="txn-audit-qr-label">QR Code ID: <strong>{qrValue}</strong></p>
-          </div>
-
-          <div className="txn-audit-divider"></div>
-
           {/* ── Receipt Image ── */}
           {transaction.receipt_image && (
             <>
@@ -98,7 +87,7 @@ const TransactionDetailsModal = ({ show, onClose, transaction }) => {
 
           {/* ── Detail rows ── */}
           <div className="txn-audit-details">
-            <DR label="Customer"       value={transaction.user_name || 'Anonymous'} />
+            <DR label="Customer" value={transaction.user_name || 'Anonymous'} />
             {storeName && <DR label="Store / Branch" value={storeName} />}
             {(transaction.amount || transaction.amount === 0) && (
               <DR label="Receipt Total" value={formatAmount(transaction.amount)} highlight />
@@ -122,7 +111,7 @@ const TransactionDetailsModal = ({ show, onClose, transaction }) => {
               </div>
             )}
 
-            <DR label="Expires on"    value={formatDate(transaction.expiry_date)} />
+            <DR label="Expires on" value={formatDate(transaction.expiry_date)} />
             {transaction.created_at && <DR label="Date Recorded" value={formatDate(transaction.created_at)} />}
             {transaction.updated_at && transaction.status !== 'Pending' && (
               <DR label="Last Updated" value={formatDate(transaction.updated_at)} />

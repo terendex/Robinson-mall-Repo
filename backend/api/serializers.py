@@ -74,7 +74,8 @@ class CampaignSerializer(serializers.ModelSerializer):
     reach         = serializers.SerializerMethodField()  # count of Claims for campaign vouchers
     conversions   = serializers.SerializerMethodField()  # count of Approved transactions
 
-    budget = serializers.DecimalField(max_digits=10, decimal_places=2, min_value=0)
+    budget          = serializers.DecimalField(max_digits=10, decimal_places=2, min_value=0)
+    spending_target  = serializers.DecimalField(max_digits=10, decimal_places=2, min_value=0, allow_null=True, required=False)
 
     voucher_type     = serializers.SerializerMethodField()
     voucher_discount = serializers.SerializerMethodField()
@@ -83,7 +84,7 @@ class CampaignSerializer(serializers.ModelSerializer):
     class Meta:
         model = Campaign
         fields = (
-            'id', 'name', 'status', 'budget',
+            'id', 'name', 'status', 'budget', 'spending_target',
             'start_date', 'end_date',
             'reach', 'conversions',
             'vouchers', 'voucher_count',
@@ -170,7 +171,7 @@ class TransactionSerializer(serializers.ModelSerializer):
         model = Transaction
         fields = (
             'id', 'transaction_id', 'transaction_id_short',
-            'receipt_no', 'user_name',
+            'user', 'receipt_no', 'user_name',
             'store', 'store_name', 'store_display_name',
             'voucher_name', 'voucher_code',
             'amount', 'expiry_date',

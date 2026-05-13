@@ -112,6 +112,34 @@ body {
   z-index: 1;
 }
 
+/* ── Password input wrapper with eye toggle ── */
+.pw-input-wrap {
+  position: relative;
+}
+
+.pw-input-wrap input {
+  width: 100%;
+  box-sizing: border-box;
+  padding-right: 42px;
+}
+
+.pw-eye-icon {
+  position: absolute;
+  top: 50%;
+  right: 13px;
+  transform: translateY(-50%);
+  color: #888;
+  cursor: pointer;
+  font-size: 15px;
+  line-height: 1;
+  user-select: none;
+}
+
+.pw-eye-icon:hover {
+  color: #C40000;
+}
+
+/* Legacy toggle kept for backward compat */
 .password-toggle-icon {
   position: absolute;
   top: 72%;
@@ -201,6 +229,104 @@ body {
   display: none !important;
 }
 
+/* ── Field error / success inline messages ── */
+.field-error-msg,
+.field-success-msg {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  margin-top: 5px;
+  font-weight: 500;
+}
+
+.field-error-msg {
+  color: #c0392b;
+}
+
+.field-success-msg {
+  color: #27ae60;
+}
+
+.field-error-icon,
+.field-success-icon {
+  flex-shrink: 0;
+  font-size: 11px;
+}
+
+/* Border highlight on error */
+.field-error input {
+  border: 1px solid #c0392b !important;
+  background-color: #fff5f5 !important;
+}
+
+/* ── Password strength bar ── */
+.pw-strength-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.pw-strength-bar {
+  flex: 1;
+  height: 5px;
+  background: #e2e8f0;
+  border-radius: 99px;
+  overflow: hidden;
+}
+
+.pw-strength-fill {
+  height: 100%;
+  border-radius: 99px;
+  transition: width 0.3s ease, background-color 0.3s ease;
+}
+
+.pw-strength-fill.weak   { background: #e53e3e; }
+.pw-strength-fill.fair   { background: #dd6b20; }
+.pw-strength-fill.good   { background: #d69e2e; }
+.pw-strength-fill.strong { background: #38a169; }
+
+.pw-strength-label {
+  font-size: 11px;
+  font-weight: 700;
+  min-width: 42px;
+  text-align: right;
+}
+
+.pw-strength-label.weak   { color: #e53e3e; }
+.pw-strength-label.fair   { color: #dd6b20; }
+.pw-strength-label.good   { color: #d69e2e; }
+.pw-strength-label.strong { color: #38a169; }
+
+/* ── Password requirements checklist ── */
+.pw-requirements {
+  list-style: none;
+  padding: 0;
+  margin: 10px 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.pw-requirements li {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  transition: color 0.2s;
+}
+
+.pw-requirements li.req-pass { color: #27ae60; }
+.pw-requirements li.req-fail { color: #94a3b8; }
+
+.req-icon {
+  flex-shrink: 0;
+  font-size: 10px;
+}
+
+/* ── Form checkboxes ── */
 .form-check {
   margin-bottom: 1rem;
   display: flex;

@@ -167,7 +167,7 @@ function App() {
           {/* Admin Routes */}
           <Route path="/admin" element={user && user.role === 'admin' ? <AdminLayout user={user} onLogout={handleLogout} /> : <Navigate to="/login" />}>
             <Route path="dashboard" element={<AdminDashboard />} />
-            <Route path="vouchers" element={<Vouchers />} />
+            <Route path="vouchers" element={<Navigate to="/admin/campaigns" replace />} />
             <Route path="campaigns" element={<Campaigns />} />
             <Route path="claims" element={<Claims />} />
             <Route path="transactions" element={<Transactions />} />
@@ -182,7 +182,7 @@ function App() {
           {/* Manager Routes */}
           <Route path="/manager" element={user && user.role === 'manager' ? <ManagerLayout user={user} onLogout={handleLogout} /> : <Navigate to="/login" />}>
             <Route path="dashboard" element={<ManagerDashboard />} />
-            <Route path="vouchers" element={<ManagerVouchers />} />
+            <Route path="vouchers" element={<Navigate to="/manager/campaigns" replace />} />
             <Route path="campaigns" element={<ManagerCampaigns />} />
             <Route path="claims" element={<ManagerClaims />} />
             <Route path="transactions" element={<ManagerTransactions />} />
@@ -194,7 +194,7 @@ function App() {
           </Route>
           {/* Staff Routes */}
           <Route path="/staff" element={user && user.role === 'staff' ? <StaffLayout user={user} onLogout={handleLogout} /> : <Navigate to="/login" />}>
-            <Route path="vouchers" element={<StaffVouchers />} />
+            <Route path="vouchers" element={<Navigate to="/staff/campaigns" replace />} />
             <Route path="campaigns" element={<StaffCampaigns />} />
             <Route path="claims" element={<StaffClaims />} />
             <Route path="transactions" element={<StaffTransactions />} />
@@ -205,7 +205,7 @@ function App() {
           {/* Customer Routes */}
           <Route path="/customer" element={user && user.role === 'customer' ? <CustomerLayout user={user} onLogout={handleLogout} /> : <Navigate to="/login" />}>
             <Route path="dashboard" element={<CustomerDashboard user={user} />} />
-            <Route path="vouchers" element={<Navigate to="/customer/claims" />} />
+            <Route path="vouchers" element={<Navigate to="/customer/campaigns" replace />} />
             <Route path="campaigns" element={<CustomerCampaigns user={user} />} />
             <Route path="claims" element={<CustomerClaims user={user} />} />
             <Route path="transactions" element={<CustomerTransactions />} />

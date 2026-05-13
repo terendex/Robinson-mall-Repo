@@ -45,6 +45,8 @@ const CampaignDetailsModal = ({ show, onClose, campaign, offer, onClaim, claimin
     const fmt = (d) => d ? new Date(d).toISOString().split('T')[0] : '—';
     const budget = campaign.budget != null
       ? `₱${Number(campaign.budget).toLocaleString(undefined, { minimumFractionDigits: 2 })}` : '—';
+    const spendTarget = campaign.spending_target != null && campaign.spending_target > 0
+      ? `₱${Number(campaign.spending_target).toLocaleString(undefined, { minimumFractionDigits: 2 })}` : '—';
 
     return (
       <div className="modal-overlay">
@@ -81,12 +83,13 @@ const CampaignDetailsModal = ({ show, onClose, campaign, offer, onClaim, claimin
 
           {/* Detail grid */}
           <div style={{ padding: '22px 22px 8px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '18px' }}>
-            <DR label="Start Date"   value={fmt(campaign.start_date)} />
-            <DR label="End Date"     value={fmt(campaign.end_date)} />
-            <DR label="Budget"       value={budget} highlight />
-            <DR label="Vouchers"     value={String(campaign.voucher_count ?? campaign.vouchers?.length ?? 0)} />
-            <DR label="Total Reach"  value={Number(campaign.reach || 0).toLocaleString()} />
-            <DR label="Conversions"  value={Number(campaign.conversions || 0).toLocaleString()} />
+            <DR label="Start Date"       value={fmt(campaign.start_date)} />
+            <DR label="End Date"         value={fmt(campaign.end_date)} />
+            <DR label="Budget"           value={budget} />
+            <DR label="Spending Target"  value={spendTarget} highlight />
+            <DR label="Vouchers"         value={String(campaign.voucher_count ?? campaign.vouchers?.length ?? 0)} />
+            <DR label="Total Reach"      value={Number(campaign.reach || 0).toLocaleString()} />
+            <DR label="Conversions"      value={Number(campaign.conversions || 0).toLocaleString()} />
             {campaign.description && (
               <DR label="Description" value={campaign.description} wide />
             )}
@@ -181,6 +184,14 @@ const CampaignDetailsModal = ({ show, onClose, campaign, offer, onClaim, claimin
                   <div className="reward-glow"></div>
                 </div>
                 <div className="status-info-card">
+                  <div className="status-row">
+                    <span className="s-label">Spending Target</span>
+                    <span className="s-val" style={{ fontWeight: 700, color: '#c40000' }}>
+                      {(offer.campaign_spending_target || offer.campaign_budget)
+                        ? `₱${Number(offer.campaign_spending_target || offer.campaign_budget).toLocaleString('en-PH', { minimumFractionDigits: 2 })}`
+                        : '—'}
+                    </span>
+                  </div>
                   <div className="status-row">
                     <span className="s-label">Expires On</span>
                     <span className="s-val">{new Date(offer.campaign_end_date).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}</span>

@@ -4,8 +4,11 @@ import CampaignModal from '../../components/CampaignModal';
 import CampaignDetailsModal from '../../components/CampaignDetailsModal';
 import NotificationContext from '../../context/NotificationContext';
 import Pagination from '../../components/Pagination';
+import Vouchers from './Vouchers';
 import '../../css/Campaigns.css';
 import '../../css/Transactions.css';
+import '../../css/CustomerVouchers.css';
+
 
 /**
  * Campaigns Component
@@ -14,6 +17,7 @@ import '../../css/Transactions.css';
 const PAGE_SIZE = 10;
 
 const Campaigns = () => {
+  const [pageTab, setPageTab] = useState('campaigns'); // 'campaigns' | 'vouchers'
   const [campaigns, setCampaigns] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -176,6 +180,29 @@ const Campaigns = () => {
   return (
     <div className="campaigns-page">
       <div className="campaigns-container">
+
+        {/* ── Page-level tab bar ── */}
+        <div className="cv-tabs" style={{ marginBottom: '1.5rem' }}>
+          <button
+            className={`cv-tab ${pageTab === 'campaigns' ? 'active' : ''}`}
+            onClick={() => setPageTab('campaigns')}
+          >
+            <i className="fa-solid fa-tag"></i> Campaigns
+          </button>
+          <button
+            className={`cv-tab ${pageTab === 'vouchers' ? 'active' : ''}`}
+            onClick={() => setPageTab('vouchers')}
+          >
+            <i className="fa-solid fa-ticket-simple"></i> Vouchers
+          </button>
+        </div>
+
+        {/* ── Vouchers tab ── */}
+        {pageTab === 'vouchers' && <Vouchers />}
+
+        {/* ── Campaigns tab ── */}
+        {pageTab === 'campaigns' && (
+          <>
         <div className="campaigns-header">
           <h1>Campaigns</h1>
           <button className="create-campaign-btn" onClick={handleAddCampaign}>
@@ -266,6 +293,7 @@ const Campaigns = () => {
                       <th>Conversions</th>
                       <th>Timeline</th>
                       <th>Budget</th>
+                      <th>Spending Target</th>
                       <th>Status</th>
                       <th>Actions</th>
                     </tr>
@@ -287,7 +315,14 @@ const Campaigns = () => {
                           {formatDateLabel(campaign.start_date)} to<br />
                           {formatDateLabel(campaign.end_date)}
                         </td>
-                        <td className="budget-cell">₱{Number(campaign.budget).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+                        <td className="budget-cell">
+                          ₱{Number(campaign.budget).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}
+                        </td>
+                        <td className="budget-cell">
+                          {campaign.spending_target > 0
+                            ? `₱${Number(campaign.spending_target).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`
+                            : <span style={{ color: '#cbd5e1', fontSize: '0.8rem' }}>— not set</span>}
+                        </td>
                         <td>
                           <span className={`status-badge-new ${campaign.status.toLowerCase()}`}>
                             {campaign.status}
@@ -333,16 +368,17 @@ const Campaigns = () => {
             )}
           </div>
         </div>
+        </> )}
       </div>
 
-      <CampaignModal 
+      <CampaignModal
         show={showModal}
         onClose={() => setShowModal(false)}
         onSave={handleSaveCampaign}
         campaignToEdit={campaignToEdit}
       />
 
-      <CampaignDetailsModal 
+      <CampaignDetailsModal
         show={!!selectedCampaignForDetails}
         onClose={() => setSelectedCampaignForDetails(null)}
         campaign={selectedCampaignForDetails}

@@ -439,7 +439,7 @@ class ClaimViewSet(viewsets.ModelViewSet):
             queryset = Claim.objects.all()
             status_param = self.request.query_params.get('status')
             user_id_param = self.request.query_params.get('user_id')
-            
+
             if status_param:
                 queryset = queryset.filter(status=status_param)
             if user_id_param:
@@ -447,8 +447,60 @@ class ClaimViewSet(viewsets.ModelViewSet):
         else:
             # Customers only see their own claims
             queryset = Claim.objects.filter(user=user)
-            
+
         return queryset.order_by('-created_at')
+
+    @action(detail=False, methods=['get'], permission_classes=[IsAuthenticated])
+    def lookup(self, request):
+        """
+        GET /api/claims/lookup/?q=CLAIM-5  (or just ?q=5)
+        Staff/Manager use this after scanning a customer's QR code.
+        Returns the claim with all related info for verification.
+        """
+        user = request.user
+        if user.role not in ['admin', 'manager', 'staff']:
+            return Response({'detail': 'Not authorised.'}, status=403)
+
+        raw = request.query_params.get('q', '').strip()
+        # Accept "CLAIM-5", "claim-5", or just "5"
+        claim_id_str = raw.upper().replace('CLAIM-', '').strip()
+        if not claim_id_str.isdigit():
+            return Response({'detail': 'Invalid claim reference. Expected CLAIM-<id> or a numeric ID.'}, status=400)
+
+        try:
+            claim = Claim.objects.get(pk=int(claim_id_str))
+        except Claim.DoesNotExist:
+            return Response({'detail': f'No claim found with ID {claim_id_str}.'}, status=404)
+
+        serializer = self.get_serializer(claim)
+        return Response(serializer.data)
+
+    @action(detail=True, methods=['patch'], permission_classes=[IsAuthenticated])
+    def redeem(self, request, pk=None):
+        """
+        PATCH /api/claims/{id}/redeem/
+        Marks a claim as Approved (Claimed). Staff/Manager only.
+        Optionally accepts { "rejection_reason": "..." } to reject instead.
+        """
+        user = request.user
+        if user.role not in ['admin', 'manager', 'staff']:
+            return Response({'detail': 'Not authorised.'}, status=403)
+
+        claim = self.get_object()
+
+        action_type = request.data.get('action', 'approve')  # 'approve' or 'reject'
+        if action_type == 'reject':
+            claim.status = 'Rejected'
+        else:
+            if claim.status == 'Approved':
+                return Response({'detail': 'This voucher has already been claimed.'}, status=400)
+            claim.status = 'Approved'
+
+        claim.save(update_fields=['status', 'updated_at'])
+        serializer = self.get_serializer(claim)
+        return Response(serializer.data)
+
+
 
 class NotificationViewSet(viewsets.ModelViewSet):
     queryset = Notification.objects.all()
@@ -508,7 +560,24 @@ class TransactionViewSet(viewsets.ModelViewSet):
         if user.role in ['admin', 'manager', 'staff']:
             qs = Transaction.objects.all()
         else:
-            qs = Transaction.objects.filter(user=user)
+            from django.db.models import Q
+            full_name  = f"{user.first_name} {user.last_name}".strip() or user.username
+
+            # Staff often enter "First L" (first name + last initial) so match that too
+            matchers = (
+                Q(user=user) |
+                Q(user_name__iexact=full_name) |
+                Q(user_name__iexact=user.username)
+            )
+            if user.first_name and user.last_name:
+                # "Joshua V"  →  first="Joshua", last="Villareal"
+                initial = f"{user.first_name} {user.last_name[0]}"
+                matchers |= Q(user_name__iexact=initial)
+                matchers |= Q(user_name__iexact=f"{initial}.")
+            elif user.first_name:
+                matchers |= Q(user_name__iexact=user.first_name)
+
+            qs = Transaction.objects.filter(matchers).distinct()
 
         qs = qs.order_by('-created_at')
 

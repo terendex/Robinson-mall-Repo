@@ -1,9 +1,20 @@
 import React, { useState, useEffect } from 'react';
+import { FaEye, FaEyeSlash, FaCheck, FaTimes } from 'react-icons/fa';
 import axios from 'axios';
 import '../css/Settings.css';
 
 /**
- * SettingsPage — shared across admin, manager, and staff layouts.
+ * Password rules — must mirror Register.jsx.
+ */
+const PASSWORD_RULES = [
+  { key: 'length',  label: 'At least 8 characters',                     test: pw => pw.length >= 8 },
+  { key: 'upper',   label: 'At least one uppercase letter (A–Z)',        test: pw => /[A-Z]/.test(pw) },
+  { key: 'lower',   label: 'At least one lowercase letter (a–z)',        test: pw => /[a-z]/.test(pw) },
+  { key: 'special', label: 'At least one special character (!@#$%^&*…)', test: pw => /[!@#$%^&*()\-_=+\[\]{};':"\\|,.<>/?`~]/.test(pw) },
+];
+
+/**
+ * SettingsPage — shared across admin, manager, staff, and customer layouts.
  * Tabs: General (profile info) | Security (password change) | Notifications (toggles)
  */
 const SettingsPage = () => {
@@ -12,14 +23,14 @@ const SettingsPage = () => {
 
   // ── General tab state ──
   const [profile, setProfile] = useState({
-    first_name: storedUser.first_name || '',
-    last_name:  storedUser.last_name  || '',
-    email:      storedUser.email      || '',
-    username:   storedUser.username   || '',
+    first_name:   storedUser.first_name   || '',
+    last_name:    storedUser.last_name    || '',
+    email:        storedUser.email        || '',
+    username:     storedUser.username     || '',
     phone_number: '',
   });
-  const [profileStatus, setProfileStatus] = useState({ type: '', msg: '' });
-  const [profileSaving, setProfileSaving] = useState(false);
+  const [profileStatus, setProfileStatus]   = useState({ type: '', msg: '' });
+  const [profileSaving, setProfileSaving]   = useState(false);
 
   // ── Security tab state ──
   const [security, setSecurity] = useState({
@@ -29,7 +40,9 @@ const SettingsPage = () => {
   });
   const [securityStatus, setSecurityStatus] = useState({ type: '', msg: '' });
   const [securitySaving, setSecuritySaving] = useState(false);
-  const [showPasswords, setShowPasswords] = useState(false);
+  const [showCurrent, setShowCurrent]       = useState(false);
+  const [showNew, setShowNew]               = useState(false);
+  const [showConfirm, setShowConfirm]       = useState(false);
 
   // ── Notifications tab state ──
   const [notifPrefs, setNotifPrefs] = useState({
@@ -53,6 +66,22 @@ const SettingsPage = () => {
       .catch(err => console.error('Failed to load profile:', err));
   }, []);
 
+  // ── Password strength derived state ──
+  const newPw        = security.new_password;
+  const ruleResults  = PASSWORD_RULES.map(r => ({ ...r, passed: r.test(newPw) }));
+  const allRulesPassed  = ruleResults.every(r => r.passed);
+  const passedCount     = ruleResults.filter(r => r.passed).length;
+  const strengthPct     = (passedCount / PASSWORD_RULES.length) * 100;
+  const strengthLabel   =
+    passedCount === 0 ? '' :
+    passedCount === 1 ? 'Weak' :
+    passedCount === 2 ? 'Fair' :
+    passedCount === 3 ? 'Good' : 'Strong';
+  const strengthClass   =
+    passedCount <= 1 ? 'weak' :
+    passedCount === 2 ? 'fair' :
+    passedCount === 3 ? 'good' : 'strong';
+
   // ── Save profile ──
   const handleProfileSave = async (e) => {
     e.preventDefault();
@@ -65,7 +94,6 @@ const SettingsPage = () => {
         email:        profile.email,
         phone_number: profile.phone_number,
       });
-      // Update localStorage so other parts of the app reflect the change
       const updated = { ...storedUser, ...res.data };
       localStorage.setItem('user', JSON.stringify(updated));
       setProfileStatus({ type: 'success', msg: 'Profile updated successfully.' });
@@ -80,14 +108,17 @@ const SettingsPage = () => {
   // ── Save password ──
   const handlePasswordSave = async (e) => {
     e.preventDefault();
+
+    // Client-side strength validation
+    if (!allRulesPassed) {
+      setSecurityStatus({ type: 'error', msg: 'New password does not meet the required criteria. Check the requirements below.' });
+      return;
+    }
     if (security.new_password !== security.confirm_password) {
       setSecurityStatus({ type: 'error', msg: 'New passwords do not match.' });
       return;
     }
-    if (security.new_password.length < 8) {
-      setSecurityStatus({ type: 'error', msg: 'Password must be at least 8 characters.' });
-      return;
-    }
+
     setSecuritySaving(true);
     setSecurityStatus({ type: '', msg: '' });
     try {
@@ -149,7 +180,7 @@ const SettingsPage = () => {
               <div className="settings-section">
                 <h3>Profile Information</h3>
 
-                {/* Avatar area */}
+                {/* Avatar */}
                 <div className="profile-avatar-large">
                   <div className="settings-avatar-circle">
                     {profile.first_name
@@ -158,9 +189,7 @@ const SettingsPage = () => {
                     }
                   </div>
                   <div>
-                    <div className="settings-avatar-name">
-                      {profile.first_name} {profile.last_name}
-                    </div>
+                    <div className="settings-avatar-name">{profile.first_name} {profile.last_name}</div>
                     <div className="settings-avatar-role">{roleLabel}</div>
                   </div>
                 </div>
@@ -193,7 +222,7 @@ const SettingsPage = () => {
                       type="email"
                       value={profile.email}
                       onChange={e => setProfile(p => ({ ...p, email: e.target.value }))}
-                      placeholder="email@robinsonsmalls.com"
+                      placeholder="email@example.com"
                     />
                   </div>
 
@@ -252,54 +281,97 @@ const SettingsPage = () => {
             {activeTab === 'security' && (
               <div className="settings-section">
                 <h3>Change Password</h3>
+
+                {/* Policy summary banner */}
+                <div className="settings-policy-banner">
+                  <i className="fa-solid fa-shield-halved"></i>
+                  <div>
+                    <strong>Password Policy</strong>
+                    <p>Passwords must be at least 8 characters and include an uppercase letter, lowercase letter, and a special character.</p>
+                  </div>
+                </div>
+
                 <form className="settings-form" onSubmit={handlePasswordSave}>
+                  {/* Current Password */}
                   <div className="form-group">
                     <label>Current Password</label>
                     <div className="settings-input-wrap">
                       <input
-                        type={showPasswords ? 'text' : 'password'}
+                        type={showCurrent ? 'text' : 'password'}
                         value={security.current_password}
                         onChange={e => setSecurity(s => ({ ...s, current_password: e.target.value }))}
                         placeholder="Enter current password"
                         required
                       />
+                      <span className="settings-pw-eye" onClick={() => setShowCurrent(v => !v)}>
+                        {showCurrent ? <FaEyeSlash /> : <FaEye />}
+                      </span>
                     </div>
                   </div>
 
+                  {/* New Password */}
                   <div className="form-group">
                     <label>New Password</label>
                     <div className="settings-input-wrap">
                       <input
-                        type={showPasswords ? 'text' : 'password'}
+                        type={showNew ? 'text' : 'password'}
                         value={security.new_password}
                         onChange={e => setSecurity(s => ({ ...s, new_password: e.target.value }))}
                         placeholder="Enter new password"
                         required
                       />
+                      <span className="settings-pw-eye" onClick={() => setShowNew(v => !v)}>
+                        {showNew ? <FaEyeSlash /> : <FaEye />}
+                      </span>
                     </div>
+
+                    {/* Strength bar */}
+                    {newPw.length > 0 && (
+                      <div className="pw-strength-wrap">
+                        <div className="pw-strength-bar">
+                          <div className={`pw-strength-fill ${strengthClass}`} style={{ width: `${strengthPct}%` }} />
+                        </div>
+                        <span className={`pw-strength-label ${strengthClass}`}>{strengthLabel}</span>
+                      </div>
+                    )}
+
+                    {/* Requirements checklist */}
+                    <ul className="pw-requirements">
+                      {ruleResults.map(r => (
+                        <li key={r.key} className={r.passed ? 'req-pass' : 'req-fail'}>
+                          {r.passed ? <FaCheck className="req-icon" /> : <FaTimes className="req-icon" />}
+                          {r.label}
+                        </li>
+                      ))}
+                    </ul>
                   </div>
 
+                  {/* Confirm New Password */}
                   <div className="form-group">
                     <label>Confirm New Password</label>
                     <div className="settings-input-wrap">
                       <input
-                        type={showPasswords ? 'text' : 'password'}
+                        type={showConfirm ? 'text' : 'password'}
                         value={security.confirm_password}
                         onChange={e => setSecurity(s => ({ ...s, confirm_password: e.target.value }))}
                         placeholder="Confirm new password"
                         required
                       />
+                      <span className="settings-pw-eye" onClick={() => setShowConfirm(v => !v)}>
+                        {showConfirm ? <FaEyeSlash /> : <FaEye />}
+                      </span>
                     </div>
+                    {security.confirm_password && security.new_password !== security.confirm_password && (
+                      <span className="settings-field-error">
+                        <FaTimes /> Passwords do not match.
+                      </span>
+                    )}
+                    {security.confirm_password && security.new_password === security.confirm_password && security.confirm_password.length > 0 && (
+                      <span className="settings-field-success">
+                        <FaCheck /> Passwords match.
+                      </span>
+                    )}
                   </div>
-
-                  <label className="settings-show-password">
-                    <input
-                      type="checkbox"
-                      checked={showPasswords}
-                      onChange={e => setShowPasswords(e.target.checked)}
-                    />
-                    Show passwords
-                  </label>
 
                   {securityStatus.msg && (
                     <div className={`settings-status-msg ${securityStatus.type}`}>

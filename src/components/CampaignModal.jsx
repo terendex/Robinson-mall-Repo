@@ -12,10 +12,11 @@ const CampaignModal = ({ show, onClose, onSave, campaignToEdit }) => {
   const today = new Date().toISOString().split('T')[0];  // 'YYYY-MM-DD'
 
   const [formData, setFormData] = useState({
-    name:       '',
-    budget:     '',
-    start_date: '',
-    end_date:   '',
+    name:            '',
+    budget:          '',
+    spending_target: '',
+    start_date:      '',
+    end_date:        '',
   });
 
   const [dateError, setDateError] = useState('');
@@ -24,22 +25,23 @@ const CampaignModal = ({ show, onClose, onSave, campaignToEdit }) => {
   useEffect(() => {
     if (campaignToEdit) {
       setFormData({
-        name:       campaignToEdit.name       || '',
-        budget:     campaignToEdit.budget     || '',
-        start_date: campaignToEdit.start_date || '',
-        end_date:   campaignToEdit.end_date   || '',
-        status:     campaignToEdit.status     || 'Active',
-        // reach & conversions are display-only, not in editable payload
-        reach:       campaignToEdit.reach       ?? 0,
-        conversions: campaignToEdit.conversions ?? 0,
+        name:            campaignToEdit.name            || '',
+        budget:          campaignToEdit.budget          || '',
+        spending_target: campaignToEdit.spending_target || '',
+        start_date:      campaignToEdit.start_date      || '',
+        end_date:        campaignToEdit.end_date        || '',
+        status:          campaignToEdit.status          || 'Active',
+        reach:           campaignToEdit.reach           ?? 0,
+        conversions:     campaignToEdit.conversions     ?? 0,
       });
       setAttachedVouchers(campaignToEdit.vouchers || []);
     } else {
       setFormData({
-        name:       '',
-        budget:     '',
-        start_date: '',
-        end_date:   '',
+        name:            '',
+        budget:          '',
+        spending_target: '',
+        start_date:      '',
+        end_date:        '',
       });
       setAttachedVouchers([]);
     }
@@ -168,9 +170,27 @@ const CampaignModal = ({ show, onClose, onSave, campaignToEdit }) => {
               name="budget"
               value={formData.budget}
               onChange={handleChange}
-              placeholder="50000"
+              placeholder="e.g. 500000"
               min="0"
               required
+            />
+          </div>
+
+          {/* Spending Target */}
+          <div className="form-group">
+            <label>
+              Spending Target (₱)
+              <span style={{ fontSize: '0.72rem', color: '#2563eb', marginLeft: '0.4rem', fontWeight: 600 }}>
+                — customers must reach this to unlock the voucher
+              </span>
+            </label>
+            <input
+              type="number"
+              name="spending_target"
+              value={formData.spending_target}
+              onChange={handleChange}
+              placeholder="e.g. 5000 — customer spend threshold"
+              min="0"
             />
           </div>
 

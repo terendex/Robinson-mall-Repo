@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import "../css/Log.css";
-import { FaEye, FaEyeSlash } from 'react-icons/fa';
+import { FaEye, FaEyeSlash, FaShieldAlt } from 'react-icons/fa';
 
 /**
  * Log Component (Login Page)
@@ -32,7 +32,7 @@ export default function Log({ onLogin }) {
 
   /**
    * Submits the populated state credentials to the parent `onLogin` property.
-   * If successful, saves credentials if "Remember Me" is checked, and routes the user 
+   * If successful, saves credentials if "Remember Me" is checked, and routes the user
    * to their respective role-based dashboard.
    */
   const handleSubmit = async (e) => {
@@ -49,20 +49,11 @@ export default function Log({ onLogin }) {
           localStorage.removeItem('rememberedPassword');
         }
         switch (user.role) {
-          case 'admin':
-            navigate('/admin');
-            break;
-          case 'manager':
-            navigate('/manager');
-            break;
-          case 'staff':
-            navigate('/staff');
-            break;
-          case 'customer':
-            navigate('/customer');
-            break;
-          default:
-            navigate('/login');
+          case 'admin': navigate('/admin'); break;
+          case 'manager': navigate('/manager'); break;
+          case 'staff': navigate('/staff'); break;
+          case 'customer': navigate('/customer'); break;
+          default: navigate('/login');
         }
       } else {
         setError('Invalid username or password. Please check your credentials and try again.');
@@ -81,6 +72,7 @@ export default function Log({ onLogin }) {
             <p className="system-title-sub">INFORMATION SYSTEM</p>
           </div>
           <h2>Account Login</h2>
+
           {error && (
             <div className="error-container">
               <span className="error-icon">ⓘ</span>
@@ -90,7 +82,9 @@ export default function Log({ onLogin }) {
               </div>
             </div>
           )}
+
           <form onSubmit={handleSubmit}>
+            {/* Email / Username */}
             <div className="form-group">
               <label htmlFor="email">Email or Username *</label>
               <input
@@ -102,6 +96,8 @@ export default function Log({ onLogin }) {
                 required
               />
             </div>
+
+            {/* Password */}
             <div className="form-group password-container">
               <label htmlFor="password">Password *</label>
               <input
@@ -119,6 +115,8 @@ export default function Log({ onLogin }) {
                 {showPassword ? <FaEyeSlash /> : <FaEye />}
               </div>
             </div>
+
+            {/* Remember Me + Forgot Password row */}
             <div className="form-check">
               <input
                 type="checkbox"
@@ -131,8 +129,10 @@ export default function Log({ onLogin }) {
             <div className="forgot-password">
               <Link to="/forgot-password">Forgot Password</Link>
             </div>
+
             <button type="submit" className="login-btn">Login</button>
           </form>
+
           <div className="signup-link">
             <p>Don't have an account? <Link to="/register">Sign up</Link></p>
           </div>

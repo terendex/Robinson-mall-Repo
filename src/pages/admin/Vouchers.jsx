@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import axios from 'axios';
 import VoucherModal from '../../components/VoucherModal';
 import Pagination from '../../components/Pagination';
+import RedeemVoucherPanel from '../../components/RedeemVoucherPanel';
 import '../../css/Vouchers.css';
 
 /**
@@ -10,7 +11,20 @@ import '../../css/Vouchers.css';
  */
 const PAGE_SIZE = 10;
 
+const TAB_BTN = (active, color, onClick, icon, label) => (
+  <button onClick={onClick} style={{
+    padding: '0.5rem 1.1rem', borderRadius: 8, fontWeight: 700, fontSize: '0.85rem',
+    border: '1.5px solid', cursor: 'pointer', transition: 'all 0.18s',
+    background: active ? color : '#fff',
+    color:      active ? '#fff' : '#64748b',
+    borderColor: active ? color : '#e2e8f0',
+  }}>
+    <i className={`fa-solid ${icon}`} style={{ marginRight: '0.4rem' }}></i>{label}
+  </button>
+);
+
 const Vouchers = () => {
+  const [tab, setTab] = useState('vouchers'); // 'vouchers' | 'redeem'
   const [vouchers, setVouchers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -133,12 +147,20 @@ const Vouchers = () => {
       <div className="vouchers-container">
         <div className="vouchers-header">
           <h1>Vouchers</h1>
-          <button className="create-voucher-btn" onClick={handleAddVoucher}>
-            <i className="fa-solid fa-plus"></i> Create Voucher
-          </button>
+          <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+            {tab === 'vouchers' && (
+              <button className="create-voucher-btn" onClick={handleAddVoucher}>
+                <i className="fa-solid fa-plus"></i> Create Voucher
+              </button>
+            )}
+            {TAB_BTN(tab === 'vouchers', '#c50000', () => setTab('vouchers'), 'fa-ticket-simple', 'Vouchers')}
+            {TAB_BTN(tab === 'redeem',   '#16a34a', () => setTab('redeem'),   'fa-qrcode',        'Redeem Voucher')}
+          </div>
         </div>
 
-        <div className="vouchers-list-section">
+        {tab === 'redeem' && <RedeemVoucherPanel />}
+
+        <div className="vouchers-list-section" style={{ display: tab === 'vouchers' ? '' : 'none' }}>
           <div className="vouchers-controls">
             <div className="search-wrapper">
               <i className="fa-solid fa-magnifying-glass"></i>

@@ -1,0 +1,703 @@
+/* ─────────────────────────────────────────────────
+   CustomerVouchers.css
+   ───────────────────────────────────────────────── */
+
+/* ── Page shell ── */
+.cv-page {
+  padding: 2rem;
+  min-height: calc(100vh - 70px);
+  background: #f8fafc;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* ── Loading ── */
+.cv-loading {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  justify-content: center;
+  padding: 4rem;
+  color: #64748b;
+  font-size: 1rem;
+}
+
+.cv-loading i { color: #c50000; font-size: 1.5rem; }
+
+/* ── Header ── */
+.cv-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+  flex-wrap: wrap;
+}
+
+.cv-header h1 {
+  font-size: 1.75rem;
+  font-weight: 800;
+  color: #1e293b;
+  margin: 0 0 0.2rem;
+}
+
+.cv-header p {
+  color: #64748b;
+  font-size: 0.875rem;
+  margin: 0;
+}
+
+.cv-txn-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 1.25rem;
+  border: 1.5px solid #c50000;
+  border-radius: 8px;
+  background: transparent;
+  color: #c50000;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.18s, color 0.18s;
+}
+
+.cv-txn-btn:hover {
+  background: #c50000;
+  color: #fff;
+}
+
+/* ── Alerts ── */
+.cv-alert {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.75rem 1rem;
+  border-radius: 10px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  margin-bottom: 1rem;
+}
+
+.cv-alert button {
+  margin-left: auto;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: inherit;
+  opacity: 0.7;
+}
+
+.cv-alert button:hover { opacity: 1; }
+
+.cv-alert-success {
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  color: #15803d;
+}
+
+.cv-alert-error {
+  background: #fff5f5;
+  border: 1px solid #fecaca;
+  color: #b91c1c;
+}
+
+/* ── Info banner ── */
+.cv-info-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 10px;
+  padding: 12px 16px;
+  font-size: 0.8375rem;
+  color: #1e40af;
+  margin-bottom: 1.5rem;
+  line-height: 1.5;
+}
+
+.cv-info-banner i {
+  font-size: 1rem;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.cv-info-banner strong { color: #1e3a8a; }
+
+/* ── Tabs ── */
+.cv-tabs {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.cv-tab {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 1.25rem;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 8px;
+  background: #fff;
+  color: #64748b;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.18s;
+}
+
+.cv-tab:hover {
+  border-color: #c50000;
+  color: #c50000;
+}
+
+.cv-tab.active {
+  background: #c50000;
+  border-color: #c50000;
+  color: #fff;
+}
+
+.cv-tab-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.25);
+  font-size: 11px;
+  font-weight: 700;
+  padding: 0 5px;
+}
+
+.cv-tab:not(.active) .cv-tab-badge {
+  background: #f1f5f9;
+  color: #475569;
+}
+
+/* ── Grid ── */
+.cv-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 1.25rem;
+  margin-bottom: 1.5rem;
+}
+
+/* ── Campaign Card ── */
+.cv-card {
+  background: #fff;
+  border-radius: 14px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  border: 1.5px solid #e2e8f0;
+  transition: box-shadow 0.2s, border-color 0.2s, transform 0.2s;
+}
+
+.cv-card:hover {
+  box-shadow: 0 6px 24px rgba(0,0,0,0.11);
+  transform: translateY(-2px);
+}
+
+.cv-card-unlocked {
+  border-color: #16a34a;
+  box-shadow: 0 4px 16px rgba(22, 163, 74, 0.12);
+}
+
+.cv-card-accent {
+  height: 5px;
+  background: linear-gradient(90deg, #c50000, #ff6b6b);
+}
+
+.cv-card-unlocked .cv-card-accent {
+  background: linear-gradient(90deg, #16a34a, #4ade80);
+}
+
+/* card top */
+.cv-card-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 1rem 1rem 0;
+  gap: 0.75rem;
+}
+
+.cv-campaign-info {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  flex: 1;
+  min-width: 0;
+}
+
+.cv-campaign-name {
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: #1e293b;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cv-campaign-dates {
+  font-size: 0.78rem;
+  color: #94a3b8;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+/* lock badge */
+.cv-lock-badge {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.cv-lock-badge.locked {
+  background: #f1f5f9;
+  color: #64748b;
+}
+
+.cv-lock-badge.unlocked {
+  background: #dcfce7;
+  color: #16a34a;
+}
+
+/* voucher preview pill row */
+.cv-voucher-preview {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.65rem 1rem;
+  flex-wrap: wrap;
+}
+
+.cv-voucher-tag {
+  padding: 3px 10px;
+  background: #fff0f0;
+  color: #c50000;
+  border-radius: 999px;
+  font-size: 0.73rem;
+  font-weight: 700;
+}
+
+.cv-voucher-name {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #374151;
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cv-voucher-discount {
+  font-size: 0.875rem;
+  font-weight: 800;
+  color: #c50000;
+}
+
+/* ── Progress section ── */
+.cv-progress-section {
+  padding: 0.75rem 1rem;
+  background: #f8fafc;
+  border-top: 1px solid #f1f5f9;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.cv-progress-labels {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.cv-progress-title {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #64748b;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.cv-progress-pct {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.cv-progress-bar {
+  height: 8px;
+  background: #e2e8f0;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.cv-progress-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #c50000, #ff6b6b);
+  transition: width 0.5s ease;
+}
+
+.cv-progress-fill.filled {
+  background: linear-gradient(90deg, #16a34a, #4ade80);
+}
+
+.cv-progress-amounts {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 6px;
+  font-size: 0.78rem;
+}
+
+.cv-spent {
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.cv-spent-label {
+  font-weight: 400;
+  color: #94a3b8;
+}
+
+.cv-target {
+  color: #64748b;
+}
+
+.cv-target strong { color: #1e293b; }
+
+/* ── Card footer ── */
+.cv-card-footer {
+  padding: 0.875rem 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cv-claim-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.65rem 1rem;
+  background: #16a34a;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.18s, box-shadow 0.18s;
+  box-shadow: 0 2px 8px rgba(22, 163, 74, 0.25);
+}
+
+.cv-claim-btn:hover:not(:disabled) {
+  background: #15803d;
+  box-shadow: 0 4px 14px rgba(22, 163, 74, 0.35);
+}
+
+.cv-claim-btn:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.cv-remaining-hint {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #64748b;
+  flex-wrap: wrap;
+}
+
+.cv-remaining-hint i { color: #c50000; }
+
+.cv-details-link {
+  margin-left: auto;
+  background: none;
+  border: none;
+  color: #c50000;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 4px;
+  transition: background 0.15s;
+}
+
+.cv-details-link:hover { background: #fff0f0; }
+
+/* claimed badge */
+.cv-claimed-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  width: 100%;
+  justify-content: center;
+}
+
+.cv-claimed-badge.cv-status-approved  { background: #dcfce7; color: #15803d; }
+.cv-claimed-badge.cv-status-pending   { background: #fef9c3; color: #854d0e; }
+.cv-claimed-badge.cv-status-rejected  { background: #fff5f5; color: #b91c1c; }
+.cv-claimed-badge.cv-status-expired   { background: #f1f5f9; color: #64748b; }
+
+/* ── Ticket card (My Claims tab) ── */
+.cv-ticket-card {
+  display: flex;
+  background: #fff;
+  border-radius: 14px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+  overflow: hidden;
+  border: 1.5px solid #e2e8f0;
+  transition: box-shadow 0.2s, transform 0.2s;
+}
+
+.cv-ticket-card:hover {
+  box-shadow: 0 6px 24px rgba(0,0,0,0.11);
+  transform: translateY(-2px);
+}
+
+.cv-ticket-left {
+  width: 8px;
+  flex-shrink: 0;
+  background: linear-gradient(180deg, #c50000, #ff6b6b);
+}
+
+.cv-ticket-body {
+  flex: 1;
+  padding: 1rem 1rem 0.875rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.cv-ticket-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.cv-ticket-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #94a3b8;
+}
+
+.cv-status-pill {
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 999px;
+}
+
+.cv-status-approved { background: #dcfce7; color: #15803d; }
+.cv-status-pending  { background: #fef9c3; color: #854d0e; }
+.cv-status-rejected { background: #fee2e2; color: #b91c1c; }
+.cv-status-expired  { background: #f1f5f9; color: #64748b; }
+
+.cv-ticket-name {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0;
+}
+
+.cv-ticket-store {
+  font-size: 0.8rem;
+  color: #64748b;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin: 0;
+}
+
+.cv-ticket-store i { color: #c50000; }
+
+/* ticket divider */
+.cv-ticket-divider {
+  display: flex;
+  align-items: center;
+  position: relative;
+  margin: 0.25rem -1rem;
+}
+
+.cv-cutout {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #f8fafc;
+  border: 1.5px solid #e2e8f0;
+  flex-shrink: 0;
+}
+
+.cv-cutout-left  { margin-left: -7px; }
+.cv-cutout-right { margin-right: -7px; }
+
+.cv-dashed-line {
+  flex: 1;
+  border-bottom: 1.5px dashed #e2e8f0;
+}
+
+/* code row */
+.cv-ticket-code-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.cv-code-label {
+  display: block;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 2px;
+}
+
+.cv-code-text {
+  display: block;
+  font-size: 1rem;
+  font-weight: 800;
+  color: #c50000;
+  letter-spacing: 0.08em;
+}
+
+.cv-qr-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 8px;
+  border: 1.5px solid #c50000;
+  background: #fff0f0;
+  color: #c50000;
+  font-size: 1.1rem;
+  cursor: pointer;
+  transition: background 0.18s, color 0.18s;
+  flex-shrink: 0;
+}
+
+.cv-qr-btn:hover { background: #c50000; color: #fff; }
+
+/* ticket footer */
+.cv-ticket-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.cv-ticket-date {
+  font-size: 0.78rem;
+  color: #94a3b8;
+}
+
+.cv-active-pill {
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: #dcfce7;
+  color: #15803d;
+  letter-spacing: 0.05em;
+}
+
+.cv-expired-pill {
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: #f1f5f9;
+  color: #64748b;
+  letter-spacing: 0.05em;
+}
+
+/* ── Empty state ── */
+.cv-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: 4rem 2rem;
+  text-align: center;
+  background: #fff;
+  border-radius: 14px;
+  border: 1.5px dashed #e2e8f0;
+}
+
+.cv-empty i {
+  font-size: 2.5rem;
+  color: #cbd5e1;
+}
+
+.cv-empty h3 {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #334155;
+  margin: 0;
+}
+
+.cv-empty p {
+  font-size: 0.875rem;
+  color: #94a3b8;
+  margin: 0;
+}
+
+.cv-switch-tab-btn {
+  margin-top: 0.5rem;
+  padding: 0.6rem 1.5rem;
+  background: #c50000;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.18s;
+}
+
+.cv-switch-tab-btn:hover { background: #a50000; }
+
+/* ── Responsive ── */
+@media (max-width: 768px) {
+  .cv-page { padding: 1rem; }
+
+  .cv-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .cv-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
+@media (max-width: 480px) {
+  .cv-tabs { gap: 0.4rem; }
+  .cv-tab  { padding: 0.5rem 0.9rem; font-size: 0.82rem; }
+}
