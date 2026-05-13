@@ -106,10 +106,17 @@ const Register = () => {
     } catch (err) {
       if (err.response && err.response.data) {
         const errorData = err.response.data;
-        const errorMessages = Object.values(errorData).flat();
-        setError(errorMessages[0] || 'Failed to create account. Please try again.');
+        
+        // If email is already taken, show a specific friendly message
+        if (errorData.email || errorData.username) {
+          setError("A user with that email already exists. Please try logging in instead.");
+        } else {
+          // Otherwise show the first specific error from the backend
+          const errorMessages = Object.values(errorData).flat();
+          setError(errorMessages[0] || 'Failed to create account. Please try again.');
+        }
       } else {
-        setError('Failed to create account. Please try again.');
+        setError('Failed to create account. Please try again later.');
       }
     }
   };
