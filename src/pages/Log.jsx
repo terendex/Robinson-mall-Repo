@@ -17,37 +17,33 @@ export default function Log({ onLogin }) {
   const navigate = useNavigate();
 
   /**
-   * Effect Hook: On mount, checks if "Remember Me" credentials exist in LocalStorage.
+   * Effect Hook: On mount, checks if "Remember Me" identifier exists in LocalStorage.
    * Modifies state to auto-fill the login form if found.
    */
   useEffect(() => {
     const rememberedEmail = localStorage.getItem('rememberedEmail');
-    const rememberedPassword = localStorage.getItem('rememberedPassword');
-    if (rememberedEmail && rememberedPassword) {
+    if (rememberedEmail) {
       setEmail(rememberedEmail);
-      setPassword(rememberedPassword);
       setRememberMe(true);
     }
   }, []);
 
   /**
-   * Submits the populated state credentials to the parent `onLogin` property.
-   * If successful, saves credentials if "Remember Me" is checked, and routes the user
-   * to their respective role-based dashboard.
+   * Submits credentials to the parent `onLogin`.
+   * Saves only the identifier if "Remember Me" is checked.
    */
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
     try {
-      const user = await onLogin(email, password);
+      const user = await onLogin(email, password, rememberMe);
       if (user) {
         if (rememberMe) {
           localStorage.setItem('rememberedEmail', email);
-          localStorage.setItem('rememberedPassword', password);
         } else {
           localStorage.removeItem('rememberedEmail');
-          localStorage.removeItem('rememberedPassword');
         }
+        
         switch (user.role) {
           case 'admin': navigate('/admin'); break;
           case 'manager': navigate('/manager'); break;
@@ -92,7 +88,13 @@ export default function Log({ onLogin }) {
                 id="email"
                 placeholder="adminuser@gmail.com or adminuser"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setEmail(val);
+                  if (rememberMe) {
+                    localStorage.setItem('rememberedEmail', val);
+                  }
+                }}
                 required
               />
             </div>
@@ -122,7 +124,15 @@ export default function Log({ onLogin }) {
                 type="checkbox"
                 id="rememberMe"
                 checked={rememberMe}
-                onChange={(e) => setRememberMe(e.target.checked)}
+                onChange={(e) => {
+                  const isChecked = e.target.checked;
+                  setRememberMe(isChecked);
+                  if (isChecked) {
+                    localStorage.setItem('rememberedEmail', email);
+                  } else {
+                    localStorage.removeItem('rememberedEmail');
+                  }
+                }}
               />
               <label htmlFor="rememberMe">Remember Me</label>
             </div>

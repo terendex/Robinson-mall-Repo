@@ -66,6 +66,22 @@ class UserViewSet(viewsets.ModelViewSet):
                 return Response({'detail': 'Current password is required to set a new one.'}, status=status.HTTP_400_BAD_REQUEST)
             if not user.check_password(old_password):
                 return Response({'detail': 'Current password is incorrect.'}, status=status.HTTP_400_BAD_REQUEST)
+            
+            # ETHICS CHECK 1: Cannot be same as current password
+            if old_password == new_password:
+                return Response({'detail': 'New password cannot be the same as your current password.'}, status=status.HTTP_400_BAD_REQUEST)
+
+            # ETHICS CHECK 2: Complexity rules (Caps, Special, etc.)
+            import re
+            if len(new_password) < 8:
+                return Response({'detail': 'Password must be at least 8 characters long.'}, status=status.HTTP_400_BAD_REQUEST)
+            if not re.search(r'[A-Z]', new_password):
+                return Response({'detail': 'Password must contain at least one uppercase letter.'}, status=status.HTTP_400_BAD_REQUEST)
+            if not re.search(r'[a-z]', new_password):
+                return Response({'detail': 'Password must contain at least one lowercase letter.'}, status=status.HTTP_400_BAD_REQUEST)
+            if not re.search(r'[!@#$%^&*(),.?":{}|<>]', new_password):
+                return Response({'detail': 'Password must contain at least one special character.'}, status=status.HTTP_400_BAD_REQUEST)
+
             user.set_password(new_password)
             user.save(update_fields=['password'])
 
@@ -312,6 +328,21 @@ class PasswordResetView(views.APIView):
 
         if not default_token_generator.check_token(user, token):
              return Response({'detail': 'Invalid or expired token.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # ETHICS CHECK 1: Cannot be same as current password
+        if user.check_password(password):
+             return Response({'detail': 'New password cannot be the same as your current password.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # ETHICS CHECK 2: Complexity rules (Caps, Special, etc.)
+        import re
+        if len(password) < 8:
+            return Response({'detail': 'Password must be at least 8 characters long.'}, status=status.HTTP_400_BAD_REQUEST)
+        if not re.search(r'[A-Z]', password):
+            return Response({'detail': 'Password must contain at least one uppercase letter.'}, status=status.HTTP_400_BAD_REQUEST)
+        if not re.search(r'[a-z]', password):
+            return Response({'detail': 'Password must contain at least one lowercase letter.'}, status=status.HTTP_400_BAD_REQUEST)
+        if not re.search(r'[!@#$%^&*(),.?":{}|<>]', password):
+            return Response({'detail': 'Password must contain at least one special character.'}, status=status.HTTP_400_BAD_REQUEST)
 
         user.set_password(password)
         user.save()

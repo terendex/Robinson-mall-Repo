@@ -1,13 +1,19 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
-import { FaEye, FaEyeSlash } from 'react-icons/fa';
+import { FaEye, FaEyeSlash, FaCheck, FaTimes } from 'react-icons/fa';
 import '../css/PasswordReset.css';
 
 /**
- * PasswordReset Component
- * Handles setting a new password using the uid + token from the reset email link.
+ * Password rules enforced on reset.
  */
+const PASSWORD_RULES = [
+  { key: 'length',  label: 'At least 8 characters',                      test: pw => pw.length >= 8 },
+  { key: 'upper',   label: 'At least one uppercase letter (A–Z)',         test: pw => /[A-Z]/.test(pw) },
+  { key: 'lower',   label: 'At least one lowercase letter (a–z)',         test: pw => /[a-z]/.test(pw) },
+  { key: 'special', label: 'At least one special character (!@#$%^&*…)',  test: pw => /[!@#$%^&*()\-_=+\[\]{};':"\\|,.<>/?`~]/.test(pw) },
+];
+
 const PasswordReset = () => {
   const { uidb64, token } = useParams();
   const [password, setPassword] = useState('');
@@ -20,6 +26,23 @@ const PasswordReset = () => {
   const [isValidating, setIsValidating] = useState(true);
   const [tokenValid, setTokenValid] = useState(false);
   const navigate = useNavigate();
+
+  // ── derived state ──
+  const ruleResults  = PASSWORD_RULES.map(r => ({ ...r, passed: r.test(password) }));
+  const allRulesPassed = ruleResults.every(r => r.passed);
+  const passedCount  = ruleResults.filter(r => r.passed).length;
+  const strengthPct  = (passedCount / PASSWORD_RULES.length) * 100;
+  const strengthLabel =
+    passedCount === 0 ? '' :
+    passedCount === 1 ? 'Weak' :
+    passedCount === 2 ? 'Fair' :
+    passedCount === 3 ? 'Good' : 'Strong';
+  const strengthClass =
+    passedCount <= 1 ? 'weak' :
+    passedCount === 2 ? 'fair' :
+    passedCount === 3 ? 'good' : 'strong';
+
+  const [timeLeft, setTimeLeft] = useState(300); // 5 minutes in seconds
 
   // Validate token on component mount
   useEffect(() => {
@@ -37,13 +60,39 @@ const PasswordReset = () => {
     validateToken();
   }, [uidb64, token]);
 
+  // Page Expiration Timer (5 Minutes)
+  useEffect(() => {
+    if (!tokenValid || message) return;
+
+    const timer = setInterval(() => {
+      setTimeLeft((prev) => {
+        if (prev <= 1) {
+          clearInterval(timer);
+          setTokenValid(false);
+          setError('This password reset session has expired for your security. Please request a new link.');
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [tokenValid, message]);
+
+  // Format time for display (optional, but good for UX)
+  const formatTime = (seconds) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setMessage('');
     setError('');
 
-    if (password.length < 8) {
-      setError('Password must be at least 8 characters long.');
+    if (!allRulesPassed) {
+      setError('Password does not meet the security requirements.');
       return;
     }
 
@@ -88,6 +137,15 @@ const PasswordReset = () => {
           <h2>Reset Your Password</h2>
           <p>Choose a strong new password for your account.</p>
 
+          {tokenValid && !message && (
+            <div className={`pr-timer ${timeLeft < 60 ? 'timer-low' : ''}`}>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+              </svg>
+              <span>Session expires in: <strong>{formatTime(timeLeft)}</strong></span>
+            </div>
+          )}
+
           {message && (
             <div className="pr-success">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -122,7 +180,7 @@ const PasswordReset = () => {
                   <input
                     id="pr-password"
                     type={showPassword ? 'text' : 'password'}
-                    placeholder="At least 8 characters"
+                    placeholder="Create a strong password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
@@ -139,6 +197,26 @@ const PasswordReset = () => {
                     {showPassword ? <FaEyeSlash /> : <FaEye />}
                   </button>
                 </div>
+
+                {/* Strength bar */}
+                {password.length > 0 && (
+                  <div className="pw-strength-wrap">
+                    <div className="pw-strength-bar">
+                      <div className={`pw-strength-fill ${strengthClass}`} style={{ width: `${strengthPct}%` }} />
+                    </div>
+                    <span className={`pw-strength-label ${strengthClass}`}>{strengthLabel}</span>
+                  </div>
+                )}
+
+                {/* Requirements checklist */}
+                <ul className="pw-requirements" style={{ marginTop: '16px' }}>
+                  {ruleResults.map(r => (
+                    <li key={r.key} className={r.passed ? 'req-pass' : 'req-fail'}>
+                      {r.passed ? <FaCheck className="req-icon" /> : <FaTimes className="req-icon" />}
+                      {r.label}
+                    </li>
+                  ))}
+                </ul>
               </div>
 
               <div className="form-group">
@@ -164,9 +242,14 @@ const PasswordReset = () => {
                     {showConfirm ? <FaEyeSlash /> : <FaEye />}
                   </button>
                 </div>
+                {confirmPassword && password !== confirmPassword && (
+                  <span style={{ fontSize: '12px', color: '#ef4444', marginTop: '6px', display: 'block' }}>
+                    <FaTimes /> Passwords do not match.
+                  </span>
+                )}
               </div>
 
-              <button type="submit" className="submit-btn" disabled={loading}>
+              <button type="submit" className="submit-btn" disabled={loading || !allRulesPassed}>
                 {loading ? (
                   <span className="btn-loading">
                     <span className="spinner" />
