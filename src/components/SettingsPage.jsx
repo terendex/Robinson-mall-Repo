@@ -87,6 +87,13 @@ const SettingsPage = () => {
       .catch(err => console.error('Failed to load profile:', err));
   }, []);
 
+  // ── Password strength derived state ──
+  const newPw        = security.new_password;
+  const ruleResults  = PASSWORD_RULES.map(r => ({ ...r, passed: r.test(newPw) }));
+  const allRulesPassed  = ruleResults.every(r => r.passed);
+  const passedCount     = ruleResults.filter(r => r.passed).length;
+  const strengthPct     = (passedCount / PASSWORD_RULES.length) * 100;
+
   const isProfileDirty = React.useMemo(() => {
     return (
       profile.first_name !== initialProfile.first_name ||
@@ -99,13 +106,6 @@ const SettingsPage = () => {
   const isSecurityDirty = React.useMemo(() => {
     return !!(security.current_password && security.new_password && security.confirm_password && allRulesPassed && security.new_password === security.confirm_password);
   }, [security, allRulesPassed]);
-
-  // ── Password strength derived state ──
-  const newPw        = security.new_password;
-  const ruleResults  = PASSWORD_RULES.map(r => ({ ...r, passed: r.test(newPw) }));
-  const allRulesPassed  = ruleResults.every(r => r.passed);
-  const passedCount     = ruleResults.filter(r => r.passed).length;
-  const strengthPct     = (passedCount / PASSWORD_RULES.length) * 100;
   const strengthLabel   =
     passedCount === 0 ? '' :
     passedCount === 1 ? 'Weak' :
