@@ -220,101 +220,140 @@ class Notification(models.Model):
     def __str__(self):
         return self.title
 
-@receiver(post_save, sender=Claim)
-def create_claim_notification(sender, instance, created, **kwargs):
-    """Automatically create individual notifications for managers, staff, and the customer."""
-    if created:
-        # 1. Notify all Managers (Action Oriented)
-        managers = User.objects.filter(role='manager')
-        for manager in managers:
-            Notification.objects.create(
-                user=manager,
-                title="Action Required: New Claim",
-                message=f"Review needed for {instance.user.get_full_name()}'s ₱{instance.amount} claim. Voucher: {instance.voucher.name}.",
-                notification_type='warning'
-            )
-        
-        # 2. Notify all Staff (Informational)
-        staff_users = User.objects.filter(role='staff')
-        for staff in staff_users:
-            Notification.objects.create(
-                user=staff,
-                title="Claim Logged",
-                message=f"New claim submitted by {instance.user.get_full_name()}. Processing initiated.",
-                notification_type='info'
-            )
+# ── Global Audit Notification Helper ──────────────────────────────────
+def notify_management(title, message, n_type='info'):
+    """Broadcasts a notification to all Admin, Manager, and Staff accounts."""
+    recipients = User.objects.filter(role__in=['admin', 'manager', 'staff'])
+    for user in recipients:
+        Notification.objects.create(
+            user=user,
+            title=title,
+            message=message,
+            notification_type=n_type
+        )
 
-        # 3. Notify the Customer who claimed it
+# ── Store Signals ───────────────────────────────────────────────────
+@receiver(post_save, sender=Store)
+def store_saved(sender, instance, created, **kwargs):
+    action = "added" if created else "updated"
+    notify_management(
+        title=f"Store {action.capitalize()}",
+        message=f"Store '{instance.name}' has been {action} in the system."
+    )
+
+@receiver(post_delete, sender=Store)
+def store_deleted(sender, instance, **kwargs):
+    notify_management(
+        title="Store Deleted",
+        message=f"Store '{instance.name}' has been removed from the system.",
+        n_type='warning'
+    )
+
+# ── Voucher Signals ────────────────────────────────────────────────
+@receiver(post_save, sender=Voucher)
+def voucher_saved(sender, instance, created, **kwargs):
+    action = "created" if created else "updated"
+    notify_management(
+        title=f"Voucher {action.capitalize()}",
+        message=f"Voucher '{instance.name}' ({instance.code}) has been {action}."
+    )
+
+@receiver(post_delete, sender=Voucher)
+def voucher_deleted(sender, instance, **kwargs):
+    notify_management(
+        title="Voucher Removed",
+        message=f"Voucher '{instance.name}' has been permanently deleted.",
+        n_type='warning'
+    )
+
+# ── Campaign Signals ───────────────────────────────────────────────
+@receiver(post_save, sender=Campaign)
+def campaign_saved(sender, instance, created, **kwargs):
+    if created:
+        # Custom message for new launches (existing logic preserved but standardized)
+        notify_management(
+            title="New Campaign Launched",
+            message=f"Campaign '{instance.name}' is now {instance.status}.",
+            n_type='success'
+        )
+    else:
+        notify_management(
+            title="Campaign Updated",
+            message=f"Campaign details for '{instance.name}' have been modified."
+        )
+
+@receiver(post_delete, sender=Campaign)
+def campaign_deleted(sender, instance, **kwargs):
+    notify_management(
+        title="Campaign Deleted",
+        message=f"Campaign '{instance.name}' has been removed.",
+        n_type='warning'
+    )
+
+# ── User Signals ───────────────────────────────────────────────────
+@receiver(post_save, sender=User)
+def user_saved(sender, instance, created, **kwargs):
+    if created:
+        if instance.role == 'customer':
+            # Existing specific logic for customers
+            notify_management(
+                title="New Customer Joined",
+                message=f"Customer {instance.get_full_name() or instance.username} has registered.",
+                n_type='success'
+            )
+        else:
+            notify_management(
+                title="Management Account Created",
+                message=f"A new {instance.role} account ({instance.username}) has been added.",
+                n_type='info'
+            )
+    else:
+        notify_management(
+            title="Account Updated",
+            message=f"The account details for {instance.username} ({instance.role}) were modified."
+        )
+
+@receiver(post_delete, sender=User)
+def user_deleted(sender, instance, **kwargs):
+    notify_management(
+        title="Account Removed",
+        message=f"The account for {instance.username} has been deleted.",
+        n_type='warning'
+    )
+
+# ── Claim & Transaction Signals ────────────────────────────────────
+@receiver(post_save, sender=Claim)
+def claim_saved(sender, instance, created, **kwargs):
+    if created:
+        # Existing logic for new claims
+        notify_management(
+            title="New Claim Submitted",
+            message=f"New claim for {instance.voucher.name} by {instance.user.get_full_name() or instance.username}.",
+            n_type='warning'
+        )
+        # Also notify the specific customer
         Notification.objects.create(
             user=instance.user,
             title="Claim Received",
-            message=f"Your claim for {instance.voucher.name} has been received and is currently pending review.",
+            message=f"Your claim for {instance.voucher.name} is now pending review.",
             notification_type='success'
         )
 
-@receiver(post_save, sender=User)
-def create_user_notification(sender, instance, created, **kwargs):
-    """Alert managers and staff individually when a new customer registers."""
-    if created and instance.role == 'customer':
-        # Managers get review tasks
-        managers = User.objects.filter(role='manager')
-        for manager in managers:
-            Notification.objects.create(
-                user=manager,
-                title="Review Required: New Registration",
-                message=f"New customer '{instance.first_name} {instance.last_name}' needs profile verification.",
-                notification_type='info'
-            )
-        
-        # Staff get general updates
-        staff_users = User.objects.filter(role='staff')
-        for staff in staff_users:
-            Notification.objects.create(
-                user=staff,
-                title="New Customer Joined",
-                message=f"Welcome alert: {instance.first_name} {instance.last_name} has registered.",
-                notification_type='success'
-            )
-
-@receiver(post_save, sender=Campaign)
-def create_campaign_notification(sender, instance, created, **kwargs):
-    """Notify all users individually when a new campaign is successfully launched."""
-    if created:
-        users = User.objects.all()
-        for u in users:
-            Notification.objects.create(
-                user=u,
-                title="New Campaign Launched",
-                message=f"Campaign '{instance.name}' has been created and is now {instance.status}.",
-                notification_type='success'
-            )
-
 @receiver(post_save, sender=Transaction)
-def update_campaign_conversions(sender, instance, created, **kwargs):
-    """
-    ISSUE-08 FIX: Recalculate conversions from scratch instead of incrementing.
-    This is idempotent — re-saving an already-Approved transaction, or toggling
-    a transaction back and forth, always results in the correct final count rather
-    than accumulating phantom increments.
-    Fires on both create AND update so rejections also reduce the count correctly.
-    """
-    if not instance.voucher_code:
-        return
-    try:
-        voucher = Voucher.objects.get(code=instance.voucher_code)
-        if not voucher.campaign_id:
-            return
-        # All voucher codes belonging to the same campaign
-        campaign_codes = list(
-            Voucher.objects.filter(campaign_id=voucher.campaign_id)
-            .values_list('code', flat=True)
+def transaction_saved(sender, instance, created, **kwargs):
+    # Recalculate conversions (existing logic)
+    if instance.voucher_code:
+        try:
+            voucher = Voucher.objects.get(code=instance.voucher_code)
+            if voucher.campaign_id:
+                campaign_codes = list(Voucher.objects.filter(campaign_id=voucher.campaign_id).values_list('code', flat=True))
+                actual_conversions = Transaction.objects.filter(voucher_code__in=campaign_codes, status='Approved').count()
+                Campaign.objects.filter(pk=voucher.campaign_id).update(conversions=actual_conversions)
+        except Voucher.DoesNotExist: pass
+
+    if not created:
+        notify_management(
+            title="Transaction Status Updated",
+            message=f"Transaction {instance.transaction_id} was marked as {instance.status}."
         )
-        actual_conversions = Transaction.objects.filter(
-            voucher_code__in=campaign_codes,
-            status='Approved'
-        ).count()
-        Campaign.objects.filter(pk=voucher.campaign_id).update(
-            conversions=actual_conversions
-        )
-    except Voucher.DoesNotExist:
         pass
