@@ -46,6 +46,7 @@ import ForgotPassword from './pages/ForgotPassword';
 import PasswordReset from './pages/PasswordReset';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import Notifications from './pages/admin/Notifications';
+import NotFound from './pages/NotFound';
 import "./css/App.css"
 
 /**
@@ -221,6 +222,9 @@ function App() {
             <Route path="notifications" element={<CustomerNotifications user={user} />} />
             <Route index element={<Navigate to="dashboard" />} />
           </Route>
+
+          {/* Catch-all 404 Route */}
+          <Route path="*" element={<NotFound user={user} />} />
         </Routes>
       </div>
     </Router>
