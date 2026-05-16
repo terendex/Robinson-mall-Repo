@@ -23,6 +23,10 @@ const PasswordReset = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const navigate = useNavigate();
+  const [tokenValid, setTokenValid] = useState(false);
+  const [isValidating, setIsValidating] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState('');
 
   const [errorConfig, setErrorConfig] = useState({
     show: false,
