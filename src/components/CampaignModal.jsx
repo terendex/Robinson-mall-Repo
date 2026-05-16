@@ -266,10 +266,12 @@ const CampaignModal = ({ show, onClose, onSave, campaignToEdit }) => {
               gap: '0.5rem',
             }}>
               <i className={`fa-solid ${previewStatus === 'Active' ? 'fa-circle-check' : 'fa-calendar-days'}`}></i>
-              {previewStatus === 'Active'
-                ? <>Campaign will launch as <strong>Active</strong> on save (start date is today or not set).</>  
-                : <>Campaign will be <strong>Scheduled</strong> — it becomes Active on {formData.start_date}.</>
-              }
+              <span style={{ flex: 1, lineHeight: '1.4' }}>
+                {previewStatus === 'Active'
+                  ? <>Campaign will launch as <strong>Active</strong> on save (start date is today or not set).</>  
+                  : <>Campaign will be <strong>Scheduled</strong> — it becomes Active on {formData.start_date}.</>
+                }
+              </span>
             </div>
           )}
 
