@@ -91,7 +91,7 @@ const ForgotPassword = () => {
                   autoComplete="email"
                 />
               </div>
-              <button type="submit" className="submit-btn" disabled={loading}>
+              <button type="submit" className="submit-btn" disabled={loading || !email}>
                 {loading ? (
                   <span className="btn-loading">
                     <span className="spinner" />

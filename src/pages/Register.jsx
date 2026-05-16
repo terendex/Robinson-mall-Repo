@@ -65,6 +65,17 @@ const Register = () => {
       ? 'Please enter a valid email address (e.g. user@example.com).'
       : '';
 
+  const isFormValid = !!(
+    firstName && 
+    lastName && 
+    email && 
+    isValidEmailFormat(email) && 
+    allRulesPassed && 
+    password === confirmPassword && 
+    agreePromotions && 
+    agreePrivacy
+  );
+
   const openDatePicker = () => {
     if (datepickerRef.current) datepickerRef.current.setOpen(true);
   };
@@ -313,7 +324,7 @@ const Register = () => {
               </label>
             </div>
 
-            <button type="submit" className="signup-btn">Sign Up</button>
+            <button type="submit" className="signup-btn" disabled={!isFormValid}>Sign Up</button>
           </form>
 
           <p className="login-link">

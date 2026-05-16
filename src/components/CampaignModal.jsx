@@ -74,6 +74,21 @@ const CampaignModal = ({ show, onClose, onSave, campaignToEdit }) => {
     ? (formData.start_date <= today ? 'Active' : 'Scheduled')
     : 'Active';
 
+  const isDirty = React.useMemo(() => {
+    if (!campaignToEdit) {
+      // For NEW campaign: check if all required fields are populated
+      return !!(formData.name.trim() && formData.budget && formData.start_date && formData.end_date);
+    }
+    // For EDIT: compare current state vs initial campaignToEdit values
+    return (
+      formData.name !== (campaignToEdit.name || '') ||
+      formData.budget != (campaignToEdit.budget || '') ||
+      formData.spending_target != (campaignToEdit.spending_target || '') ||
+      formData.start_date !== (campaignToEdit.start_date || '') ||
+      formData.end_date !== (campaignToEdit.end_date || '')
+    );
+  }, [formData, campaignToEdit]);
+
   return (
     <div className="modal-overlay">
       <div className="modal-content">
@@ -277,7 +292,7 @@ const CampaignModal = ({ show, onClose, onSave, campaignToEdit }) => {
 
           <div className="modal-actions">
             <button type="button" onClick={onClose} className="cancel-inner-btn">Cancel</button>
-            <button type="submit" className="save-btn">
+            <button type="submit" className="save-btn" disabled={!isDirty}>
               {campaignToEdit ? 'Save Changes' : 'Create Campaign'}
             </button>
           </div>

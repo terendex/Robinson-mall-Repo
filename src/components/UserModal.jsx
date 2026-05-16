@@ -47,6 +47,22 @@ const UserModal = ({ show, onClose, onSave, userToEdit }) => {
     }
   }, [userToEdit, show]);
 
+  const isDirty = React.useMemo(() => {
+    if (!userToEdit) {
+      // For NEW user: username, email, password are required
+      return !!(formData.username.trim() && formData.email.trim() && formData.password);
+    }
+    // For EDIT: compare current state vs initial userToEdit values
+    return (
+      formData.username !== (userToEdit.username || '') ||
+      formData.email !== (userToEdit.email || '') ||
+      formData.role !== (userToEdit.role || 'customer') ||
+      formData.first_name !== (userToEdit.first_name || '') ||
+      formData.last_name !== (userToEdit.last_name || '') ||
+      formData.password !== ''
+    );
+  }, [formData, userToEdit]);
+
   if (!show) return null;
 
   const handleChange = (e) => {
@@ -180,7 +196,7 @@ const UserModal = ({ show, onClose, onSave, userToEdit }) => {
 
           <div className="modal-actions">
             <button type="button" onClick={onClose} className="cancel-inner-btn">Cancel</button>
-            <button type="submit" className="save-btn">
+            <button type="submit" className="save-btn" disabled={!isDirty}>
               {formData.role === 'admin' ? 'Confirm Admin Change' : (userToEdit ? 'Save Changes' : 'Add User')}
             </button>
           </div>

@@ -185,6 +185,24 @@ const VoucherModal = ({ show, onClose, onSave, voucherToEdit, readOnly }) => {
     }
   }, [voucherToEdit, show]);
 
+  const isDirty = React.useMemo(() => {
+    if (!voucherToEdit) {
+      // For NEW: check if all required fields are populated
+      return !!(formData.campaign && formData.name.trim() && formData.code.trim() && formData.discount_percentage && formData.usage_limit);
+    }
+    // For EDIT: compare current state vs initial voucherToEdit values
+    return (
+      formData.name !== (voucherToEdit.name || '') ||
+      formData.code !== (voucherToEdit.code || '') ||
+      formData.voucher_type !== (voucherToEdit.voucher_type || 'Fashion') ||
+      formData.discount_percentage != (voucherToEdit.discount_percentage || '') ||
+      formData.usage_limit != (voucherToEdit.usage_limit || '') ||
+      formData.campaign != (voucherToEdit.campaign || '') ||
+      formData.store != (voucherToEdit.store || '') ||
+      formData.store_name != (voucherToEdit.store_display_name || voucherToEdit.store_name || '')
+    );
+  }, [formData, voucherToEdit]);
+
   if (!show) return null;
 
   const handleChange = (e) => {
@@ -480,7 +498,7 @@ const VoucherModal = ({ show, onClose, onSave, voucherToEdit, readOnly }) => {
             <button
               type="submit"
               className="save-btn"
-              disabled={!voucherToEdit && campaigns.length === 0}
+              disabled={!isDirty}
             >
               {voucherToEdit ? 'Save Changes' : 'Create Voucher'}
             </button>

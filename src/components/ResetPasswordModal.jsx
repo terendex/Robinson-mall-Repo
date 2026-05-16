@@ -66,7 +66,13 @@ const ResetPasswordModal = ({ show, user, onClose, onSave }) => {
           {error && <p className="error-message" style={{ color: '#c50000', fontSize: '13px', marginTop: '-10px', marginBottom: '10px' }}>{error}</p>}
           <div className="modal-actions">
             <button type="button" className="cancel-inner-btn" onClick={onClose}>Cancel</button>
-            <button type="submit" className="save-btn">Update Password</button>
+            <button 
+              type="submit" 
+              className="save-btn"
+              disabled={!password || !confirmPassword || password !== confirmPassword || password.length < 8}
+            >
+              Update Password
+            </button>
           </div>
         </form>
       </div>

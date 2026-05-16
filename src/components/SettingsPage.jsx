@@ -33,6 +33,7 @@ const SettingsPage = () => {
   });
   const [profileStatus, setProfileStatus]   = useState({ type: '', msg: '' });
   const [profileSaving, setProfileSaving]   = useState(false);
+  const [initialProfile, setInitialProfile] = useState({});
 
   // ── Security tab state ──
   const [security, setSecurity] = useState({
@@ -40,6 +41,7 @@ const SettingsPage = () => {
     new_password:     '',
     confirm_password: '',
   });
+  // ... (keeping other states)
   const [securityStatus, setSecurityStatus] = useState({ type: '', msg: '' });
   const [securitySaving, setSecuritySaving] = useState(false);
   const [showCurrent, setShowCurrent]       = useState(false);
@@ -72,16 +74,31 @@ const SettingsPage = () => {
   useEffect(() => {
     axios.get(`${import.meta.env.VITE_API_URL}/api/users/me/`)
       .then(res => {
-        setProfile({
+        const data = {
           first_name:   res.data.first_name   || '',
           last_name:    res.data.last_name    || '',
           email:        res.data.email        || '',
           username:     res.data.username     || '',
           phone_number: res.data.phone_number || '',
-        });
+        };
+        setProfile(data);
+        setInitialProfile(data);
       })
       .catch(err => console.error('Failed to load profile:', err));
   }, []);
+
+  const isProfileDirty = React.useMemo(() => {
+    return (
+      profile.first_name !== initialProfile.first_name ||
+      profile.last_name !== initialProfile.last_name ||
+      profile.email !== initialProfile.email ||
+      profile.phone_number !== initialProfile.phone_number
+    );
+  }, [profile, initialProfile]);
+
+  const isSecurityDirty = React.useMemo(() => {
+    return !!(security.current_password && security.new_password && security.confirm_password && allRulesPassed && security.new_password === security.confirm_password);
+  }, [security, allRulesPassed]);
 
   // ── Password strength derived state ──
   const newPw        = security.new_password;
@@ -327,7 +344,7 @@ const SettingsPage = () => {
                     <button type="button" className="settings-cancel-btn" onClick={() => setProfileStatus({ type: '', msg: '' })}>
                       Cancel
                     </button>
-                    <button type="submit" className="settings-save-btn" disabled={profileSaving}>
+                    <button type="submit" className="settings-save-btn" disabled={profileSaving || !isProfileDirty}>
                       {profileSaving ? <><i className="fa-solid fa-spinner fa-spin"></i> Saving…</> : 'Save All Changes'}
                     </button>
                   </div>
@@ -449,7 +466,7 @@ const SettingsPage = () => {
                     >
                       Cancel
                     </button>
-                    <button type="submit" className="settings-save-btn" disabled={securitySaving}>
+                    <button type="submit" className="settings-save-btn" disabled={securitySaving || !isSecurityDirty}>
                       {securitySaving ? <><i className="fa-solid fa-spinner fa-spin"></i> Updating…</> : 'Update Password'}
                     </button>
                   </div>

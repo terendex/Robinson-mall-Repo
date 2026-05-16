@@ -245,6 +245,27 @@ const TransactionModal = ({ show, onClose, onSave, transactionToEdit }) => {
     stopCamera();
   }, [transactionToEdit, show]);
 
+  const isDirty = React.useMemo(() => {
+    if (!transactionToEdit) {
+      // For NEW: check if required field (receipt_no) is populated
+      return !!formData.receipt_no.trim();
+    }
+    // For EDIT: compare current state vs initial transactionToEdit values
+    const toDatetimeLocal = (str) => {
+      if (!str) return '';
+      return new Date(str).toISOString().slice(0, 16);
+    };
+    return (
+      formData.receipt_no !== (transactionToEdit.receipt_no || '') ||
+      formData.user_name !== (transactionToEdit.user_name || '') ||
+      formData.store !== (transactionToEdit.store || '') ||
+      formData.store_name !== (transactionToEdit.store_display_name || transactionToEdit.store_name || '') ||
+      formData.amount != (transactionToEdit.amount || '') ||
+      formData.created_at !== toDatetimeLocal(transactionToEdit.created_at) ||
+      !!ocrPreview
+    );
+  }, [formData, transactionToEdit, ocrPreview]);
+
   if (!show) return null;
 
   const handleChange = (e) => {
@@ -616,7 +637,7 @@ const TransactionModal = ({ show, onClose, onSave, transactionToEdit }) => {
 
           <div className="modal-actions">
             <button type="button" className="cancel-inner-btn" onClick={onClose}>Cancel</button>
-            <button type="submit" className="save-btn">
+            <button type="submit" className="save-btn" disabled={!isDirty}>
               {transactionToEdit ? 'Save Changes' : (isCustomer ? 'Submit for Review' : 'Record Transaction')}
             </button>
           </div>

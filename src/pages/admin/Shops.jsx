@@ -52,6 +52,13 @@ const Shops = () => {
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState('');
 
+  const isDirty = React.useMemo(() => {
+    if (!storeToEdit) {
+      return !!form.name.trim();
+    }
+    return form.name !== storeToEdit.name || form.location !== (storeToEdit.location || '');
+  }, [form, storeToEdit]);
+
   useEffect(() => { fetchStores(); }, []);
 
   useEffect(() => {
@@ -350,7 +357,7 @@ const Shops = () => {
                 <button type="button" className="cancel-inner-btn" onClick={() => setShowModal(false)}>
                   Cancel
                 </button>
-                <button type="submit" className="save-btn" disabled={saving}>
+                <button type="submit" className="save-btn" disabled={saving || !isDirty}>
                   {saving ? <i className="fa-solid fa-spinner fa-spin"></i> : null}
                   {storeToEdit ? ' Save Changes' : ' Add Store'}
                 </button>

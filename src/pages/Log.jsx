@@ -144,7 +144,7 @@ export default function Log({ onLogin }) {
               <Link to="/forgot-password">Forgot Password</Link>
             </div>
 
-            <button type="submit" className="login-btn">Login</button>
+            <button type="submit" className="login-btn" disabled={!email || !password}>Login</button>
           </form>
 
           <div className="signup-link">
