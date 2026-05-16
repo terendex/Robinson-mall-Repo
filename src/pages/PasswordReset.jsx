@@ -3,6 +3,8 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
 import { FaEye, FaEyeSlash, FaCheck, FaTimes } from 'react-icons/fa';
 import '../css/PasswordReset.css';
+import ErrorModal from '../components/ErrorModal';
+import SuccessModal from '../components/SuccessModal';
 
 /**
  * Password rules enforced on reset.
@@ -20,12 +22,19 @@ const PasswordReset = () => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
-  const [message, setMessage] = useState('');
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [isValidating, setIsValidating] = useState(true);
-  const [tokenValid, setTokenValid] = useState(false);
   const navigate = useNavigate();
+
+  const [errorConfig, setErrorConfig] = useState({
+    show: false,
+    title: '',
+    message: ''
+  });
+
+  const [successConfig, setSuccessConfig] = useState({
+    show: false,
+    title: '',
+    message: ''
+  });
 
   // ── derived state ──
   const ruleResults  = PASSWORD_RULES.map(r => ({ ...r, passed: r.test(password) }));
@@ -51,7 +60,11 @@ const PasswordReset = () => {
         await axios.get(`${import.meta.env.VITE_API_URL}/api/users/password-reset/${uidb64}/${token}/`);
         setTokenValid(true);
       } catch (err) {
-        setError(err.response?.data?.detail || 'This password reset link is invalid or has expired.');
+        setErrorConfig({
+          show: true,
+          title: 'Invalid Link',
+          message: err.response?.data?.detail || 'This password reset link is invalid or has expired.'
+        });
         setTokenValid(false);
       } finally {
         setIsValidating(false);
@@ -69,7 +82,11 @@ const PasswordReset = () => {
         if (prev <= 1) {
           clearInterval(timer);
           setTokenValid(false);
-          setError('This password reset session has expired for your security. Please request a new link.');
+          setErrorConfig({
+            show: true,
+            title: 'Session Expired',
+            message: 'This password reset session has expired for your security. Please request a new link.'
+          });
           return 0;
         }
         return prev - 1;
@@ -88,16 +105,21 @@ const PasswordReset = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setMessage('');
-    setError('');
-
     if (!allRulesPassed) {
-      setError('Password does not meet the security requirements.');
+      setErrorConfig({
+        show: true,
+        title: 'Security Requirement',
+        message: 'Password does not meet the security requirements. Please check the requirements checklist.'
+      });
       return;
     }
 
     if (password !== confirmPassword) {
-      setError('Passwords do not match.');
+      setErrorConfig({
+        show: true,
+        title: 'Password Mismatch',
+        message: 'Passwords do not match. Please ensure both fields are identical.'
+      });
       return;
     }
 
@@ -108,15 +130,23 @@ const PasswordReset = () => {
         { password }
       );
       if (response.status === 200) {
-        setMessage('Your password has been reset successfully! Redirecting you to login…');
+        setSuccessConfig({
+          show: true,
+          title: 'Password Reset!',
+          message: 'Your password has been reset successfully! Redirecting you to login…'
+        });
         setTimeout(() => navigate('/login'), 3000);
       }
     } catch (err) {
+      let msg = 'Unable to reach the server. Please try again later.';
       if (err.response && err.response.data) {
-        setError(err.response.data.detail || 'Failed to reset password. The link may be invalid or expired.');
-      } else {
-        setError('Unable to reach the server. Please try again later.');
+        msg = err.response.data.detail || 'Failed to reset password. The link may be invalid or expired.';
       }
+      setErrorConfig({
+        show: true,
+        title: 'Action Failed',
+        message: msg
+      });
     } finally {
       setLoading(false);
     }
@@ -137,42 +167,14 @@ const PasswordReset = () => {
           <h2>Reset Your Password</h2>
           <p>Choose a strong new password for your account.</p>
 
-          {tokenValid && !message && (
-            <div className={`pr-timer ${timeLeft < 60 ? 'timer-low' : ''}`}>
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
-              </svg>
-              <span>Session expires in: <strong>{formatTime(timeLeft)}</strong></span>
-            </div>
-          )}
-
-          {message && (
-            <div className="pr-success">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
-                <polyline points="22 4 12 14.01 9 11.01"/>
-              </svg>
-              <p>{message}</p>
-            </div>
-          )}
-
-          {error && (
-            <div className="pr-error">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="12" cy="12" r="10"/>
-                <line x1="12" y1="8" x2="12" y2="12"/>
-                <line x1="12" y1="16" x2="12.01" y2="16"/>
-              </svg>
-              <p>{error}</p>
-            </div>
-          )}
+          {/* Alerts and errors are handled by Modals */}
 
           {isValidating ? (
             <div className="pr-loading-state">
               <span className="spinner"></span>
               <p>Verifying reset link...</p>
             </div>
-          ) : tokenValid && !message ? (
+          ) : tokenValid && !successConfig.show ? (
             <form onSubmit={handleSubmit}>
               <div className="form-group">
                 <label htmlFor="pr-password">New Password</label>
@@ -262,13 +264,15 @@ const PasswordReset = () => {
             </form>
           ) : null}
 
-          {!message && (
-            <div className="back-link">
-              <Link to="/forgot-password">← Request a new link</Link>
-            </div>
-          )}
-        </div>
-      </div>
+          {!successConfig.show && (
+      <SuccessModal 
+        {...successConfig}
+        onClose={() => setSuccessConfig(p => ({ ...p, show: false }))}
+      />
+      <ErrorModal 
+        {...errorConfig}
+        onClose={() => setErrorConfig(p => ({ ...p, show: false }))}
+      />
     </div>
   );
 };

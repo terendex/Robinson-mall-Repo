@@ -3,6 +3,7 @@ import axios from 'axios';
 import Pagination from '../../components/Pagination';
 import ActionConfirmModal from '../../components/ActionConfirmModal';
 import SuccessModal from '../../components/SuccessModal';
+import ErrorModal from '../../components/ErrorModal';
 import '../../css/Shops.css';
 
 // BUG-01 FIX: Use environment variable instead of hardcoded localhost URL
@@ -35,6 +36,12 @@ const Shops = () => {
     onConfirm: () => {}
   });
   const [successConfig, setSuccessConfig] = useState({
+    show: false,
+    title: '',
+    message: ''
+  });
+
+  const [errorConfig, setErrorConfig] = useState({
     show: false,
     title: '',
     message: ''
@@ -137,7 +144,11 @@ const Shops = () => {
       });
     } catch (err) {
       console.error('Failed to delete store:', err);
-      alert('Failed to delete store.');
+      setErrorConfig({
+        show: true,
+        title: 'Action Failed',
+        message: 'The store could not be deleted. It may be linked to active vouchers or campaigns.'
+      });
     }
   };
 
@@ -362,6 +373,10 @@ const Shops = () => {
           setSuccessConfig(p => ({ ...p, show: false }));
           if (successConfig.onClose) successConfig.onClose();
         }}
+      />
+      <ErrorModal 
+        {...errorConfig}
+        onClose={() => setErrorConfig(p => ({ ...p, show: false }))}
       />
     </div>
   );

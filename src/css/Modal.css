@@ -455,9 +455,61 @@
   100% { transform: scale(1); }
 }
 
-/* Mobile override for success modal header padding */
+/* ── Error Modal Specifics ── */
+.error-modal-overlay {
+  background-color: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+}
+
+.error-header {
+  flex-direction: column;
+  padding: 2.5rem 1.5rem 1rem !important;
+  border: none !important;
+}
+
+.error-icon-wrap {
+  width: 70px;
+  height: 70px;
+  background: #fef2f2;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1rem;
+  animation: errorShake 0.4s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+}
+
+.error-icon-wrap i {
+  font-size: 2.5rem;
+  color: #ef4444;
+}
+
+.error-header h2 {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #1e293b;
+  margin: 0;
+}
+
+@keyframes errorShake {
+  10%, 90% { transform: translate3d(-1px, 0, 0); }
+  20%, 80% { transform: translate3d(2px, 0, 0); }
+  30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+  40%, 60% { transform: translate3d(4px, 0, 0); }
+}
+
+.btn-error {
+  background-color: #ef4444;
+  box-shadow: 0 8px 16px rgba(239, 68, 68, 0.2);
+}
+.btn-error:hover {
+  background-color: #dc2626;
+  box-shadow: 0 12px 20px rgba(239, 68, 68, 0.3);
+}
+
+/* Mobile override for error modal header padding */
 @media (max-width: 480px) {
-  .success-header {
+  .success-header, .error-header {
     padding: 2rem 1.5rem 1rem !important;
   }
 }

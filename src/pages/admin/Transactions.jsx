@@ -6,6 +6,7 @@ import { exportCSV, exportExcel, buildTransactionRows } from '../../utils/export
 import Pagination from '../../components/Pagination';
 import ActionConfirmModal from '../../components/ActionConfirmModal';
 import SuccessModal from '../../components/SuccessModal';
+import ErrorModal from '../../components/ErrorModal';
 import '../../css/Transactions.css';
 
 // BUG-01 FIX: Use environment variable instead of hardcoded localhost URL
@@ -70,6 +71,12 @@ const Transactions = () => {
   });
 
   const [successConfig, setSuccessConfig] = useState({
+    show: false,
+    title: '',
+    message: ''
+  });
+
+  const [errorConfig, setErrorConfig] = useState({
     show: false,
     title: '',
     message: ''
@@ -147,7 +154,11 @@ const Transactions = () => {
         (errData?.user_name  && errData.user_name[0])  ||
         errData?.detail ||
         'Error saving transaction. Please check the form and try again.';
-      alert(msg);
+      setErrorConfig({
+        show: true,
+        title: 'Save Failed',
+        message: msg
+      });
     }
   };
 
@@ -175,7 +186,11 @@ const Transactions = () => {
       });
     } catch (err) {
       console.error('Error deleting transaction:', err);
-      alert('Failed to delete transaction.');
+      setErrorConfig({
+        show: true,
+        title: 'Action Failed',
+        message: 'The transaction record could not be deleted. Please check your network connection.'
+      });
     } finally {
       setStatusLoading(null);
     }
@@ -210,7 +225,11 @@ const Transactions = () => {
       });
     } catch (err) {
       console.error('Error marking approved:', err);
-      alert(err.response?.data?.detail || 'Failed to update status.');
+      setErrorConfig({
+        show: true,
+        title: 'Update Failed',
+        message: err.response?.data?.detail || 'Failed to update transaction status.'
+      });
     } finally {
       setStatusLoading(null);
     }
@@ -237,7 +256,11 @@ const Transactions = () => {
 
   const confirmReject = async () => {
     if (!rejectReason.trim()) {
-      alert('Please provide a rejection reason.');
+      setErrorConfig({
+        show: true,
+        title: 'Requirement Missing',
+        message: 'Please provide a rejection reason before rejecting this transaction.'
+      });
       return;
     }
     setStatusLoading(rejectTarget.id);
@@ -255,7 +278,11 @@ const Transactions = () => {
       });
     } catch (err) {
       console.error('Error rejecting transaction:', err);
-      alert(err.response?.data?.rejection_reason || err.response?.data?.detail || 'Failed to reject.');
+      setErrorConfig({
+        show: true,
+        title: 'Action Failed',
+        message: err.response?.data?.rejection_reason || err.response?.data?.detail || 'The transaction could not be rejected. Please try again.'
+      });
     } finally {
       setStatusLoading(null);
       setRejectTarget(null);
@@ -786,6 +813,10 @@ const Transactions = () => {
           setSuccessConfig(p => ({ ...p, show: false }));
           if (successConfig.onClose) successConfig.onClose();
         }}
+      />
+      <ErrorModal 
+        {...errorConfig}
+        onClose={() => setErrorConfig(p => ({ ...p, show: false }))}
       />
     </div>
   );

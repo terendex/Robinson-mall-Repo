@@ -4,6 +4,7 @@ import ClaimDetailsModal from '../../components/ClaimDetailsModal';
 import Pagination from '../../components/Pagination';
 import ActionConfirmModal from '../../components/ActionConfirmModal';
 import SuccessModal from '../../components/SuccessModal';
+import ErrorModal from '../../components/ErrorModal';
 import '../../css/Claims.css';
 import '../../css/Transactions.css';
 
@@ -58,6 +59,12 @@ const Claims = () => {
   });
 
   const [successConfig, setSuccessConfig] = useState({
+    show: false,
+    title: '',
+    message: ''
+  });
+
+  const [errorConfig, setErrorConfig] = useState({
     show: false,
     title: '',
     message: ''
@@ -118,6 +125,11 @@ const Claims = () => {
     try {
       const res = await axios.patch(`${BASE}/api/claims/${id}/`, { status: 'Approved' });
       setClaims(prev => prev.map(c => c.id === id ? res.data : c));
+      setSuccessConfig({
+        show: true,
+        title: 'Claim Confirmed!',
+        message: 'The voucher has been successfully marked as claimed.'
+      });
     } catch (err) { console.error(err); }
     finally { setStatusLoading(null); }
   };
@@ -142,7 +154,14 @@ const Claims = () => {
   };
 
   const confirmReject = async () => {
-    if (!rejectReason.trim()) { alert('Please provide a rejection reason.'); return; }
+    if (!rejectReason.trim()) { 
+      setErrorConfig({
+        show: true,
+        title: 'Requirement Missing',
+        message: 'Please provide a rejection reason.'
+      });
+      return; 
+    }
     setStatusLoading(rejectTarget.id);
     setShowRejectModal(false);
     try {
@@ -182,7 +201,11 @@ const Claims = () => {
   const saveEdit = async () => {
     if (!editClaim) return;
     if (editStatus === 'Rejected' && !editNote.trim()) {
-      alert('Please provide a rejection reason.');
+      setErrorConfig({
+        show: true,
+        title: 'Requirement Missing',
+        message: 'Please provide a rejection reason before rejecting this claim.'
+      });
       return;
     }
     setEditLoading(true);
@@ -197,7 +220,14 @@ const Claims = () => {
         title: 'Updated!',
         message: 'The claim details have been updated.'
       });
-    } catch (err) { console.error(err); alert('Failed to update claim.'); }
+    } catch (err) { 
+      console.error(err); 
+      setErrorConfig({
+        show: true,
+        title: 'Update Failed',
+        message: 'The claim record could not be updated. Please try again.'
+      });
+    }
     finally { setEditLoading(false); }
   };
 
@@ -212,7 +242,11 @@ const Claims = () => {
       });
     } catch (err) {
       console.error('Error deleting claim:', err);
-      alert('Failed to delete claim.');
+      setErrorConfig({
+        show: true,
+        title: 'Action Failed',
+        message: 'Failed to delete the claim record. Please check your connection.'
+      });
     }
   };
 
@@ -552,6 +586,10 @@ const Claims = () => {
           setSuccessConfig(p => ({ ...p, show: false }));
           if (successConfig.onClose) successConfig.onClose();
         }}
+      />
+      <ErrorModal 
+        {...errorConfig}
+        onClose={() => setErrorConfig(p => ({ ...p, show: false }))}
       />
     </div>
   );

@@ -5,6 +5,7 @@ import Pagination from '../../components/Pagination';
 import RedeemVoucherPanel from '../../components/RedeemVoucherPanel';
 import ActionConfirmModal from '../../components/ActionConfirmModal';
 import SuccessModal from '../../components/SuccessModal';
+import ErrorModal from '../../components/ErrorModal';
 import '../../css/Vouchers.css';
 
 // BUG-01 FIX: Use environment variable instead of hardcoded localhost URL
@@ -52,6 +53,12 @@ const Vouchers = () => {
   });
 
   const [successConfig, setSuccessConfig] = useState({
+    show: false,
+    title: '',
+    message: ''
+  });
+
+  const [errorConfig, setErrorConfig] = useState({
     show: false,
     title: '',
     message: ''
@@ -115,7 +122,11 @@ const Vouchers = () => {
       });
     } catch (error) {
       console.error('Error deleting voucher:', error);
-      alert('Failed to delete voucher.');
+      setErrorConfig({
+        show: true,
+        title: 'Delete Failed',
+        message: 'The voucher could not be removed. It may be linked to active claims.'
+      });
     }
   };
 
@@ -148,7 +159,11 @@ const Vouchers = () => {
       });
     } catch (error) {
       console.error('Error saving voucher:', error);
-      alert('Error saving voucher. Please check if code is unique.');
+      setErrorConfig({
+        show: true,
+        title: 'Save Failed',
+        message: 'Error saving voucher. Please check if the voucher code is unique and all fields are valid.'
+      });
     }
   };
 
@@ -177,7 +192,11 @@ const Vouchers = () => {
       });
     } catch (error) {
       console.error('Error toggling voucher status:', error);
-      alert('Failed to update voucher status.');
+      setErrorConfig({
+        show: true,
+        title: 'Action Failed',
+        message: 'Failed to update voucher status. Please try again.'
+      });
     }
   };
 
@@ -408,6 +427,10 @@ const Vouchers = () => {
           setSuccessConfig(p => ({ ...p, show: false }));
           if (successConfig.onClose) successConfig.onClose();
         }}
+      />
+      <ErrorModal 
+        {...errorConfig}
+        onClose={() => setErrorConfig(p => ({ ...p, show: false }))}
       />
     </div>
   );

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import '../css/Modal.css';
+import ErrorModal from './ErrorModal';
 
 // BUG-01 FIX: Use environment variable instead of hardcoded localhost URL
 const BASE = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
@@ -141,6 +142,12 @@ const VoucherModal = ({ show, onClose, onSave, voucherToEdit, readOnly }) => {
     store_name:          '',
   });
 
+  const [errorConfig, setErrorConfig] = useState({
+    show: false,
+    title: '',
+    message: ''
+  });
+
   // Load campaigns + stores for selectors
   useEffect(() => {
     if (!show) return;
@@ -198,7 +205,11 @@ const VoucherModal = ({ show, onClose, onSave, voucherToEdit, readOnly }) => {
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!formData.campaign && !voucherToEdit) {
-      alert('Please select a Campaign before creating a voucher. Campaigns must be created first.');
+      setErrorConfig({
+        show: true,
+        title: 'Requirement Missing',
+        message: 'Please select a Campaign before creating a voucher. Campaigns must be created first.'
+      });
       return;
     }
     onSave(formData);
@@ -476,6 +487,10 @@ const VoucherModal = ({ show, onClose, onSave, voucherToEdit, readOnly }) => {
           </div>
         </form>
       </div>
+      <ErrorModal 
+        {...errorConfig}
+        onClose={() => setErrorConfig(p => ({ ...p, show: false }))}
+      />
     </div>
   );
 };

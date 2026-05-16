@@ -6,6 +6,7 @@ import NotificationContext from '../../context/NotificationContext';
 import Pagination from '../../components/Pagination';
 import ActionConfirmModal from '../../components/ActionConfirmModal';
 import SuccessModal from '../../components/SuccessModal';
+import ErrorModal from '../../components/ErrorModal';
 import Vouchers from './Vouchers';
 import '../../css/Campaigns.css';
 import '../../css/Transactions.css';
@@ -54,6 +55,12 @@ const Campaigns = () => {
   });
 
   const [successConfig, setSuccessConfig] = useState({
+    show: false,
+    title: '',
+    message: ''
+  });
+
+  const [errorConfig, setErrorConfig] = useState({
     show: false,
     title: '',
     message: ''
@@ -158,7 +165,11 @@ const Campaigns = () => {
       const msg = errData
         ? Object.entries(errData).map(([key, val]) => `${key}: ${val}`).join('\n')
         : 'Error saving campaign. Please try again.';
-      alert(msg);
+      setErrorConfig({
+        show: true,
+        title: 'Save Failed',
+        message: msg
+      });
     }
   };
 
@@ -184,7 +195,11 @@ const Campaigns = () => {
       });
     } catch (error) {
       console.error('Error deleting campaign:', error);
-      alert('Failed to delete campaign.');
+      setErrorConfig({
+        show: true,
+        title: 'Action Failed',
+        message: 'Failed to delete the campaign. It may still be linked to active vouchers.'
+      });
     }
   };
 
@@ -469,6 +484,10 @@ const Campaigns = () => {
         show={!!selectedCampaignForDetails}
         onClose={() => setSelectedCampaignForDetails(null)}
         campaign={selectedCampaignForDetails}
+      />
+      <ErrorModal 
+        {...errorConfig}
+        onClose={() => setErrorConfig(p => ({ ...p, show: false }))}
       />
     </div>
   );

@@ -505,7 +505,11 @@ const SettingsPage = () => {
                   <button
                     type="button"
                     className="settings-save-btn"
-                    onClick={() => alert('Notification preferences saved (UI only).')}
+                    onClick={() => setSuccessConfig({
+                      show: true,
+                      title: 'Preferences Saved',
+                      message: 'Your notification preferences have been updated successfully.'
+                    })}
                   >
                     Save All Changes
                   </button>

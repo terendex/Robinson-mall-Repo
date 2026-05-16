@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
 import '../css/ForgotPassword.css';
+import ErrorModal from '../components/ErrorModal';
+import SuccessModal from '../components/SuccessModal';
 
 /**
  * ForgotPassword Component
@@ -10,14 +12,23 @@ import '../css/ForgotPassword.css';
  */
 const ForgotPassword = () => {
   const [email, setEmail] = useState('');
-  const [message, setMessage] = useState('');
-  const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+
+  const [errorConfig, setErrorConfig] = useState({
+    show: false,
+    title: '',
+    message: ''
+  });
+
+  const [successConfig, setSuccessConfig] = useState({
+    show: false,
+    title: '',
+    message: ''
+  });
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setMessage('');
-    setError('');
+    setErrorConfig(p => ({ ...p, show: false }));
     setLoading(true);
 
     try {
@@ -26,15 +37,23 @@ const ForgotPassword = () => {
         { email }
       );
       if (response.status === 200) {
-        setMessage('A password reset link has been sent to your email. Please check your inbox (and spam folder).');
+        setSuccessConfig({
+          show: true,
+          title: 'Link Sent!',
+          message: 'A password reset link has been sent to your email. Please check your inbox (and spam folder).'
+        });
         setEmail('');
       }
     } catch (err) {
+      let msg = 'Unable to reach the server. Please try again later.';
       if (err.response && err.response.data) {
-        setError(err.response.data.detail || 'Failed to send reset email. Please check your email address and try again.');
-      } else {
-        setError('Unable to reach the server. Please try again later.');
+        msg = err.response.data.detail || 'Failed to send reset email. Please check your email address and try again.';
       }
+      setErrorConfig({
+        show: true,
+        title: 'Action Failed',
+        message: msg
+      });
     } finally {
       setLoading(false);
     }
@@ -55,28 +74,9 @@ const ForgotPassword = () => {
           <h2>Forgot Password?</h2>
           <p>Enter the email address linked to your account and we'll send you a secure reset link.</p>
 
-          {message && (
-            <div className="fp-success">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
-                <polyline points="22 4 12 14.01 9 11.01"/>
-              </svg>
-              <p>{message}</p>
-            </div>
-          )}
+          {/* Feedbacks handled by Modals */}
 
-          {error && (
-            <div className="fp-error">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="12" cy="12" r="10"/>
-                <line x1="12" y1="8" x2="12" y2="12"/>
-                <line x1="12" y1="16" x2="12.01" y2="16"/>
-              </svg>
-              <p>{error}</p>
-            </div>
-          )}
-
-          {!message && (
+          {!successConfig.show && (
             <form onSubmit={handleSubmit}>
               <div className="form-group">
                 <label htmlFor="fp-email">Email Address</label>
@@ -109,6 +109,14 @@ const ForgotPassword = () => {
           </div>
         </div>
       </div>
+      <SuccessModal 
+        {...successConfig}
+        onClose={() => setSuccessConfig(p => ({ ...p, show: false }))}
+      />
+      <ErrorModal 
+        {...errorConfig}
+        onClose={() => setErrorConfig(p => ({ ...p, show: false }))}
+      />
     </div>
   );
 };

@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import DatePicker from 'react-datepicker';
 import { FaEye, FaEyeSlash, FaCheck, FaTimes } from 'react-icons/fa';
-import Modal from '../components/Modal';
+import ErrorModal from '../components/ErrorModal';
 import 'react-datepicker/dist/react-datepicker.css';
 import '../css/Register.css';
 
@@ -37,8 +37,11 @@ const Register = () => {
   const [showConfirm, setShowConfirm] = useState(false);
   const [agreePromotions, setAgreePromotions] = useState(false);
   const [agreePrivacy, setAgreePrivacy] = useState(false);
-  const [error, setError] = useState('');
-  const [showModal, setShowModal] = useState(false);
+  const [errorConfig, setErrorConfig] = useState({
+    show: false,
+    title: '',
+    message: ''
+  });
   const navigate = useNavigate();
   const datepickerRef = useRef(null);
 
@@ -73,19 +76,35 @@ const Register = () => {
 
     // ── client-side guards ──
     if (!isValidEmailFormat(email)) {
-      setError('Please enter a valid email address.');
+      setErrorConfig({
+        show: true,
+        title: 'Invalid Email',
+        message: 'Please enter a valid email address (e.g. user@example.com).'
+      });
       return;
     }
     if (!allRulesPassed) {
-      setError('Your password does not meet the required criteria. Please check the requirements below.');
+      setErrorConfig({
+        show: true,
+        title: 'Security Requirement',
+        message: 'Your password does not meet the required criteria. Please follow the checklist provided.'
+      });
       return;
     }
     if (password !== confirmPassword) {
-      setError('Passwords do not match.');
+      setErrorConfig({
+        show: true,
+        title: 'Password Mismatch',
+        message: 'The confirmation password does not match. Please re-enter your password.'
+      });
       return;
     }
     if (!agreePromotions || !agreePrivacy) {
-      setShowModal(true);
+      setErrorConfig({
+        show: true,
+        title: 'Agreement Required',
+        message: "To complete your registration at Robinson Mall, please review and agree to our advertising promotions and privacy policy. This ensures you stay updated on the latest rewards and your data remains protected."
+      });
       return;
     }
 
@@ -104,20 +123,21 @@ const Register = () => {
         navigate('/login');
       }
     } catch (err) {
+      let msg = 'Failed to create account. Please try again later.';
       if (err.response && err.response.data) {
         const errorData = err.response.data;
-        
-        // If email is already taken, show a specific friendly message
         if (errorData.email || errorData.username) {
-          setError("A user with that email already exists. Please try logging in instead.");
+          msg = "A user with that email already exists. Please try logging in instead.";
         } else {
-          // Otherwise show the first specific error from the backend
           const errorMessages = Object.values(errorData).flat();
-          setError(errorMessages[0] || 'Failed to create account. Please try again.');
+          msg = errorMessages[0] || msg;
         }
-      } else {
-        setError('Failed to create account. Please try again later.');
       }
+      setErrorConfig({
+        show: true,
+        title: 'Registration Failed',
+        message: msg
+      });
     }
   };
 
@@ -131,7 +151,7 @@ const Register = () => {
           </div>
           <h2>Create Account</h2>
 
-          {error && <p className="error-message">{error}</p>}
+          {/* Error display is handled by ErrorModal */}
 
           <form onSubmit={handleSubmit}>
             {/* First Name */}
@@ -303,12 +323,9 @@ const Register = () => {
         </div>
       </div>
 
-      <Modal
-        show={showModal}
-        onClose={() => setShowModal(false)}
-        title="Agreement Required"
-        type="alert"
-        message="To complete your registration at Robinson Mall, please review and agree to our advertising promotions and privacy policy. This ensures you stay updated on the latest rewards and your data remains protected."
+      <ErrorModal 
+        {...errorConfig}
+        onClose={() => setErrorConfig(p => ({ ...p, show: false }))}
       />
     </div>
   );

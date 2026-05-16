@@ -5,6 +5,7 @@ import ResetPasswordModal from '../../components/ResetPasswordModal';
 import Pagination from '../../components/Pagination';
 import ActionConfirmModal from '../../components/ActionConfirmModal';
 import SuccessModal from '../../components/SuccessModal';
+import ErrorModal from '../../components/ErrorModal';
 import '../../css/Users.css';
 import '../../css/Transactions.css';
 
@@ -37,6 +38,12 @@ const Users = () => {
   });
 
   const [successConfig, setSuccessConfig] = useState({
+    show: false,
+    title: '',
+    message: ''
+  });
+
+  const [errorConfig, setErrorConfig] = useState({
     show: false,
     title: '',
     message: ''
@@ -138,7 +145,11 @@ const Users = () => {
         }
       }
       
-      alert(errorMessage);
+      setErrorConfig({
+        show: true,
+        title: 'Save Failed',
+        message: errorMessage
+      });
     }
   };
 
@@ -167,7 +178,11 @@ const Users = () => {
       });
     } catch (error) {
       console.error('Error toggling user status:', error);
-      alert('Failed to update user status.');
+      setErrorConfig({
+        show: true,
+        title: 'Update Failed',
+        message: 'Failed to update user status. Please try again.'
+      });
     }
   };
 
@@ -182,7 +197,11 @@ const Users = () => {
       });
     } catch (error) {
       console.error('Error deleting user:', error);
-      alert('Failed to delete user.');
+      setErrorConfig({
+        show: true,
+        title: 'Delete Failed',
+        message: 'The user account could not be removed. They may have active claims or transactions.'
+      });
     }
   };
 
@@ -421,6 +440,10 @@ const Users = () => {
           setSuccessConfig(p => ({ ...p, show: false }));
           if (successConfig.onClose) successConfig.onClose();
         }}
+      />
+      <ErrorModal 
+        {...errorConfig}
+        onClose={() => setErrorConfig(p => ({ ...p, show: false }))}
       />
     </div>
   );

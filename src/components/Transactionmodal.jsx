@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { createWorker } from 'tesseract.js';
 import axios from 'axios';
+import SuccessModal from './SuccessModal';
 import '../css/Transactionmodal.css';
 
 // BUG-01 FIX: Use environment variable instead of hardcoded localhost URL
@@ -166,6 +167,12 @@ const TransactionModal = ({ show, onClose, onSave, transactionToEdit }) => {
     amount:     '',
     created_at: '',
     status:     'Pending',
+  });
+
+  const [successConfig, setSuccessConfig] = useState({
+    show: false,
+    title: '',
+    message: ''
   });
 
   const [ocrState,    setOcrState]    = useState('idle');
@@ -470,7 +477,11 @@ const TransactionModal = ({ show, onClose, onSave, transactionToEdit }) => {
                     console.group('🧠 Tesseract Raw OCR Output');
                     console.log(ocrRawText);
                     console.groupEnd();
-                    alert('Raw OCR text printed to browser console (F12 → Console).');
+                    setSuccessConfig({
+                      show: true,
+                      title: 'Debug Output',
+                      message: 'Raw OCR text has been printed to the browser console (F12).'
+                    });
                   }}
                 >
                   <i className="fa-solid fa-bug"></i> Debug
@@ -611,6 +622,10 @@ const TransactionModal = ({ show, onClose, onSave, transactionToEdit }) => {
           </div>
         </form>
       </div>
+      <SuccessModal 
+        {...successConfig}
+        onClose={() => setSuccessConfig(p => ({ ...p, show: false }))}
+      />
     </div>
   );
 };

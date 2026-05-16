@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import '../css/Modal.css';
+import ErrorModal from './ErrorModal';
 
 /**
  * UserModal Component
@@ -14,6 +15,12 @@ const UserModal = ({ show, onClose, onSave, userToEdit }) => {
     confirmPassword: '',
     first_name: '',
     last_name: '',
+  });
+
+  const [errorConfig, setErrorConfig] = useState({
+    show: false,
+    title: '',
+    message: ''
   });
 
   useEffect(() => {
@@ -51,12 +58,20 @@ const UserModal = ({ show, onClose, onSave, userToEdit }) => {
     e.preventDefault();
     
     if (formData.role === 'admin' && formData.password !== formData.confirmPassword) {
-      alert('Admin passwords do not match. Please retype to confirm.');
+      setErrorConfig({
+        show: true,
+        title: 'Password Mismatch',
+        message: 'Admin passwords do not match. Please retype to confirm.'
+      });
       return;
     }
 
     if (!userToEdit && !formData.password) {
-      alert('Password is required for new users.');
+      setErrorConfig({
+        show: true,
+        title: 'Requirement Missing',
+        message: 'A password is required when creating a new user account.'
+      });
       return;
     }
 
@@ -170,6 +185,10 @@ const UserModal = ({ show, onClose, onSave, userToEdit }) => {
             </button>
           </div>
         </form>
+        <ErrorModal 
+          {...errorConfig}
+          onClose={() => setErrorConfig(p => ({ ...p, show: false }))}
+        />
       </div>
     </div>
   );

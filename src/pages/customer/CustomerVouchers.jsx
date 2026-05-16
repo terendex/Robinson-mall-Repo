@@ -413,7 +413,11 @@ const CustomerVouchers = ({ user }) => {
                           <button
                             className="cv-qr-btn"
                             title="Show QR Code"
-                            onClick={() => alert(`QR for ${claim.voucher_code}`)}
+                            onClick={() => setSuccessConfig({
+                              show: true,
+                              title: 'QR Code Ready',
+                              message: `The QR code for ${claim.voucher_code} is being generated. Please present this to the cashier.`
+                            })}
                           >
                             <i className="fa-solid fa-qrcode"></i>
                           </button>

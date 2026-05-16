@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import "../css/Log.css";
 import { FaEye, FaEyeSlash, FaShieldAlt } from 'react-icons/fa';
+import ErrorModal from '../components/ErrorModal';
 
 /**
  * Log Component (Login Page)
@@ -13,7 +14,11 @@ export default function Log({ onLogin }) {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
-  const [error, setError] = useState("");
+  const [errorConfig, setErrorConfig] = useState({
+    show: false,
+    title: '',
+    message: ''
+  });
   const navigate = useNavigate();
 
   /**
@@ -52,10 +57,18 @@ export default function Log({ onLogin }) {
           default: navigate('/login');
         }
       } else {
-        setError('Invalid username or password. Please check your credentials and try again.');
+        setErrorConfig({
+          show: true,
+          title: 'Login Failed',
+          message: 'Invalid username or password. Please check your credentials and try again.'
+        });
       }
     } catch (err) {
-      setError('An error occurred during login. Please try again later.');
+      setErrorConfig({
+        show: true,
+        title: 'System Error',
+        message: 'An error occurred during login. Please try again later.'
+      });
     }
   };
 
@@ -69,15 +82,7 @@ export default function Log({ onLogin }) {
           </div>
           <h2>Account Login</h2>
 
-          {error && (
-            <div className="error-container">
-              <span className="error-icon">ⓘ</span>
-              <div className="error-text-container">
-                <p className="error-title">Login Failed</p>
-                <p className="error-message">{error}</p>
-              </div>
-            </div>
-          )}
+          {/* Error handled by ErrorModal */}
 
           <form onSubmit={handleSubmit}>
             {/* Email / Username */}
@@ -151,6 +156,10 @@ export default function Log({ onLogin }) {
           </div>
         </div>
       </div>
+      <ErrorModal 
+        {...errorConfig}
+        onClose={() => setErrorConfig(p => ({ ...p, show: false }))}
+      />
     </div>
   );
 }
