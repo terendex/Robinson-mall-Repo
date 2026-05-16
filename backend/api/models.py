@@ -241,8 +241,8 @@ def create_user_notification(sender, instance, created, **kwargs):
     """Alert admins when a new customer registers."""
     if created and instance.role == 'customer':
         Notification.objects.create(
-            title="Customer Approval Pending",
-            message=f"A new customer '{instance.first_name} {instance.last_name}' requires profile verification before activation.",
+            title="New Customer Registered",
+            message=f"A new customer '{instance.first_name} {instance.last_name}' has joined the platform.",
             notification_type='info'
         )
 
