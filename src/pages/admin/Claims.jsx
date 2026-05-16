@@ -548,7 +548,10 @@ const Claims = () => {
 
       <SuccessModal 
         {...successConfig}
-        onClose={() => setSuccessConfig(p => ({ ...p, show: false }))}
+        onClose={() => {
+          setSuccessConfig(p => ({ ...p, show: false }));
+          if (successConfig.onClose) successConfig.onClose();
+        }}
       />
     </div>
   );

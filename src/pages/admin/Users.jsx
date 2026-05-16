@@ -100,14 +100,21 @@ const Users = () => {
       
       setShowModal(false);
 
-      // If we just created/promoted a new admin, the current admin account is deleted.
-      // We must log out the current user.
+      // If we just created/promoted a new admin, the current admin account is demoted in backend.
+      // We must log out the current user to reflect their new manager status.
       if (formData.role === 'admin') {
-        alert('A new Admin has been established. This account has been removed. You will now be logged out.');
-        localStorage.removeItem('user');
-        localStorage.removeItem('accessToken');
-        localStorage.removeItem('refreshToken');
-        window.location.href = '/login';
+        setSuccessConfig({
+          show: true,
+          title: 'Admin Replacement Active',
+          message: 'A new Admin has been established. For security, your session will now end as you have been reassigned to Manager status.',
+          onClose: () => {
+            ['user', 'accessToken', 'refreshToken'].forEach(k => {
+              localStorage.removeItem(k);
+              sessionStorage.removeItem(k);
+            });
+            window.location.href = '/login';
+          }
+        });
       } else {
         setSuccessConfig({
           show: true,
@@ -117,7 +124,21 @@ const Users = () => {
       }
     } catch (error) {
       console.error('Error saving user:', error);
-      alert('Error saving user. Please check if username/email already exists.');
+      // Extract specific error message from backend (e.g. "email already exists")
+      const errorData = error.response?.data;
+      let errorMessage = 'Failed to save user.';
+      
+      if (errorData) {
+        if (typeof errorData === 'object') {
+          errorMessage = Object.entries(errorData)
+            .map(([field, msgs]) => `${field}: ${Array.isArray(msgs) ? msgs.join(' ') : msgs}`)
+            .join('\n');
+        } else {
+          errorMessage = errorData;
+        }
+      }
+      
+      alert(errorMessage);
     }
   };
 
@@ -396,7 +417,10 @@ const Users = () => {
 
       <SuccessModal 
         {...successConfig}
-        onClose={() => setSuccessConfig(p => ({ ...p, show: false }))}
+        onClose={() => {
+          setSuccessConfig(p => ({ ...p, show: false }));
+          if (successConfig.onClose) successConfig.onClose();
+        }}
       />
     </div>
   );
