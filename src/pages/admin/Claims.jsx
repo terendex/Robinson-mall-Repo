@@ -198,6 +198,13 @@ const Claims = () => {
     setActiveActions(null);
   };
 
+  const isDirty = useMemo(() => {
+    if (!editClaim) return false;
+    const currentNote = editNote || '';
+    const initialNote = editClaim.rejection_reason || '';
+    return editStatus !== editClaim.status || currentNote !== initialNote;
+  }, [editClaim, editStatus, editNote]);
+
   const saveEdit = async () => {
     if (!editClaim) return;
     if (editStatus === 'Rejected' && !editNote.trim()) {
@@ -564,7 +571,7 @@ const Claims = () => {
             </div>
             <div className="modal-actions" style={{ padding: '0 1.5rem 1.25rem' }}>
               <button className="cancel-inner-btn" onClick={() => setShowEditModal(false)}>Cancel</button>
-              <button className="save-btn" onClick={requestEditSaveConfirm} disabled={editLoading}>
+              <button className="save-btn" onClick={requestEditSaveConfirm} disabled={editLoading || !isDirty}>
                 {editLoading ? <i className="fa-solid fa-spinner fa-spin"></i> : 'Save Changes'}
               </button>
             </div>

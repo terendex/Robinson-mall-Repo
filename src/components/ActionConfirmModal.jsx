@@ -54,9 +54,14 @@ const ActionConfirmModal = ({
           </button>
           <button 
             type="button" 
-            onClick={() => {
-              onConfirm();
-              onClose();
+            onClick={async () => {
+              try {
+                await onConfirm();
+                onClose();
+              } catch (err) {
+                console.error("Confirmation error:", err);
+                onClose();
+              }
             }} 
             className={`save-btn ${getVariantClass()}`}
           >

@@ -308,6 +308,11 @@ def user_saved(sender, instance, created, **kwargs):
                 n_type='info'
             )
     else:
+        # BUG-LOGIC FIX: Skip "Account Updated" notification if ONLY last_login changed (login event)
+        update_fields = kwargs.get('update_fields')
+        if update_fields and list(update_fields) == ['last_login']:
+            return
+
         notify_management(
             title="Account Updated",
             message=f"The account details for {instance.username} ({instance.role}) were modified."
@@ -356,4 +361,3 @@ def transaction_saved(sender, instance, created, **kwargs):
             title="Transaction Status Updated",
             message=f"Transaction {instance.transaction_id} was marked as {instance.status}."
         )
-        pass

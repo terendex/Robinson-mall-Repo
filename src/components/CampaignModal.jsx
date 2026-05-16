@@ -48,7 +48,25 @@ const CampaignModal = ({ show, onClose, onSave, campaignToEdit }) => {
     setDateError('');
   }, [campaignToEdit, show]);
 
-  if (!show) return null;
+  // Derive the status that the backend will assign based on chosen start_date
+  const previewStatus = formData.start_date
+    ? (formData.start_date <= today ? 'Active' : 'Scheduled')
+    : 'Active';
+
+  const isDirty = React.useMemo(() => {
+    if (!campaignToEdit) {
+      // For NEW campaign: check if all required fields are populated
+      return !!(formData.name.trim() && formData.budget && formData.start_date && formData.end_date);
+    }
+    // For EDIT: compare current state vs initial campaignToEdit values
+    return (
+      formData.name !== (campaignToEdit.name || '') ||
+      formData.budget != (campaignToEdit.budget || '') ||
+      formData.spending_target != (campaignToEdit.spending_target || '') ||
+      formData.start_date !== (campaignToEdit.start_date || '') ||
+      formData.end_date !== (campaignToEdit.end_date || '')
+    );
+  }, [formData, campaignToEdit]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -69,25 +87,7 @@ const CampaignModal = ({ show, onClose, onSave, campaignToEdit }) => {
     onSave(payload);
   };
 
-  // Derive the status that the backend will assign based on chosen start_date
-  const previewStatus = formData.start_date
-    ? (formData.start_date <= today ? 'Active' : 'Scheduled')
-    : 'Active';
-
-  const isDirty = React.useMemo(() => {
-    if (!campaignToEdit) {
-      // For NEW campaign: check if all required fields are populated
-      return !!(formData.name.trim() && formData.budget && formData.start_date && formData.end_date);
-    }
-    // For EDIT: compare current state vs initial campaignToEdit values
-    return (
-      formData.name !== (campaignToEdit.name || '') ||
-      formData.budget != (campaignToEdit.budget || '') ||
-      formData.spending_target != (campaignToEdit.spending_target || '') ||
-      formData.start_date !== (campaignToEdit.start_date || '') ||
-      formData.end_date !== (campaignToEdit.end_date || '')
-    );
-  }, [formData, campaignToEdit]);
+  if (!show) return null;
 
   return (
     <div className="modal-overlay">

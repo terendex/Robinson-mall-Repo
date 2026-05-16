@@ -145,9 +145,9 @@ const Campaigns = () => {
         
         const response = await axios.patch(`${BASE}/api/campaigns/${campaignToEdit.id}/`, formData);
         
-        const refreshedResponse = await axios.get(`${BASE}/api/campaigns/${campaignToEdit.id}/`);
-        setCampaigns(campaigns.map(c => c.id === campaignToEdit.id ? refreshedResponse.data : c));
-        addNotification({ title: refreshedResponse.data.name, message: 'has been updated.', icon: 'fa-tag' });
+        // Use the response data directly instead of an extra GET
+        setCampaigns(prev => prev.map(c => c.id === campaignToEdit.id ? response.data : c));
+        addNotification({ title: response.data.name, message: 'has been updated.', icon: 'fa-tag' });
       } else {
         const response = await axios.post(`${BASE}/api/campaigns/`, formData);
         setCampaigns([response.data, ...campaigns]);
@@ -238,7 +238,9 @@ const Campaigns = () => {
   }, [campaigns, searchQuery, statusFilters]);
 
   // Reset page when search changes
-  useMemo(() => { setCurrentPage(1); }, [searchQuery]);
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery]);
 
   // Pagination
   const totalPages     = Math.ceil(filteredCampaigns.length / PAGE_SIZE);
@@ -247,9 +249,9 @@ const Campaigns = () => {
   const stats = useMemo(() => {
     return {
       active:      campaigns.filter(c => c.status === 'Active').length,
-      reach:       campaigns.reduce((sum, c) => sum + (c.reach        || 0), 0).toLocaleString(),
+      reach:       campaigns.reduce((sum, c) => sum + (Number(c.reach) || 0), 0).toLocaleString(),
       scheduled:   campaigns.filter(c => c.status === 'Scheduled').length,
-      conversions: campaigns.reduce((sum, c) => sum + (c.conversions  || 0), 0).toLocaleString(),
+      conversions: campaigns.reduce((sum, c) => sum + (Number(c.conversions) || 0), 0).toLocaleString(),
     };
   }, [campaigns]);
 
