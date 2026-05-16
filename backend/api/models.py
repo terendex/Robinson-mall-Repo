@@ -222,23 +222,27 @@ class Notification(models.Model):
 
 @receiver(post_save, sender=Claim)
 def create_claim_notification(sender, instance, created, **kwargs):
-    """Automatically create notifications for users and admins when a claim is filed."""
+    """Automatically create individual notifications for managers, staff, and the customer."""
     if created:
-        # 1. Manager Notification (Action Oriented)
-        Notification.objects.create(
-            target_role='manager',
-            title="Action Required: New Claim",
-            message=f"Review needed for {instance.user.get_full_name()}'s ₱{instance.amount} claim. Voucher: {instance.voucher.name}.",
-            notification_type='warning'
-        )
+        # 1. Notify all Managers (Action Oriented)
+        managers = User.objects.filter(role='manager')
+        for manager in managers:
+            Notification.objects.create(
+                user=manager,
+                title="Action Required: New Claim",
+                message=f"Review needed for {instance.user.get_full_name()}'s ₱{instance.amount} claim. Voucher: {instance.voucher.name}.",
+                notification_type='warning'
+            )
         
-        # 2. Staff Notification (Informational)
-        Notification.objects.create(
-            target_role='staff',
-            title="Claim Logged",
-            message=f"New claim submitted by {instance.user.get_full_name()}. Processing initiated.",
-            notification_type='info'
-        )
+        # 2. Notify all Staff (Informational)
+        staff_users = User.objects.filter(role='staff')
+        for staff in staff_users:
+            Notification.objects.create(
+                user=staff,
+                title="Claim Logged",
+                message=f"New claim submitted by {instance.user.get_full_name()}. Processing initiated.",
+                notification_type='info'
+            )
 
         # 3. Notify the Customer who claimed it
         Notification.objects.create(
@@ -250,32 +254,40 @@ def create_claim_notification(sender, instance, created, **kwargs):
 
 @receiver(post_save, sender=User)
 def create_user_notification(sender, instance, created, **kwargs):
-    """Alert admins when a new customer registers."""
+    """Alert managers and staff individually when a new customer registers."""
     if created and instance.role == 'customer':
-        # Manager gets a task-oriented alert
-        Notification.objects.create(
-            target_role='manager',
-            title="Review Required: New Registration",
-            message=f"New customer '{instance.first_name} {instance.last_name}' needs profile verification.",
-            notification_type='info'
-        )
-        # Staff/Admin get a general update
-        Notification.objects.create(
-            target_role='staff',
-            title="New Customer Joined",
-            message=f"Welcome alert: {instance.first_name} {instance.last_name} has registered.",
-            notification_type='success'
-        )
+        # Managers get review tasks
+        managers = User.objects.filter(role='manager')
+        for manager in managers:
+            Notification.objects.create(
+                user=manager,
+                title="Review Required: New Registration",
+                message=f"New customer '{instance.first_name} {instance.last_name}' needs profile verification.",
+                notification_type='info'
+            )
+        
+        # Staff get general updates
+        staff_users = User.objects.filter(role='staff')
+        for staff in staff_users:
+            Notification.objects.create(
+                user=staff,
+                title="New Customer Joined",
+                message=f"Welcome alert: {instance.first_name} {instance.last_name} has registered.",
+                notification_type='success'
+            )
 
 @receiver(post_save, sender=Campaign)
 def create_campaign_notification(sender, instance, created, **kwargs):
-    """Global notification whenever a new campaign is successfully launched."""
+    """Notify all users individually when a new campaign is successfully launched."""
     if created:
-        Notification.objects.create(
-            title="New Campaign",
-            message=f"Campaign '{instance.name}' has been created and is now {instance.status}.",
-            notification_type='success'
-        )
+        users = User.objects.all()
+        for u in users:
+            Notification.objects.create(
+                user=u,
+                title="New Campaign Launched",
+                message=f"Campaign '{instance.name}' has been created and is now {instance.status}.",
+                notification_type='success'
+            )
 
 @receiver(post_save, sender=Transaction)
 def update_campaign_conversions(sender, instance, created, **kwargs):

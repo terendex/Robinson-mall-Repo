@@ -550,22 +550,11 @@ class NotificationViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        user = self.request.user
-        from django.db.models import Q
-        
-        # Admin, Manager, and Staff see:
-        # 1. Their own personal notifications
-        # 2. Global notifications (user=null and target_role=null)
-        # 3. Notifications targeted specifically at their role
-        if user.role in ['admin', 'manager', 'staff']:
-            return Notification.objects.filter(
-                Q(user=user) | 
-                Q(user__isnull=True, target_role__isnull=True) |
-                Q(target_role=user.role)
-            ).order_by('-created_at')
-        
-        # Customers ONLY see notifications specifically assigned to them.
-        return Notification.objects.filter(user=user).order_by('-created_at')
+        """
+        Returns notifications specifically assigned to the requesting user.
+        Isolation is guaranteed: clearing your alerts does not affect others.
+        """
+        return Notification.objects.filter(user=self.request.user).order_by('-created_at')
 
     @action(detail=False, methods=['post'])
     def mark_all_as_read(self, request):
