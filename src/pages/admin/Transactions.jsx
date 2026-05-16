@@ -6,11 +6,29 @@ import { exportCSV, exportExcel, buildTransactionRows } from '../../utils/export
 import Pagination from '../../components/Pagination';
 import '../../css/Transactions.css';
 
+// BUG-01 FIX: Use environment variable instead of hardcoded localhost URL
+const BASE = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
+
+// ISSUE-12 FIX: Format dates in Philippine Standard Time (UTC+8)
+const fmtDatePH = (dateString) => {
+  if (!dateString) return '';
+  return new Intl.DateTimeFormat('en-PH', {
+    timeZone: 'Asia/Manila',
+    year: 'numeric', month: '2-digit', day: '2-digit',
+  }).format(new Date(dateString));
+};
+
+const fmtTimePH = (dateString) => {
+  if (!dateString) return '';
+  return new Intl.DateTimeFormat('en-PH', {
+    timeZone: 'Asia/Manila',
+    hour: '2-digit', minute: '2-digit', hour12: true,
+  }).format(new Date(dateString));
+};
 const PAGE_SIZE = 10;
 
-
 const Transactions = () => {
-  const user = JSON.parse(localStorage.getItem('user') || '{}');
+  const user = JSON.parse(localStorage.getItem('user') || sessionStorage.getItem('user') || '{}');
   const isAdmin = user.role === 'admin';
   const isStaff = user.role === 'staff';
   const isManager = user.role === 'manager';
@@ -71,7 +89,7 @@ const Transactions = () => {
   const fetchTransactions = async () => {
     try {
       setLoading(true);
-      const response = await axios.get('http://127.0.0.1:8000/api/transactions/');
+      const response = await axios.get(`${BASE}/api/transactions/`);
       setTransactions(response.data);
     } catch (error) {
       console.error('Error fetching transactions:', error);
@@ -85,7 +103,7 @@ const Transactions = () => {
       const { receipt_image, ...apiPayload } = formData;
       if (transactionToEdit) {
         const response = await axios.patch(
-          `http://127.0.0.1:8000/api/transactions/${transactionToEdit.id}/`,
+          `${BASE}/api/transactions/${transactionToEdit.id}/`,
           apiPayload
         );
         setTransactions(transactions.map(t =>
@@ -94,7 +112,7 @@ const Transactions = () => {
             : t
         ));
       } else {
-        const response = await axios.post('http://127.0.0.1:8000/api/transactions/', apiPayload);
+        const response = await axios.post(`${BASE}/api/transactions/`, apiPayload);
         setTransactions([{ ...response.data, receipt_image }, ...transactions]);
       }
       setShowFormModal(false);
@@ -117,7 +135,7 @@ const Transactions = () => {
     setStatusLoading(txnId);
     setActiveActions(null);
     try {
-      await axios.delete(`http://127.0.0.1:8000/api/transactions/${txnId}/`);
+      await axios.delete(`${BASE}/api/transactions/${txnId}/`);
       setTransactions(prev => prev.filter(t => t.id !== txnId));
     } catch (err) {
       console.error('Error deleting transaction:', err);
@@ -133,7 +151,7 @@ const Transactions = () => {
     setActiveActions(null);
     try {
       const response = await axios.patch(
-        `http://127.0.0.1:8000/api/transactions/${txn.id}/update_status/`,
+        `${BASE}/api/transactions/${txn.id}/update_status/`,
         { status: 'Approved' }
       );
       setTransactions(prev => prev.map(t => t.id === txn.id ? response.data : t));
@@ -161,7 +179,7 @@ const Transactions = () => {
     setShowRejectModal(false);
     try {
       const response = await axios.patch(
-        `http://127.0.0.1:8000/api/transactions/${rejectTarget.id}/update_status/`,
+        `${BASE}/api/transactions/${rejectTarget.id}/update_status/`,
         { status: 'Rejected', rejection_reason: rejectReason }
       );
       setTransactions(prev => prev.map(t => t.id === rejectTarget.id ? response.data : t));
@@ -193,9 +211,8 @@ const Transactions = () => {
     setShowFormModal(true);
   };
 
-  // ── Filtering ──────────────────────────────────────────────────────
+  // ISSUE-14 FIX: Remove side-effect (setCurrentPage) from useMemo — use useEffect instead
   const filteredTransactions = useMemo(() => {
-    setCurrentPage(1);
     const now = new Date();
     return transactions.filter((t) => {
       const matchesSearch =
@@ -224,6 +241,10 @@ const Transactions = () => {
     });
   }, [transactions, searchQuery, timeFilter, amountFilter]);
 
+  // Reset to page 1 whenever any filter changes (extracted from useMemo — fixes anti-pattern)
+  useEffect(() => { setCurrentPage(1); }, [searchQuery, timeFilter, amountFilter]);
+
+
   // Pagination slice
   const totalPages           = Math.ceil(filteredTransactions.length / PAGE_SIZE);
   const pagedTransactions    = filteredTransactions.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
@@ -250,18 +271,19 @@ const Transactions = () => {
 
   const formatTimestamp = (dateString) => {
     if (!dateString) return '';
-    const d = new Date(dateString);
+    // ISSUE-12 FIX: Use PH timezone instead of raw ISO string (UTC)
     return (
       <>
-        {d.toISOString().split('T')[0]}<br />
-        {d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+        {fmtDatePH(dateString)}<br />
+        {fmtTimePH(dateString)}
       </>
     );
   };
 
   const formatDate = (dateString) => {
     if (!dateString) return '';
-    return new Date(dateString).toISOString().split('T')[0];
+    // ISSUE-12 FIX: Display in PH timezone
+    return fmtDatePH(dateString);
   };
 
   const getStatusClass = (status) => {
@@ -337,9 +359,12 @@ const Transactions = () => {
               )}
             </div>
 
-            {(canManage || isManager || isCustomer) && (
+            {/* BUG-02 FIX: Only staff/admin can create transactions.
+                Customers must use the Claims flow (submit claim → staff scans QR).
+                Manager is view-only but can still add transactions if needed. */}
+            {(canManage || isManager) && (
               <button className="new-transaction-btn" onClick={openNewModal}>
-                <i className="fa-solid fa-plus"></i> {isCustomer ? 'Submit Transaction' : 'New Transaction'}
+                <i className="fa-solid fa-plus"></i> New Transaction
               </button>
             )}
           </div>

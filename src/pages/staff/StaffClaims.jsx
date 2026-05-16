@@ -4,8 +4,10 @@ import ClaimDetailsModal from '../../components/ClaimDetailsModal';
 import Pagination from '../../components/Pagination';
 import '../../css/Claims.css';
 
-const PAGE_SIZE = 10;
+// BUG-01 FIX: Use environment variable instead of hardcoded localhost URL
+const BASE = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
 
+const PAGE_SIZE = 10;
 
 /**
  * StaffClaims Component
@@ -53,7 +55,7 @@ const StaffClaims = () => {
   const fetchClaims = async () => {
     try {
       setLoading(true);
-      const response = await axios.get('http://127.0.0.1:8000/api/claims/');
+      const response = await axios.get(`${BASE}/api/claims/`);
       setClaims(response.data);
     } catch (error) {
       console.error('Error fetching claims:', error);
@@ -112,15 +114,13 @@ const StaffClaims = () => {
     };
   }, [claims]);
 
+  // ISSUE-12 FIX: Display in PH timezone instead of raw UTC ISO string
   const formatDateTime = (dateString) => {
     if (!dateString) return '';
-    const date = new Date(dateString);
-    return (
-      <>
-        {date.toISOString().split('T')[0]}<br />
-        {date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-      </>
-    );
+    const d = new Date(dateString);
+    const datePH = new Intl.DateTimeFormat('en-PH', { timeZone: 'Asia/Manila', year: 'numeric', month: '2-digit', day: '2-digit' }).format(d);
+    const timePH = new Intl.DateTimeFormat('en-PH', { timeZone: 'Asia/Manila', hour: '2-digit', minute: '2-digit', hour12: true }).format(d);
+    return (<>{datePH}<br />{timePH}</>);
   };
 
   return (

@@ -5,6 +5,10 @@ import Pagination from '../../components/Pagination';
 import RedeemVoucherPanel from '../../components/RedeemVoucherPanel';
 import '../../css/Vouchers.css';
 
+// BUG-01 FIX: Use environment variable instead of hardcoded localhost URL
+const BASE = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
+
+
 /**
  * Vouchers Component
  * Handles the UI and data logic for the Vouchers module.
@@ -56,7 +60,7 @@ const Vouchers = () => {
   const fetchVouchers = async () => {
     try {
       setLoading(true);
-      const response = await axios.get('http://127.0.0.1:8000/api/vouchers/');
+      const response = await axios.get(`${BASE}/api/vouchers/`);
       setVouchers(response.data);
     } catch (error) {
       console.error('Error fetching vouchers:', error);
@@ -88,7 +92,7 @@ const Vouchers = () => {
   const handleDeleteVoucher = async (id) => {
     if (window.confirm('Are you sure you want to delete this voucher?')) {
       try {
-        await axios.delete(`http://127.0.0.1:8000/api/vouchers/${id}/`);
+        await axios.delete(`${BASE}/api/vouchers/${id}/`);
         setVouchers(vouchers.filter(v => v.id !== id));
       } catch (error) {
         console.error('Error deleting voucher:', error);
@@ -99,10 +103,10 @@ const Vouchers = () => {
   const handleSaveVoucher = async (formData) => {
     try {
       if (voucherToEdit) {
-        const response = await axios.patch(`http://127.0.0.1:8000/api/vouchers/${voucherToEdit.id}/`, formData);
+        const response = await axios.patch(`${BASE}/api/vouchers/${voucherToEdit.id}/`, formData);
         setVouchers(vouchers.map(v => v.id === voucherToEdit.id ? response.data : v));
       } else {
-        const response = await axios.post('http://127.0.0.1:8000/api/vouchers/', formData);
+        const response = await axios.post(`${BASE}/api/vouchers/`, formData);
         setVouchers([response.data, ...vouchers]);
       }
       setShowModal(false);
@@ -114,7 +118,7 @@ const Vouchers = () => {
 
   const toggleVoucherStatus = async (voucher) => {
     try {
-      const response = await axios.patch(`http://127.0.0.1:8000/api/vouchers/${voucher.id}/`, {
+      const response = await axios.patch(`${BASE}/api/vouchers/${voucher.id}/`, {
         is_active: !voucher.is_active
       });
       setVouchers(vouchers.map(v => v.id === voucher.id ? response.data : v));

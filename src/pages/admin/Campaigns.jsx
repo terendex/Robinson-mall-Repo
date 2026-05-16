@@ -9,6 +9,8 @@ import '../../css/Campaigns.css';
 import '../../css/Transactions.css';
 import '../../css/CustomerVouchers.css';
 
+// BUG-01 FIX: Use environment variable instead of hardcoded localhost URL
+const BASE = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
 
 /**
  * Campaigns Component
@@ -60,7 +62,7 @@ const Campaigns = () => {
   const fetchCampaigns = async () => {
     try {
       setLoading(true);
-      const response = await axios.get('http://127.0.0.1:8000/api/campaigns/');
+      const response = await axios.get(`${BASE}/api/campaigns/`);
       setCampaigns(response.data);
     } catch (error) {
       console.error('Error fetching campaigns:', error);
@@ -82,7 +84,7 @@ const Campaigns = () => {
 
   const updateCampaignStatus = async (campaign, newStatus) => {
     try {
-      const response = await axios.patch(`http://127.0.0.1:8000/api/campaigns/${campaign.id}/`, {
+      const response = await axios.patch(`${BASE}/api/campaigns/${campaign.id}/`, {
         status: newStatus
       });
       setCampaigns(campaigns.map(c => c.id === campaign.id ? response.data : c));
@@ -113,17 +115,17 @@ const Campaigns = () => {
           if (formData.voucher_discount !== '') patchData.discount_percentage = parseInt(formData.voucher_discount, 10);
           
           if (Object.keys(patchData).length > 0) {
-            await axios.patch(`http://127.0.0.1:8000/api/vouchers/${formData.voucher}/`, patchData);
+            await axios.patch(`${BASE}/api/vouchers/${formData.voucher}/`, patchData);
           }
         }
         
-        const response = await axios.patch(`http://127.0.0.1:8000/api/campaigns/${campaignToEdit.id}/`, formData);
+        const response = await axios.patch(`${BASE}/api/campaigns/${campaignToEdit.id}/`, formData);
         
-        const refreshedResponse = await axios.get(`http://127.0.0.1:8000/api/campaigns/${campaignToEdit.id}/`);
+        const refreshedResponse = await axios.get(`${BASE}/api/campaigns/${campaignToEdit.id}/`);
         setCampaigns(campaigns.map(c => c.id === campaignToEdit.id ? refreshedResponse.data : c));
         addNotification({ title: refreshedResponse.data.name, message: 'has been updated.', icon: 'fa-tag' });
       } else {
-        const response = await axios.post('http://127.0.0.1:8000/api/campaigns/', formData);
+        const response = await axios.post(`${BASE}/api/campaigns/`, formData);
         setCampaigns([response.data, ...campaigns]);
         addNotification({ title: response.data.name, message: 'has been created.', icon: 'fa-plus' });
       }

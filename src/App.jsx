@@ -27,6 +27,7 @@ import ManagerSettings from './pages/manager/ManagerSettings';
 import ManagerNotifications from './pages/manager/ManagerNotifications';
 
 import StaffLayout from './pages/staff/StaffLayout';
+import StaffDashboard from './pages/staff/StaffDashboard';
 import StaffVouchers from './pages/staff/StaffVouchers';
 import StaffCampaigns from './pages/staff/StaffCampaigns';
 import StaffClaims from './pages/staff/StaffClaims';
@@ -200,13 +201,14 @@ function App() {
           </Route>
           {/* Staff Routes */}
           <Route path="/staff" element={user && user.role === 'staff' ? <StaffLayout user={user} onLogout={handleLogout} /> : <Navigate to="/login" />}>
+            <Route path="dashboard" element={<StaffDashboard />} />
             <Route path="vouchers" element={<Navigate to="/staff/campaigns" replace />} />
             <Route path="campaigns" element={<StaffCampaigns />} />
             <Route path="claims" element={<StaffClaims />} />
             <Route path="transactions" element={<StaffTransactions />} />
             <Route path="settings" element={<StaffSettings />} />
             <Route path="notifications" element={<StaffNotifications />} />
-            <Route index element={<Navigate to="vouchers" />} />
+            <Route index element={<Navigate to="dashboard" />} />
           </Route>
           {/* Customer Routes */}
           <Route path="/customer" element={user && user.role === 'customer' ? <CustomerLayout user={user} onLogout={handleLogout} /> : <Navigate to="/login" />}>

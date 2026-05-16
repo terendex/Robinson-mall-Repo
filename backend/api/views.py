@@ -107,21 +107,24 @@ class UserViewSet(viewsets.ModelViewSet):
             'refresh': str(refresh),
         }, status=status.HTTP_200_OK)
     def perform_create(self, serializer):
+        """
+        BUG-03 FIX: When creating a new admin, save first then DEMOTE existing admins
+        to 'manager' instead of deleting them. This prevents data loss and avoids
+        a window where no admin exists.
+        """
         role = self.request.data.get('role')
+        instance = serializer.save()
         if role == 'admin':
-            # Remove all other admins before creating the new one
-            User.objects.filter(role='admin').delete()
-        
-        serializer.save()
+            User.objects.filter(role='admin').exclude(pk=instance.pk).update(role='manager')
 
     def perform_update(self, serializer):
+        """
+        BUG-03 FIX: Same safe demotion pattern on promotion via update.
+        """
         role = self.request.data.get('role')
+        instance = serializer.save()
         if role == 'admin':
-            # If promoting to admin, remove all other admins
-            # (excluding the one being updated)
-            User.objects.filter(role='admin').exclude(pk=serializer.instance.pk).delete()
-        
-        serializer.save()
+            User.objects.filter(role='admin').exclude(pk=instance.pk).update(role='manager')
 
     @action(detail=False, methods=['post'], permission_classes=[AllowAny])
     def register(self, request):
@@ -549,18 +552,31 @@ class NotificationViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         user = self.request.user
         from django.db.models import Q
-        # Users see their own targeted notifications OR global notifications (user=None)
-        return Notification.objects.filter(Q(user=user) | Q(user__isnull=True)).order_by('-created_at')
+        
+        # Admin, Manager, and Staff see their own notifications AND global system alerts.
+        if user.role in ['admin', 'manager', 'staff']:
+            return Notification.objects.filter(
+                Q(user=user) | Q(user__isnull=True)
+            ).order_by('-created_at')
+        
+        # Customers ONLY see notifications specifically assigned to them.
+        # They should not see system-wide administrative alerts.
+        return Notification.objects.filter(user=user).order_by('-created_at')
 
     @action(detail=False, methods=['post'])
     def mark_all_as_read(self, request):
-        # ONLY mark notifications for the current user or global unread ones
-        from django.db.models import Q
+        """
+        ISSUE-01 FIX: Only mark the requesting user's OWN notifications as read.
+        Global notifications (user=None) are shared state — marking them as read
+        for one user would clear them for all users. Per-user read state would
+        require a separate ReadReceipt table (schema change). For now, only
+        personal notifications are marked as read.
+        """
         Notification.objects.filter(
-            Q(user=request.user) | Q(user__isnull=True),
+            user=request.user,
             is_read=False
         ).update(is_read=True)
-        return Response({'status': 'notifications marked as read for current user'})
+        return Response({'status': 'Your notifications have been marked as read.'})
 
 class TransactionViewSet(viewsets.ModelViewSet):
     """
@@ -587,12 +603,19 @@ class TransactionViewSet(viewsets.ModelViewSet):
         return super().get_permissions()
 
     def perform_create(self, serializer):
-        """Force status to Pending and link to current user if customer."""
+        """
+        BUG-02 FIX: Customers must NOT create transactions directly — the correct
+        flow is Customer Claim → Staff QR Scan → Transaction.
+        Force status=Pending for all; staff/admin also link the user FK if provided.
+        """
         user = self.request.user
         if user.role == 'customer':
-            serializer.save(status='Pending', user=user)
-        else:
-            serializer.save(status='Pending')
+            from rest_framework.exceptions import PermissionDenied
+            raise PermissionDenied(
+                "Customers cannot create transactions directly. "
+                "Please submit a claim and have store staff scan your QR code."
+            )
+        serializer.save(status='Pending')
 
     def get_queryset(self):
         user = self.request.user
@@ -690,7 +713,9 @@ class DashboardStatsView(views.APIView):
         active_campaigns_count = Campaign.objects.filter(status='Active').count()
         scheduled_campaigns_count = Campaign.objects.filter(status='Scheduled').count()
 
-        total_reach = Campaign.objects.aggregate(Sum('reach'))['reach__sum'] or 0
+        # ISSUE-07 FIX: The Campaign.reach field is never updated; use live claim
+        # count (unique customers who have at least one claim) as the real reach figure.
+        total_reach = Claim.objects.values('user').distinct().count()
         claims_today = Claim.objects.filter(created_at__date=today).count()
         claims_pending = Claim.objects.filter(status='Pending').count()
 

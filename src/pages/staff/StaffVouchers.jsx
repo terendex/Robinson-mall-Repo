@@ -6,7 +6,8 @@ import RedeemVoucherPanel from '../../components/RedeemVoucherPanel';
 import '../../css/Vouchers.css';
 
 const PAGE_SIZE = 10;
-const BASE = 'http://127.0.0.1:8000';
+// BUG-01 FIX: Use environment variable instead of hardcoded localhost URL
+const BASE = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
 
 /**
  * StaffVouchers Component

@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 
-const BASE = 'http://127.0.0.1:8000';
+// BUG-01 FIX: Use environment variable instead of hardcoded localhost URL
+const BASE = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
 
 const statusLabel = (s) => s === 'Approved' ? 'Claimed' : s === 'Rejected' ? 'Expired' : 'Not Claimed';
 const statusColor = (s) => s === 'Approved' ? '#15803d' : s === 'Rejected' ? '#b91c1c' : '#c2410c';

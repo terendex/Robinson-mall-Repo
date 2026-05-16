@@ -6,8 +6,9 @@ import StaffVouchers from './StaffVouchers';
 import '../../css/Campaigns.css';
 import '../../css/CustomerVouchers.css';
 
+// BUG-01 FIX: Use environment variable instead of hardcoded localhost URL
+const BASE = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
 const PAGE_SIZE = 10;
-
 
 /**
  * StaffCampaigns Component
@@ -48,7 +49,7 @@ const StaffCampaigns = () => {
   const fetchCampaigns = async () => {
     try {
       setLoading(true);
-      const response = await axios.get('http://127.0.0.1:8000/api/campaigns/');
+      const response = await axios.get(`${BASE}/api/campaigns/`);
       setCampaigns(response.data);
     } catch (error) {
       console.error('Error fetching campaigns:', error);

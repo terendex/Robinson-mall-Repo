@@ -3,6 +3,10 @@ import { createWorker } from 'tesseract.js';
 import axios from 'axios';
 import '../css/Transactionmodal.css';
 
+// BUG-01 FIX: Use environment variable instead of hardcoded localhost URL
+const BASE = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
+
+
 // ─────────────────────────────────────────────────────
 // Receipt text parser — tuned for Robinsons receipts
 // ─────────────────────────────────────────────────────
@@ -151,7 +155,7 @@ const Combobox = ({ value, onChange, options, placeholder, getLabel, getValue, d
 // Main Component
 // ─────────────────────────────────────────────────────
 const TransactionModal = ({ show, onClose, onSave, transactionToEdit }) => {
-  const user = JSON.parse(localStorage.getItem('user') || '{}');
+  const user = JSON.parse(localStorage.getItem('user') || sessionStorage.getItem('user') || '{}');
   const isCustomer = user.role === 'customer';
 
   const [formData, setFormData] = useState({
@@ -193,10 +197,10 @@ const TransactionModal = ({ show, onClose, onSave, transactionToEdit }) => {
   // Fetch stores + customers on open
   useEffect(() => {
     if (!show) return;
-    axios.get('http://127.0.0.1:8000/api/stores/')
+    axios.get(`${BASE}/api/stores/`)
       .then(res => setStores(res.data))
       .catch(err => console.error('Failed to load stores:', err));
-    axios.get('http://127.0.0.1:8000/api/users/?role=customer')
+    axios.get(`${BASE}/api/users/?role=customer`)
       .then(res => setUsers(res.data))
       .catch(err => console.error('Failed to load users:', err));
   }, [show]);

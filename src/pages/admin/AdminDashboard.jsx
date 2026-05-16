@@ -3,6 +3,9 @@ import axios from 'axios';
 import '../../css/AdminDashboard.css';
 import '../../css/Transactions.css';
 
+// BUG-01 FIX: Use environment variable instead of hardcoded localhost URL
+const BASE = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
+
 /**
  * AdminDashboard Component
  * Renders the top-level analytical view for Admins.
@@ -21,7 +24,7 @@ const AdminDashboard = () => {
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const response = await axios.get('http://127.0.0.1:8000/api/dashboard-stats/');
+        const response = await axios.get(`${BASE}/api/dashboard-stats/`);
         setStats(response.data);
         setLoading(false);
       } catch (err) {

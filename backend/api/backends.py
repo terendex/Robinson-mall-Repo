@@ -16,7 +16,8 @@ class EmailOrUsernameModelBackend(ModelBackend):
                 # If no user is found by username or email, return None
                 return None
 
-        # Check the password for the found user
-        if user.check_password(password):
+        # ISSUE-11: Check password AND that the account is active.
+        # Disabled accounts (is_active=False) must not be allowed to log in.
+        if user.check_password(password) and user.is_active:
             return user
         return None

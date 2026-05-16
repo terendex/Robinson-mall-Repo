@@ -37,8 +37,18 @@ const AdminHeader = ({ toggleSidebar, user, isSidebarOpen, onLogout }) => {
   ];
 
   const filteredNotifications = useMemo(() => {
-    if (role !== 'staff') return notifications;
-    const keywords = ['voucher', 'campaign', 'claim', 'transaction'];
+    // Admin sees everything
+    if (role === 'admin') return notifications;
+    
+    // Customers only see their targeted notifications (already filtered by backend, but safe to keep broad here)
+    if (role === 'customer') return notifications;
+
+    // Staff and Managers filter based on their use cases to reduce noise
+    const staffKeywords = ['voucher', 'campaign', 'claim', 'transaction'];
+    const managerKeywords = [...staffKeywords, 'customer', 'approval', 'registration', 'store', 'shop'];
+    
+    const keywords = role === 'manager' ? managerKeywords : staffKeywords;
+    
     return notifications.filter(n => {
       const msg = (n.message || '').toLowerCase();
       const title = (n.title || '').toLowerCase();

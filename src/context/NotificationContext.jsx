@@ -1,6 +1,9 @@
 import React, { createContext, useState, useCallback, useEffect } from 'react';
 import axios from 'axios';
 
+// BUG-01 FIX: Use environment variable instead of hardcoded localhost URL
+const BASE = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
+
 /**
  * NotificationContext Component
  * Handles the UI and data logic for the NotificationContext module.
@@ -12,7 +15,9 @@ export const NotificationProvider = ({ children, user }) => {
 
   const fetchNotifications = useCallback(async () => {
     try {
-      const url = user ? `http://127.0.0.1:8000/api/notifications/?user_id=${user.id}` : 'http://127.0.0.1:8000/api/notifications/';
+      const url = user
+        ? `${BASE}/api/notifications/?user_id=${user.id}`
+        : `${BASE}/api/notifications/`;
       const response = await axios.get(url);
       setNotifications(response.data);
     } catch (error) {
@@ -29,7 +34,7 @@ export const NotificationProvider = ({ children, user }) => {
 
   const addNotification = useCallback(async (notification) => {
     try {
-      const response = await axios.post('http://127.0.0.1:8000/api/notifications/', {
+      const response = await axios.post(`${BASE}/api/notifications/`, {
         ...notification,
         notification_type: notification.type || 'info',
       });
@@ -41,7 +46,7 @@ export const NotificationProvider = ({ children, user }) => {
 
   const removeNotification = useCallback(async (id) => {
     try {
-      await axios.delete(`http://127.0.0.1:8000/api/notifications/${id}/`);
+      await axios.delete(`${BASE}/api/notifications/${id}/`);
       setNotifications(prev => prev.filter(n => n.id !== id));
     } catch (error) {
       console.error('Error removing notification:', error);
@@ -50,7 +55,7 @@ export const NotificationProvider = ({ children, user }) => {
 
   const markAllAsRead = useCallback(async () => {
     try {
-      await axios.post('http://127.0.0.1:8000/api/notifications/mark_all_as_read/');
+      await axios.post(`${BASE}/api/notifications/mark_all_as_read/`);
       fetchNotifications();
     } catch (error) {
       console.error('Error marking all as read:', error);

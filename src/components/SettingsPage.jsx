@@ -19,7 +19,7 @@ const PASSWORD_RULES = [
  */
 const SettingsPage = () => {
   const [activeTab, setActiveTab] = useState('general');
-  const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
+  const storedUser = JSON.parse(localStorage.getItem('user') || sessionStorage.getItem('user') || '{}');
 
   // ── General tab state ──
   const [profile, setProfile] = useState({

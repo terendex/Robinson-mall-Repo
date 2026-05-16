@@ -2,6 +2,9 @@ import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import '../css/Modal.css';
 
+// BUG-01 FIX: Use environment variable instead of hardcoded localhost URL
+const BASE = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
+
 // ─────────────────────────────────────────────────────
 // Combobox: text input + filtered dropdown
 // ─────────────────────────────────────────────────────
@@ -141,10 +144,10 @@ const VoucherModal = ({ show, onClose, onSave, voucherToEdit, readOnly }) => {
   // Load campaigns + stores for selectors
   useEffect(() => {
     if (!show) return;
-    axios.get('http://127.0.0.1:8000/api/campaigns/')
+    axios.get(`${BASE}/api/campaigns/`)
       .then(res => setCampaigns(res.data.filter(c => c.status === 'Active')))
       .catch(err => console.error('Failed to load campaigns:', err));
-    axios.get('http://127.0.0.1:8000/api/stores/')
+    axios.get(`${BASE}/api/stores/`)
       .then(res => setStores(res.data))
       .catch(err => console.error('Failed to load stores:', err));
   }, [show]);

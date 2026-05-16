@@ -3,6 +3,10 @@ import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import '../../css/Customer.css';
 
+// BUG-01 FIX: Use environment variable instead of hardcoded localhost URL
+const BASE = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
+
+
 /**
  * CustomerDashboard Component
  * Handles the UI and data logic for the CustomerDashboard module.
@@ -22,8 +26,8 @@ const CustomerDashboard = ({ user }) => {
     const fetchDashboardInfo = async () => {
       try {
         const [campaignsRes, claimsRes] = await Promise.all([
-          axios.get('http://127.0.0.1:8000/api/campaigns/'),
-          axios.get(`http://127.0.0.1:8000/api/claims/?user_id=${user.id}`)
+          axios.get(`${BASE}/api/campaigns/`),
+          axios.get(`${BASE}/api/claims/?user_id=${user.id}`)
         ]);
 
         const activeCount = campaignsRes.data.filter(c => c.status === 'Active').length;

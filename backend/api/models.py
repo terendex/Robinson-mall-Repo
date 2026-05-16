@@ -259,16 +259,29 @@ def create_campaign_notification(sender, instance, created, **kwargs):
 @receiver(post_save, sender=Transaction)
 def update_campaign_conversions(sender, instance, created, **kwargs):
     """
-    When a transaction is marked Approved, increment the conversions counter
-    on the associated campaign (looked up via the transaction's voucher_code).
-    Uses update_fields to avoid recursive signal triggers.
+    ISSUE-08 FIX: Recalculate conversions from scratch instead of incrementing.
+    This is idempotent — re-saving an already-Approved transaction, or toggling
+    a transaction back and forth, always results in the correct final count rather
+    than accumulating phantom increments.
+    Fires on both create AND update so rejections also reduce the count correctly.
     """
-    if not created and instance.status == 'Approved' and instance.voucher_code:
-        try:
-            voucher = Voucher.objects.get(code=instance.voucher_code)
-            if voucher.campaign_id:
-                Campaign.objects.filter(pk=voucher.campaign_id).update(
-                    conversions=models.F('conversions') + 1
-                )
-        except Voucher.DoesNotExist:
-            pass
+    if not instance.voucher_code:
+        return
+    try:
+        voucher = Voucher.objects.get(code=instance.voucher_code)
+        if not voucher.campaign_id:
+            return
+        # All voucher codes belonging to the same campaign
+        campaign_codes = list(
+            Voucher.objects.filter(campaign_id=voucher.campaign_id)
+            .values_list('code', flat=True)
+        )
+        actual_conversions = Transaction.objects.filter(
+            voucher_code__in=campaign_codes,
+            status='Approved'
+        ).count()
+        Campaign.objects.filter(pk=voucher.campaign_id).update(
+            conversions=actual_conversions
+        )
+    except Voucher.DoesNotExist:
+        pass

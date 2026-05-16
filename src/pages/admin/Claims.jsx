@@ -5,11 +5,31 @@ import Pagination from '../../components/Pagination';
 import '../../css/Claims.css';
 import '../../css/Transactions.css';
 
+// BUG-01 FIX: Use environment variable instead of hardcoded localhost URL
+const BASE = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
+
+
 /**
  * Claims Component
  * Full CRUD: view details, edit status, approve, reject with reason.
  */
 const PAGE_SIZE = 10;
+
+// ISSUE-12 FIX: Format dates in Philippine Standard Time (UTC+8)
+const fmtDatePH = (ds) => {
+  if (!ds) return '';
+  return new Intl.DateTimeFormat('en-PH', {
+    timeZone: 'Asia/Manila',
+    year: 'numeric', month: '2-digit', day: '2-digit',
+  }).format(new Date(ds));
+};
+const fmtTimePH = (ds) => {
+  if (!ds) return '';
+  return new Intl.DateTimeFormat('en-PH', {
+    timeZone: 'Asia/Manila',
+    hour: '2-digit', minute: '2-digit', hour12: true,
+  }).format(new Date(ds));
+};
 
 const Claims = () => {
   const [claims, setClaims] = useState([]);
@@ -65,7 +85,7 @@ const Claims = () => {
   const fetchClaims = async () => {
     try {
       setLoading(true);
-      const res = await axios.get('http://127.0.0.1:8000/api/claims/');
+      const res = await axios.get(`${BASE}/api/claims/`);
       setClaims(res.data);
     } catch (err) {
       console.error('Error fetching claims:', err);
@@ -79,7 +99,7 @@ const Claims = () => {
     setStatusLoading(id);
     setActiveActions(null);
     try {
-      const res = await axios.patch(`http://127.0.0.1:8000/api/claims/${id}/`, { status: 'Approved' });
+      const res = await axios.patch(`${BASE}/api/claims/${id}/`, { status: 'Approved' });
       setClaims(prev => prev.map(c => c.id === id ? res.data : c));
     } catch (err) { console.error(err); }
     finally { setStatusLoading(null); }
@@ -97,7 +117,7 @@ const Claims = () => {
     setStatusLoading(rejectTarget.id);
     setShowRejectModal(false);
     try {
-      const res = await axios.patch(`http://127.0.0.1:8000/api/claims/${rejectTarget.id}/`, {
+      const res = await axios.patch(`${BASE}/api/claims/${rejectTarget.id}/`, {
         status: 'Rejected',
         rejection_reason: rejectReason,
       });
@@ -131,7 +151,7 @@ const Claims = () => {
     try {
       const payload = { status: editStatus };
       if (editStatus === 'Rejected') payload.rejection_reason = editNote;
-      const res = await axios.patch(`http://127.0.0.1:8000/api/claims/${editClaim.id}/`, payload);
+      const res = await axios.patch(`${BASE}/api/claims/${editClaim.id}/`, payload);
       setClaims(prev => prev.map(c => c.id === editClaim.id ? res.data : c));
       setShowEditModal(false);
     } catch (err) { console.error(err); alert('Failed to update claim.'); }
@@ -144,6 +164,7 @@ const Claims = () => {
     setCurrentPage(1);
   };
 
+  // ISSUE-14 FIX: Remove setCurrentPage side-effect from useMemo
   const filteredClaims = useMemo(() => {
     const anySelected = Object.values(statusFilters).some(v => v);
     return claims.filter(c => {
@@ -161,6 +182,7 @@ const Claims = () => {
     });
   }, [claims, searchQuery, statusFilters, amountFilter]);
 
+  // Reset page on filter change (anti-pattern fix: was inside useMemo)
   useMemo(() => { setCurrentPage(1); }, [searchQuery, amountFilter]);
 
   const totalPages  = Math.ceil(filteredClaims.length / PAGE_SIZE);
@@ -174,8 +196,8 @@ const Claims = () => {
 
   const formatDateTime = (ds) => {
     if (!ds) return '';
-    const d = new Date(ds);
-    return <>{d.toISOString().split('T')[0]}<br />{d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</>;
+    // ISSUE-12 FIX: Use PH timezone (Asia/Manila) instead of raw UTC ISO string
+    return <>{fmtDatePH(ds)}<br />{fmtTimePH(ds)}</>;
   };
 
   // Fixed-position action menu

@@ -6,6 +6,9 @@ import Pagination from '../../components/Pagination';
 import '../../css/Users.css';
 import '../../css/Transactions.css';
 
+// BUG-01 FIX: Use environment variable instead of hardcoded localhost URL
+const BASE = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
+
 /**
  * Users Component
  * Handles the UI and data logic for the Users module.
@@ -37,7 +40,7 @@ const Users = () => {
   const fetchUsers = async () => {
     try {
       setLoading(true);
-      const response = await axios.get('http://127.0.0.1:8000/api/users/');
+      const response = await axios.get(`${BASE}/api/users/`);
       setUsers(response.data);
     } catch (error) {
       console.error('Error fetching users:', error);
@@ -70,11 +73,11 @@ const Users = () => {
 
       if (userToEdit) {
         // Update user
-        const response = await axios.patch(`http://127.0.0.1:8000/api/users/${userToEdit.id}/`, payload);
+        const response = await axios.patch(`${BASE}/api/users/${userToEdit.id}/`, payload);
         setUsers(users.map(u => u.id === userToEdit.id ? response.data : u));
       } else {
         // Create new user (explicitly set is_active to true)
-        const response = await axios.post('http://127.0.0.1:8000/api/users/', { ...payload, is_active: true });
+        const response = await axios.post(`${BASE}/api/users/`, { ...payload, is_active: true });
         setUsers([response.data, ...users]);
       }
       
@@ -97,7 +100,7 @@ const Users = () => {
 
   const toggleUserActive = async (user) => {
     try {
-      const response = await axios.patch(`http://127.0.0.1:8000/api/users/${user.id}/`, {
+      const response = await axios.patch(`${BASE}/api/users/${user.id}/`, {
         is_active: !user.is_active
       });
       setUsers(users.map(u => u.id === user.id ? response.data : u));
@@ -108,8 +111,8 @@ const Users = () => {
     }
   };
 
+  // ISSUE-14 FIX: Remove setCurrentPage side-effect from useMemo
   const filteredUsers = useMemo(() => {
-    setCurrentPage(1);
     return users.filter(user => {
       // Exclude admins from the display
       if (user.role === 'admin') return false;
@@ -123,6 +126,9 @@ const Users = () => {
       );
     });
   }, [users, searchQuery]);
+
+  // Reset to page 1 when search changes (extracted from useMemo — fixes anti-pattern)
+  useEffect(() => { setCurrentPage(1); }, [searchQuery]);
 
   // Pagination slice
   const totalPages  = Math.ceil(filteredUsers.length / PAGE_SIZE);

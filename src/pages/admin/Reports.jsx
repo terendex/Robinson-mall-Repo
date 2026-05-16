@@ -7,6 +7,9 @@ import {
 import { exportCSV, exportExcel, buildReportRows } from '../../utils/exportUtils';
 import '../../css/Reports.css';
 
+// BUG-01 FIX: Use environment variable instead of hardcoded localhost URL
+const BASE = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
+
 // ── Colour palette ─────────────────────────────────────────────────────────
 const BRAND_RED   = '#c50000';
 const CHART_BLUE  = '#3b82f6';
@@ -87,9 +90,9 @@ const Reports = () => {
       try {
         setLoading(true);
         const [statsRes, claimsRes, campaignsRes] = await Promise.all([
-          axios.get('http://127.0.0.1:8000/api/dashboard-stats/'),
-          axios.get('http://127.0.0.1:8000/api/claims/'),
-          axios.get('http://127.0.0.1:8000/api/campaigns/'),
+          axios.get(`${BASE}/api/dashboard-stats/`),
+          axios.get(`${BASE}/api/claims/`),
+          axios.get(`${BASE}/api/campaigns/`),
         ]);
         setDashStats(statsRes.data);
         setClaims(claimsRes.data);

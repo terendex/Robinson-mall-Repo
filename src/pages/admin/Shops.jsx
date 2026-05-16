@@ -3,6 +3,10 @@ import axios from 'axios';
 import Pagination from '../../components/Pagination';
 import '../../css/Shops.css';
 
+// BUG-01 FIX: Use environment variable instead of hardcoded localhost URL
+const BASE = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
+
+
 /**
  * Shops Page — Admin & Manager
  * Full CRUD for the Store model (name, location).
@@ -37,7 +41,7 @@ const Shops = () => {
   const fetchStores = async () => {
     try {
       setLoading(true);
-      const { data } = await axios.get('http://127.0.0.1:8000/api/stores/');
+      const { data } = await axios.get(`${BASE}/api/stores/`);
       setStores(data);
     } catch (err) {
       console.error('Failed to fetch stores:', err);
@@ -69,12 +73,12 @@ const Shops = () => {
     try {
       if (storeToEdit) {
         const { data } = await axios.patch(
-          `http://127.0.0.1:8000/api/stores/${storeToEdit.id}/`,
+          `${BASE}/api/stores/${storeToEdit.id}/`,
           form
         );
         setStores(prev => prev.map(s => s.id === storeToEdit.id ? data : s));
       } else {
-        const { data } = await axios.post('http://127.0.0.1:8000/api/stores/', form);
+        const { data } = await axios.post(`${BASE}/api/stores/`, form);
         setStores(prev => [data, ...prev]);
       }
       setShowModal(false);
@@ -89,7 +93,7 @@ const Shops = () => {
   const handleDelete = async () => {
     if (!deleteTarget) return;
     try {
-      await axios.delete(`http://127.0.0.1:8000/api/stores/${deleteTarget.id}/`);
+      await axios.delete(`${BASE}/api/stores/${deleteTarget.id}/`);
       setStores(prev => prev.filter(s => s.id !== deleteTarget.id));
     } catch (err) {
       alert('Failed to delete store.');
