@@ -234,13 +234,51 @@ const Reports = () => {
   const slug = `report-${period.replace(/\s/g, '-').toLowerCase()}-${new Date().toISOString().slice(0, 10)}`;
 
   const handleExportCSV = () => {
-    exportCSV(buildReportRows(filteredClaims, period), `${slug}.csv`);
-    setIsExportOpen(false);
+    try {
+      const rows = buildReportRows(filteredClaims, period);
+      if (!rows.length) {
+        setErrorConfig({
+          show: true,
+          title: 'No Data to Export',
+          message: `There are no claims recorded for the selected period: ${period}. Try selecting a different timeframe.`
+        });
+        setIsExportOpen(false);
+        return;
+      }
+      exportCSV(rows, `${slug}.csv`);
+      setIsExportOpen(false);
+    } catch (err) {
+      console.error('CSV Export Error:', err);
+      setErrorConfig({
+        show: true,
+        title: 'Export Failed',
+        message: 'An error occurred while generating your CSV file. Please try again.'
+      });
+    }
   };
 
   const handleExportExcel = () => {
-    exportExcel(buildReportRows(filteredClaims, period), 'Claims Report', `${slug}.xlsx`);
-    setIsExportOpen(false);
+    try {
+      const rows = buildReportRows(filteredClaims, period);
+      if (!rows.length) {
+        setErrorConfig({
+          show: true,
+          title: 'No Data to Export',
+          message: `There are no claims recorded for the selected period: ${period}. Try selecting a different timeframe.`
+        });
+        setIsExportOpen(false);
+        return;
+      }
+      exportExcel(rows, 'Claims Report', `${slug}.xlsx`);
+      setIsExportOpen(false);
+    } catch (err) {
+      console.error('Excel Export Error:', err);
+      setErrorConfig({
+        show: true,
+        title: 'Export Failed',
+        message: 'An error occurred while generating your Excel file. Please try again.'
+      });
+    }
   };
 
   // ── Render states ──────────────────────────────────────────────────────────

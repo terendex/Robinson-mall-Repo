@@ -435,8 +435,27 @@ const Transactions = () => {
                   <button
                     className="txn-export-item"
                     onClick={() => {
-                      exportCSV(buildTransactionRows(filteredTransactions), `transactions-${new Date().toISOString().slice(0,10)}.csv`);
-                      setIsExportOpen(false);
+                      try {
+                        const rows = buildTransactionRows(filteredTransactions);
+                        if (!rows.length) {
+                          setErrorConfig({
+                            show: true,
+                            title: 'No Data to Export',
+                            message: 'The current filtered list is empty. Please adjust your search or filters before exporting.'
+                          });
+                          setIsExportOpen(false);
+                          return;
+                        }
+                        exportCSV(rows, `transactions-${new Date().toISOString().slice(0,10)}.csv`);
+                        setIsExportOpen(false);
+                      } catch (err) {
+                        console.error('CSV Export Error:', err);
+                        setErrorConfig({
+                          show: true,
+                          title: 'Export Failed',
+                          message: 'An error occurred while generating the CSV file.'
+                        });
+                      }
                     }}
                   >
                     <i className="fa-solid fa-file-csv" style={{ color: '#22c55e' }}></i>
@@ -445,8 +464,27 @@ const Transactions = () => {
                   <button
                     className="txn-export-item"
                     onClick={() => {
-                      exportExcel(buildTransactionRows(filteredTransactions), 'Transactions', `transactions-${new Date().toISOString().slice(0,10)}.xlsx`);
-                      setIsExportOpen(false);
+                      try {
+                        const rows = buildTransactionRows(filteredTransactions);
+                        if (!rows.length) {
+                          setErrorConfig({
+                            show: true,
+                            title: 'No Data to Export',
+                            message: 'The current filtered list is empty. Please adjust your search or filters before exporting.'
+                          });
+                          setIsExportOpen(false);
+                          return;
+                        }
+                        exportExcel(rows, 'Transactions', `transactions-${new Date().toISOString().slice(0,10)}.xlsx`);
+                        setIsExportOpen(false);
+                      } catch (err) {
+                        console.error('Excel Export Error:', err);
+                        setErrorConfig({
+                          show: true,
+                          title: 'Export Failed',
+                          message: 'An error occurred while generating the Excel file.'
+                        });
+                      }
                     }}
                   >
                     <i className="fa-solid fa-file-excel" style={{ color: '#16a34a' }}></i>
