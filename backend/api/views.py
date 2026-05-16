@@ -553,14 +553,18 @@ class NotificationViewSet(viewsets.ModelViewSet):
         user = self.request.user
         from django.db.models import Q
         
-        # Admin, Manager, and Staff see their own notifications AND global system alerts.
+        # Admin, Manager, and Staff see:
+        # 1. Their own personal notifications
+        # 2. Global notifications (user=null and target_role=null)
+        # 3. Notifications targeted specifically at their role
         if user.role in ['admin', 'manager', 'staff']:
             return Notification.objects.filter(
-                Q(user=user) | Q(user__isnull=True)
+                Q(user=user) | 
+                Q(user__isnull=True, target_role__isnull=True) |
+                Q(target_role=user.role)
             ).order_by('-created_at')
         
         # Customers ONLY see notifications specifically assigned to them.
-        # They should not see system-wide administrative alerts.
         return Notification.objects.filter(user=user).order_by('-created_at')
 
     @action(detail=False, methods=['post'])

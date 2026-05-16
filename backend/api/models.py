@@ -201,8 +201,10 @@ class Transaction(models.Model):
 class Notification(models.Model):
     """
     System notifications for alerts (Global if user is null, or targeted).
+    Can be targeted to a specific user OR a specific role.
     """
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='notifications', null=True, blank=True)
+    target_role = models.CharField(max_length=20, choices=User.ROLE_CHOICES, null=True, blank=True)
     NOTIFICATION_TYPES = (
         ('info', 'Info'),
         ('success', 'Success'),
@@ -222,13 +224,23 @@ class Notification(models.Model):
 def create_claim_notification(sender, instance, created, **kwargs):
     """Automatically create notifications for users and admins when a claim is filed."""
     if created:
-        # Notify Admins/Managers
+        # 1. Manager Notification (Action Oriented)
         Notification.objects.create(
-            title="New Claim submitted",
-            message=f"Customer '{instance.user.first_name} {instance.user.last_name}' submitted a ₱{instance.amount} claim. Requires manual review.",
+            target_role='manager',
+            title="Action Required: New Claim",
+            message=f"Review needed for {instance.user.get_full_name()}'s ₱{instance.amount} claim. Voucher: {instance.voucher.name}.",
+            notification_type='warning'
+        )
+        
+        # 2. Staff Notification (Informational)
+        Notification.objects.create(
+            target_role='staff',
+            title="Claim Logged",
+            message=f"New claim submitted by {instance.user.get_full_name()}. Processing initiated.",
             notification_type='info'
         )
-        # Notify the Customer who claimed it
+
+        # 3. Notify the Customer who claimed it
         Notification.objects.create(
             user=instance.user,
             title="Claim Received",
@@ -240,10 +252,19 @@ def create_claim_notification(sender, instance, created, **kwargs):
 def create_user_notification(sender, instance, created, **kwargs):
     """Alert admins when a new customer registers."""
     if created and instance.role == 'customer':
+        # Manager gets a task-oriented alert
         Notification.objects.create(
-            title="New Customer Registered",
-            message=f"A new customer '{instance.first_name} {instance.last_name}' has joined the platform.",
+            target_role='manager',
+            title="Review Required: New Registration",
+            message=f"New customer '{instance.first_name} {instance.last_name}' needs profile verification.",
             notification_type='info'
+        )
+        # Staff/Admin get a general update
+        Notification.objects.create(
+            target_role='staff',
+            title="New Customer Joined",
+            message=f"Welcome alert: {instance.first_name} {instance.last_name} has registered.",
+            notification_type='success'
         )
 
 @receiver(post_save, sender=Campaign)
