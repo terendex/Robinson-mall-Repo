@@ -1,5 +1,8 @@
 import React, { useState } from 'react';
 import axios from 'axios';
+import SuccessModal from './SuccessModal';
+import ErrorModal from './ErrorModal';
+import ActionConfirmModal from './ActionConfirmModal';
 
 // BUG-01 FIX: Use environment variable instead of hardcoded localhost URL
 const BASE = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
@@ -21,7 +24,26 @@ const RedeemVoucherPanel = () => {
   const [lookupError, setLookupError] = useState('');
   const [lookupLoading, setLookupLoading] = useState(false);
   const [redeemLoading, setRedeemLoading] = useState(false);
-  const [redeemMsg, setRedeemMsg] = useState({ type: '', text: '' });
+  const [confirmConfig, setConfirmConfig] = useState({
+    show: false,
+    title: '',
+    message: '',
+    confirmText: '',
+    variant: 'primary',
+    onConfirm: () => {}
+  });
+
+  const [successConfig, setSuccessConfig] = useState({
+    show: false,
+    title: '',
+    message: ''
+  });
+
+  const [errorConfig, setErrorConfig] = useState({
+    show: false,
+    title: '',
+    message: ''
+  });
 
   const handleLookup = async () => {
     const raw = redeemInput.trim();
@@ -45,16 +67,34 @@ const RedeemVoucherPanel = () => {
     setRedeemLoading(true);
     try {
       const res = await axios.patch(`${BASE}/api/claims/${lookupResult.id}/redeem/`, { action });
-      setRedeemMsg({
-        type: 'success',
-        text: action === 'approve' ? '✅ Voucher successfully redeemed!' : '❌ Voucher marked as rejected.',
+      setSuccessConfig({
+        show: true,
+        title: action === 'approve' ? 'Redemption Successful!' : 'Claim Rejected',
+        message: action === 'approve' 
+          ? `Voucher "${lookupResult.voucher_name}" has been successfully redeemed for ${lookupResult.user_name}.`
+          : `Claim reference ${lookupResult.id} has been marked as rejected.`
       });
       setLookupResult(res.data);
     } catch (err) {
-      setRedeemMsg({ type: 'error', text: err.response?.data?.detail || 'Failed to update claim.' });
+      setErrorConfig({
+        show: true,
+        title: 'Action Failed',
+        message: err.response?.data?.detail || 'Failed to update claim status. Please try again.'
+      });
     } finally {
       setRedeemLoading(false);
     }
+  };
+
+  const requestRedeemConfirm = (action) => {
+    setConfirmConfig({
+      show: true,
+      title: action === 'approve' ? 'Confirm Redemption' : 'Confirm Rejection',
+      message: `Are you sure you want to ${action === 'approve' ? 'approve' : 'reject'} this voucher claim?`,
+      confirmText: action === 'approve' ? 'Confirm Redemption' : 'Reject Claim',
+      variant: action === 'approve' ? 'success' : 'danger',
+      onConfirm: () => handleRedeem(action)
+    });
   };
 
   return (
@@ -119,18 +159,7 @@ const RedeemVoucherPanel = () => {
         </div>
       )}
 
-      {/* Redeem feedback */}
-      {redeemMsg.text && (
-        <div style={{
-          background: redeemMsg.type === 'success' ? '#f0fdf4' : '#fef2f2',
-          border: `1px solid ${redeemMsg.type === 'success' ? '#bbf7d0' : '#fecaca'}`,
-          borderRadius: 10, padding: '0.75rem 1rem',
-          color: redeemMsg.type === 'success' ? '#15803d' : '#b91c1c',
-          fontSize: '0.875rem', marginBottom: '1.25rem',
-        }}>
-          {redeemMsg.text}
-        </div>
-      )}
+
 
       {/* Claim preview card */}
       {lookupResult && (
@@ -184,7 +213,7 @@ const RedeemVoucherPanel = () => {
             {lookupResult.status === 'Pending' ? (
               <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
                 <button
-                  onClick={() => handleRedeem('approve')}
+                  onClick={() => requestRedeemConfirm('approve')}
                   disabled={redeemLoading}
                   style={{
                     flex: 1, padding: '0.7rem 1rem', borderRadius: 8, border: 'none',
@@ -200,7 +229,7 @@ const RedeemVoucherPanel = () => {
                   Confirm Redemption
                 </button>
                 <button
-                  onClick={() => handleRedeem('reject')}
+                  onClick={() => requestRedeemConfirm('reject')}
                   disabled={redeemLoading}
                   style={{
                     padding: '0.7rem 1rem', borderRadius: 8,
@@ -228,6 +257,18 @@ const RedeemVoucherPanel = () => {
           </div>
         </div>
       )}
+      <SuccessModal 
+        {...successConfig}
+        onClose={() => setSuccessConfig(p => ({ ...p, show: false }))}
+      />
+      <ErrorModal 
+        {...errorConfig}
+        onClose={() => setErrorConfig(p => ({ ...p, show: false }))}
+      />
+      <ActionConfirmModal 
+        {...confirmConfig}
+        onClose={() => setConfirmConfig(p => ({ ...p, show: false }))}
+      />
     </div>
   );
 };

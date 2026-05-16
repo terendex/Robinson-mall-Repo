@@ -41,7 +41,9 @@ const Vouchers = () => {
   const [viewOnly, setViewOnly] = useState(false);
   const [activeActions, setActiveActions] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
+  const [isStatusDropdownOpen, setIsStatusDropdownOpen] = useState(false);
   const statusFilterRef = useRef(null);
+  const actionsRef = useRef(null);
 
   const [confirmConfig, setConfirmConfig] = useState({
     show: false,
