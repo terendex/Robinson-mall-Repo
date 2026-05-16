@@ -25,7 +25,7 @@ const Header = () => {
       <div className="logo">
         <img src={robinsonsLogo} alt="Robinsons Malls" className="logo-img" />
       </div>
-      {location.pathname === '/privacy-policy' && (
+      {location.pathname.startsWith('/privacy-policy') && (
         <button onClick={goBack} className="header-back-button">
           &larr; Back
         </button>
