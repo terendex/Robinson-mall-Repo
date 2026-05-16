@@ -153,6 +153,7 @@ const PasswordReset = () => {
   };
 
   return (
+    <>
     <div className="password-reset-page">
       <div className="password-reset-container">
         <div className="password-reset-card">
@@ -263,17 +264,19 @@ const PasswordReset = () => {
               </button>
             </form>
           ) : null}
-
-          {!successConfig.show && (
-      <SuccessModal 
-        {...successConfig}
-        onClose={() => setSuccessConfig(p => ({ ...p, show: false }))}
-      />
-      <ErrorModal 
-        {...errorConfig}
-        onClose={() => setErrorConfig(p => ({ ...p, show: false }))}
-      />
+        </div>
+      </div>
     </div>
+
+    <SuccessModal 
+      {...successConfig}
+      onClose={() => setSuccessConfig(p => ({ ...p, show: false }))}
+    />
+    <ErrorModal 
+      {...errorConfig}
+      onClose={() => setErrorConfig(p => ({ ...p, show: false }))}
+    />
+    </>
   );
 };
 

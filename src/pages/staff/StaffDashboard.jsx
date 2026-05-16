@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import '../../css/AdminDashboard.css';
 import '../../css/Transactions.css';
+import ErrorModal from '../../components/ErrorModal';
 
 // ISSUE-05 FIX: Staff was the only role without a dashboard — this creates one.
 // BUG-01 FIX: Use environment variable instead of hardcoded localhost URL.
@@ -40,7 +41,11 @@ const StaffDashboard = () => {
   const [transactions, setTransactions] = useState([]);
   const [campaigns,    setCampaigns]    = useState([]);
   const [loading,      setLoading]      = useState(true);
-  const [error,        setError]        = useState(null);
+  const [errorConfig,  setErrorConfig]  = useState({
+    show: false,
+    title: '',
+    message: ''
+  });
 
   useEffect(() => {
     const fetchAll = async () => {
@@ -55,7 +60,11 @@ const StaffDashboard = () => {
         setCampaigns(campRes.data.filter(c => c.status === 'Active'));
       } catch (err) {
         console.error('StaffDashboard fetch error:', err);
-        setError('Failed to load dashboard data.');
+        setErrorConfig({
+          show: true,
+          title: 'Sync Failed',
+          message: 'We couldn\'t load the dashboard data. Please check your connection to the Robinson Mall server.'
+        });
       } finally {
         setLoading(false);
       }
@@ -73,13 +82,7 @@ const StaffDashboard = () => {
     );
   }
 
-  if (error) {
-    return (
-      <div className="dashboard-container">
-        <div className="dash-error">{error}</div>
-      </div>
-    );
-  }
+
 
   // ── Derived stats ──────────────────────────────────────────────────────────
   const pendingClaims   = claims.filter(c => c.status === 'Pending');
@@ -220,6 +223,10 @@ const StaffDashboard = () => {
           )}
         </div>
       </div>
+      <ErrorModal 
+        {...errorConfig}
+        onClose={() => setErrorConfig(p => ({ ...p, show: false }))}
+      />
     </div>
   );
 };

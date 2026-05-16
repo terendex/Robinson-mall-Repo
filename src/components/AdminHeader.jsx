@@ -4,6 +4,7 @@ import '../css/AdminHeader.css';
 import robinsonsLogo from '../assets/Robinson_logo.png';
 import redROB from '../assets/redROB.png';
 import NotificationContext from '../context/NotificationContext';
+import ActionConfirmModal from './ActionConfirmModal';
 
 /**
  * AdminHeader Component
@@ -20,6 +21,14 @@ const AdminHeader = ({ toggleSidebar, user, isSidebarOpen, onLogout }) => {
   const notificationDropdownRef = useRef(null);
   const profileDropdownRef = useRef(null);
   const { notifications, removeNotification } = useContext(NotificationContext);
+  const [confirmConfig, setConfirmConfig] = useState({
+    show: false,
+    title: '',
+    message: '',
+    confirmText: '',
+    variant: 'primary',
+    onConfirm: () => {}
+  });
 
   const role = user?.role || 'admin';
   const pathPrefix = `/${role}`;
@@ -104,10 +113,20 @@ const AdminHeader = ({ toggleSidebar, user, isSidebarOpen, onLogout }) => {
   };
 
   const handleLogout = () => {
-    if (onLogout) {
-      onLogout();
-    }
-    navigate('/login');
+    setIsProfileDropdownOpen(false);
+    setConfirmConfig({
+      show: true,
+      title: 'Log Out',
+      message: 'Are you sure you want to sign out of your account?',
+      confirmText: 'Log Out',
+      variant: 'danger',
+      onConfirm: () => {
+        if (onLogout) {
+          onLogout();
+        }
+        navigate('/login');
+      }
+    });
   };
 
   return (
@@ -226,6 +245,10 @@ const AdminHeader = ({ toggleSidebar, user, isSidebarOpen, onLogout }) => {
           </div>
         </div>
       </div>
+      <ActionConfirmModal 
+        {...confirmConfig}
+        onClose={() => setConfirmConfig(p => ({ ...p, show: false }))}
+      />
     </header>
   );
 };

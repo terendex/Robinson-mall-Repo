@@ -71,7 +71,6 @@ const Register = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
     setEmailTouched(true);
 
     // ── client-side guards ──

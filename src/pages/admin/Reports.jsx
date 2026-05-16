@@ -5,6 +5,7 @@ import {
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
 } from 'recharts';
 import { exportCSV, exportExcel, buildReportRows } from '../../utils/exportUtils';
+import ErrorModal from '../../components/ErrorModal';
 import '../../css/Reports.css';
 
 // BUG-01 FIX: Use environment variable instead of hardcoded localhost URL
@@ -73,7 +74,11 @@ const Reports = () => {
   const [claims, setClaims]         = useState([]);
   const [campaigns, setCampaigns]   = useState([]);
   const [loading, setLoading]       = useState(true);
-  const [error, setError]           = useState(null);
+  const [errorConfig, setErrorConfig] = useState({
+    show: false,
+    title: '',
+    message: ''
+  });
 
   // Period filter
   const [period, setPeriod]                   = useState('This Month');
@@ -99,7 +104,11 @@ const Reports = () => {
         setCampaigns(campaignsRes.data);
       } catch (err) {
         console.error('Error fetching report data:', err);
-        setError('Failed to load report data. Make sure the backend is running.');
+        setErrorConfig({
+          show: true,
+          title: 'Analytics Sync Failed',
+          message: 'Failed to load report data. Please ensure the Robinson Mall backend is reachable.'
+        });
       } finally {
         setLoading(false);
       }
@@ -245,16 +254,7 @@ const Reports = () => {
     );
   }
 
-  if (error) {
-    return (
-      <div className="rpt-page">
-        <div className="rpt-error">
-          <i className="fa-solid fa-triangle-exclamation" />
-          <p>{error}</p>
-        </div>
-      </div>
-    );
-  }
+
 
   return (
     <div className="rpt-page">
@@ -540,6 +540,10 @@ const Reports = () => {
         </div>
 
       </div>
+      <ErrorModal 
+        {...errorConfig}
+        onClose={() => setErrorConfig(p => ({ ...p, show: false }))}
+      />
     </div>
   );
 };

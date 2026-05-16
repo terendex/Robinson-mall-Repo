@@ -39,7 +39,6 @@ export default function Log({ onLogin }) {
    */
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError("");
     try {
       const user = await onLogin(email, password, rememberMe);
       if (user) {
