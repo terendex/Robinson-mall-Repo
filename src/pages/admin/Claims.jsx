@@ -2,6 +2,8 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import axios from 'axios';
 import ClaimDetailsModal from '../../components/ClaimDetailsModal';
 import Pagination from '../../components/Pagination';
+import ActionConfirmModal from '../../components/ActionConfirmModal';
+import SuccessModal from '../../components/SuccessModal';
 import '../../css/Claims.css';
 import '../../css/Transactions.css';
 
@@ -45,6 +47,21 @@ const Claims = () => {
   const [isStatusDropdownOpen, setIsStatusDropdownOpen] = useState(false);
   const [isAmountDropdownOpen, setIsAmountDropdownOpen] = useState(false);
   const [activeActions, setActiveActions] = useState(null);
+
+  const [confirmConfig, setConfirmConfig] = useState({
+    show: false,
+    title: '',
+    message: '',
+    confirmText: '',
+    variant: 'primary',
+    onConfirm: () => {}
+  });
+
+  const [successConfig, setSuccessConfig] = useState({
+    show: false,
+    title: '',
+    message: ''
+  });
 
   // ── Modal state ──────────────────────────────────────────
   const [showViewModal, setShowViewModal]     = useState(false);
@@ -105,6 +122,18 @@ const Claims = () => {
     finally { setStatusLoading(null); }
   };
 
+  const requestApproveConfirm = (claim) => {
+    setActiveActions(null);
+    setConfirmConfig({
+      show: true,
+      title: 'Confirm Claim',
+      message: `Are you sure you want to mark this voucher as Claimed for ${claim.user_name}?`,
+      confirmText: 'Approve',
+      variant: 'success',
+      onConfirm: () => handleApprove(claim.id)
+    });
+  };
+
   const openRejectModal = (claim) => {
     setRejectTarget(claim);
     setRejectReason('');
@@ -123,7 +152,16 @@ const Claims = () => {
       });
       setClaims(prev => prev.map(c => c.id === rejectTarget.id ? res.data : c));
     } catch (err) { console.error(err); }
-    finally { setStatusLoading(null); setRejectTarget(null); setRejectReason(''); }
+    finally { 
+      setStatusLoading(null); 
+      setRejectTarget(null); 
+      setRejectReason(''); 
+      setSuccessConfig({
+        show: true,
+        title: 'Expired!',
+        message: 'The claim has been marked as expired successfully.'
+      });
+    }
   };
 
   // ── View / Edit helpers ──────────────────────────────────
@@ -154,8 +192,51 @@ const Claims = () => {
       const res = await axios.patch(`${BASE}/api/claims/${editClaim.id}/`, payload);
       setClaims(prev => prev.map(c => c.id === editClaim.id ? res.data : c));
       setShowEditModal(false);
+      setSuccessConfig({
+        show: true,
+        title: 'Updated!',
+        message: 'The claim details have been updated.'
+      });
     } catch (err) { console.error(err); alert('Failed to update claim.'); }
     finally { setEditLoading(false); }
+  };
+
+  const handleDeleteClaim = async (claim) => {
+    try {
+      await axios.delete(`${BASE}/api/claims/${claim.id}/`);
+      setClaims(prev => prev.filter(c => c.id !== claim.id));
+      setSuccessConfig({
+        show: true,
+        title: 'Claim Deleted',
+        message: 'The claim record has been permanently removed.'
+      });
+    } catch (err) {
+      console.error('Error deleting claim:', err);
+      alert('Failed to delete claim.');
+    }
+  };
+
+  const requestDeleteClaimConfirm = (claim) => {
+    setActiveActions(null);
+    setConfirmConfig({
+      show: true,
+      title: 'Delete Claim Record',
+      message: `Are you sure you want to permanently delete this claim record? This action cannot be undone.`,
+      confirmText: 'Delete Record',
+      variant: 'danger',
+      onConfirm: () => handleDeleteClaim(claim)
+    });
+  };
+
+  const requestEditSaveConfirm = () => {
+    setConfirmConfig({
+      show: true,
+      title: 'Save Changes',
+      message: 'Are you sure you want to update this claim record?',
+      confirmText: 'Save Changes',
+      variant: 'success',
+      onConfirm: saveEdit
+    });
   };
 
   // ── Filters ──────────────────────────────────────────────
@@ -348,7 +429,7 @@ const Claims = () => {
             </button>
             <div className="txn-action-divider"></div>
             {claim.status !== 'Approved' && (
-              <button className="txn-action-item txn-action-redeem" onClick={() => handleApprove(claim.id)}>
+              <button className="txn-action-item txn-action-redeem" onClick={() => requestApproveConfirm(claim)}>
                 <i className="fa-solid fa-circle-check"></i> Mark as Claimed
               </button>
             )}
@@ -357,6 +438,14 @@ const Claims = () => {
                 <i className="fa-solid fa-circle-xmark"></i> Mark as Expired
               </button>
             )}
+            <div className="txn-action-divider"></div>
+            <button 
+              className="txn-action-item" 
+              onClick={() => requestDeleteClaimConfirm(claim)}
+              style={{ color: '#c40000' }}
+            >
+              <i className="fa-solid fa-trash-can"></i> Delete Claim Record
+            </button>
           </div>
         );
       })()}
@@ -441,7 +530,7 @@ const Claims = () => {
             </div>
             <div className="modal-actions" style={{ padding: '0 1.5rem 1.25rem' }}>
               <button className="cancel-inner-btn" onClick={() => setShowEditModal(false)}>Cancel</button>
-              <button className="save-btn" onClick={saveEdit} disabled={editLoading}>
+              <button className="save-btn" onClick={requestEditSaveConfirm} disabled={editLoading}>
                 {editLoading ? <i className="fa-solid fa-spinner fa-spin"></i> : 'Save Changes'}
               </button>
             </div>
@@ -451,6 +540,16 @@ const Claims = () => {
 
       {/* ── View Details Modal ── */}
       <ClaimDetailsModal show={showViewModal} onClose={() => setShowViewModal(false)} claim={selectedClaim} />
+
+      <ActionConfirmModal 
+        {...confirmConfig}
+        onClose={() => setConfirmConfig(p => ({ ...p, show: false }))}
+      />
+
+      <SuccessModal 
+        {...successConfig}
+        onClose={() => setSuccessConfig(p => ({ ...p, show: false }))}
+      />
     </div>
   );
 };

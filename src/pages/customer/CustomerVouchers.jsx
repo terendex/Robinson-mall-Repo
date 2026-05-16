@@ -2,6 +2,8 @@ import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import Pagination from '../../components/Pagination';
+import ActionConfirmModal from '../../components/ActionConfirmModal';
+import SuccessModal from '../../components/SuccessModal';
 import '../../css/CustomerVouchers.css';
 
 const BASE = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
@@ -37,6 +39,21 @@ const CustomerVouchers = ({ user }) => {
   const [claimError, setClaimError] = useState('');
   const [claimSuccess, setClaimSuccess] = useState('');
   const [page, setPage]         = useState(1);
+
+  const [confirmConfig, setConfirmConfig] = useState({
+    show: false,
+    title: '',
+    message: '',
+    confirmText: '',
+    variant: 'primary',
+    onConfirm: () => {}
+  });
+
+  const [successConfig, setSuccessConfig] = useState({
+    show: false,
+    title: '',
+    message: ''
+  });
 
   /* fetch everything */
   const load = useCallback(async () => {
@@ -109,7 +126,11 @@ const CustomerVouchers = ({ user }) => {
         amount:     mySpend[campaign.id] || 0,
         status:     'Pending',
       });
-      setClaimSuccess(`Claim for "${voucher.name}" submitted! Pending admin approval.`);
+      setSuccessConfig({
+        show: true,
+        title: 'Claim Submitted!',
+        message: `Your claim for "${voucher.name}" has been sent for approval.`
+      });
       await load(); // refresh
     } catch (err) {
       const detail = err.response?.data?.detail
@@ -119,6 +140,20 @@ const CustomerVouchers = ({ user }) => {
     } finally {
       setClaiming(null);
     }
+  };
+
+  const requestClaimConfirm = (campaign) => {
+    const voucher = (campaign.vouchers || []).find(v => v.is_active);
+    if (!voucher) return;
+
+    setConfirmConfig({
+      show: true,
+      title: 'Claim Voucher',
+      message: `You've reached the spending target! Would you like to claim your "${voucher.name}" now?`,
+      confirmText: 'Claim Now',
+      variant: 'success',
+      onConfirm: () => handleClaim(campaign)
+    });
   };
 
   /* ── helpers for per-campaign state ─────────────────────── */
@@ -300,7 +335,7 @@ const CustomerVouchers = ({ user }) => {
                         ) : unlocked ? (
                           <button
                             className="cv-claim-btn"
-                            onClick={() => handleClaim(camp)}
+                            onClick={() => requestClaimConfirm(camp)}
                             disabled={isClaiming}
                           >
                             {isClaiming
@@ -409,6 +444,16 @@ const CustomerVouchers = ({ user }) => {
           )}
         </>
       )}
+
+      <ActionConfirmModal 
+        {...confirmConfig}
+        onClose={() => setConfirmConfig(p => ({ ...p, show: false }))}
+      />
+
+      <SuccessModal 
+        {...successConfig}
+        onClose={() => setSuccessConfig(p => ({ ...p, show: false }))}
+      />
     </div>
   );
 };

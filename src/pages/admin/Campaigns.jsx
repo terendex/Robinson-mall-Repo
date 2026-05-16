@@ -4,6 +4,8 @@ import CampaignModal from '../../components/CampaignModal';
 import CampaignDetailsModal from '../../components/CampaignDetailsModal';
 import NotificationContext from '../../context/NotificationContext';
 import Pagination from '../../components/Pagination';
+import ActionConfirmModal from '../../components/ActionConfirmModal';
+import SuccessModal from '../../components/SuccessModal';
 import Vouchers from './Vouchers';
 import '../../css/Campaigns.css';
 import '../../css/Transactions.css';
@@ -41,6 +43,21 @@ const Campaigns = () => {
   const statusFilterRef = useRef(null);
   const actionsRef = useRef(null);
   const { addNotification } = useContext(NotificationContext);
+
+  const [confirmConfig, setConfirmConfig] = useState({
+    show: false,
+    title: '',
+    message: '',
+    confirmText: '',
+    variant: 'primary',
+    onConfirm: () => {}
+  });
+
+  const [successConfig, setSuccessConfig] = useState({
+    show: false,
+    title: '',
+    message: ''
+  });
   
   useEffect(() => {
     fetchCampaigns();
@@ -130,10 +147,57 @@ const Campaigns = () => {
         addNotification({ title: response.data.name, message: 'has been created.', icon: 'fa-plus' });
       }
       setShowModal(false);
+      setSuccessConfig({
+        show: true,
+        title: campaignToEdit ? 'Campaign Updated!' : 'Campaign Created!',
+        message: `Campaign "${formData.name}" has been ${campaignToEdit ? 'updated' : 'launched'} successfully.`
+      });
     } catch (error) {
       console.error('Error saving campaign:', error);
-      alert('Error saving campaign.');
+      const errData = error.response?.data;
+      const msg = errData
+        ? Object.entries(errData).map(([key, val]) => `${key}: ${val}`).join('\n')
+        : 'Error saving campaign. Please try again.';
+      alert(msg);
     }
+  };
+
+  const requestSaveConfirm = (formData) => {
+    setConfirmConfig({
+      show: true,
+      title: campaignToEdit ? 'Confirm Edit' : 'Confirm Add',
+      message: `Are you sure you want to ${campaignToEdit ? 'update' : 'create'} this campaign?`,
+      confirmText: campaignToEdit ? 'Save Changes' : 'Create Campaign',
+      variant: 'success',
+      onConfirm: () => handleSaveCampaign(formData)
+    });
+  };
+
+  const handleDeleteCampaign = async (campaign) => {
+    try {
+      await axios.delete(`${BASE}/api/campaigns/${campaign.id}/`);
+      setCampaigns(prev => prev.filter(c => c.id !== campaign.id));
+      setSuccessConfig({
+        show: true,
+        title: 'Deleted!',
+        message: `Campaign "${campaign.name}" has been removed successfully.`
+      });
+    } catch (error) {
+      console.error('Error deleting campaign:', error);
+      alert('Failed to delete campaign.');
+    }
+  };
+
+  const requestDeleteConfirm = (campaign) => {
+    setActiveActions(null);
+    setConfirmConfig({
+      show: true,
+      title: 'Delete Campaign',
+      message: `Are you sure you want to delete "${campaign.name}"? All associated data will be permanently removed.`,
+      confirmText: 'Delete',
+      variant: 'danger',
+      onConfirm: () => handleDeleteCampaign(campaign)
+    });
   };
 
   const handleFilterToggle = (status) => {
@@ -345,6 +409,14 @@ const Campaigns = () => {
                               <button onClick={() => { handleEditCampaign(campaign); setActiveActions(null); }}>
                                 <i className="fa-regular fa-pen-to-square"></i> Edit Campaign Details
                               </button>
+                              <div className="txn-action-divider"></div>
+                              <button 
+                                className="txn-action-item txn-action-reject" 
+                                onClick={() => requestDeleteConfirm(campaign)}
+                                style={{ color: '#c40000' }}
+                              >
+                                <i className="fa-solid fa-trash"></i> Delete Campaign
+                              </button>
                             </div>
                           )}
                         </td>
@@ -376,8 +448,18 @@ const Campaigns = () => {
       <CampaignModal
         show={showModal}
         onClose={() => setShowModal(false)}
-        onSave={handleSaveCampaign}
+        onSave={requestSaveConfirm}
         campaignToEdit={campaignToEdit}
+      />
+
+      <ActionConfirmModal 
+        {...confirmConfig}
+        onClose={() => setConfirmConfig(p => ({ ...p, show: false }))}
+      />
+
+      <SuccessModal 
+        {...successConfig}
+        onClose={() => setSuccessConfig(p => ({ ...p, show: false }))}
       />
 
       <CampaignDetailsModal

@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import Pagination from '../../components/Pagination';
+import ActionConfirmModal from '../../components/ActionConfirmModal';
+import SuccessModal from '../../components/SuccessModal';
 import '../../css/Shops.css';
 
 // BUG-01 FIX: Use environment variable instead of hardcoded localhost URL
@@ -22,6 +24,21 @@ const Shops = () => {
   const [activeMenu, setActiveMenu]     = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [currentPage, setCurrentPage]   = useState(1);
+  
+  // Confirmation Modal State
+  const [confirmConfig, setConfirmConfig] = useState({
+    show: false,
+    title: '',
+    message: '',
+    confirmText: '',
+    variant: 'primary',
+    onConfirm: () => {}
+  });
+  const [successConfig, setSuccessConfig] = useState({
+    show: false,
+    title: '',
+    message: ''
+  });
   const menuRef = useRef(null);
 
   const [form, setForm] = useState({ name: '', location: '' });
@@ -82,6 +99,11 @@ const Shops = () => {
         setStores(prev => [data, ...prev]);
       }
       setShowModal(false);
+      setSuccessConfig({
+        show: true,
+        title: storeToEdit ? 'Updated!' : 'Created!',
+        message: `Store "${form.name}" has been ${storeToEdit ? 'updated' : 'added'} successfully.`
+      });
     } catch (err) {
       const msg = err.response?.data?.name?.[0] || err.response?.data?.detail || 'Failed to save store.';
       setFormError(msg);
@@ -90,16 +112,45 @@ const Shops = () => {
     }
   };
 
-  const handleDelete = async () => {
-    if (!deleteTarget) return;
+  const requestSaveConfirm = (e) => {
+    e.preventDefault();
+    if (!form.name.trim()) { setFormError('Store name is required.'); return; }
+    
+    setConfirmConfig({
+      show: true,
+      title: storeToEdit ? 'Confirm Edit' : 'Confirm Add',
+      message: `Are you sure you want to ${storeToEdit ? 'update' : 'add'} this store?`,
+      confirmText: storeToEdit ? 'Save Changes' : 'Create Store',
+      variant: 'success',
+      onConfirm: () => handleSave(e)
+    });
+  };
+
+  const handleDelete = async (store) => {
     try {
-      await axios.delete(`${BASE}/api/stores/${deleteTarget.id}/`);
-      setStores(prev => prev.filter(s => s.id !== deleteTarget.id));
+      await axios.delete(`${BASE}/api/stores/${store.id}/`);
+      setStores(prev => prev.filter(s => s.id !== store.id));
+      setSuccessConfig({
+        show: true,
+        title: 'Deleted!',
+        message: `Store "${store.name}" has been removed.`
+      });
     } catch (err) {
+      console.error('Failed to delete store:', err);
       alert('Failed to delete store.');
-    } finally {
-      setDeleteTarget(null);
     }
+  };
+
+  const requestDeleteConfirm = (store) => {
+    setActiveMenu(null);
+    setConfirmConfig({
+      show: true,
+      title: 'Delete Store',
+      message: `Are you sure you want to delete "${store.name}"? This action cannot be undone and will affect associated vouchers.`,
+      confirmText: 'Delete',
+      variant: 'danger',
+      onConfirm: () => handleDelete(store)
+    });
   };
 
   const filtered = stores.filter(s =>
@@ -212,7 +263,7 @@ const Shops = () => {
                               <div className="shop-action-divider"></div>
                               <button
                                 className="shop-action-item delete"
-                                onClick={() => { setDeleteTarget(store); setActiveMenu(null); }}
+                                onClick={() => requestDeleteConfirm(store)}
                               >
                                 <i className="fa-solid fa-trash"></i> Delete
                               </button>
@@ -251,7 +302,7 @@ const Shops = () => {
               <h2>{storeToEdit ? 'Edit Store' : 'Add New Store'}</h2>
               <button className="close-x" onClick={() => setShowModal(false)}>&times;</button>
             </div>
-            <form onSubmit={handleSave} style={{ padding: '1.25rem 1.5rem 1.5rem' }}>
+            <form onSubmit={requestSaveConfirm} style={{ padding: '1.25rem 1.5rem 1.5rem' }}>
               {formError && (
                 <div style={{
                   padding: '0.6rem 0.9rem',
@@ -298,35 +349,17 @@ const Shops = () => {
         </div>
       )}
 
-      {/* ── Delete Confirm Modal ── */}
-      {deleteTarget && (
-        <div className="modal-overlay">
-          <div className="modal-content" style={{ maxWidth: 400 }}>
-            <div className="modal-header">
-              <h2>Delete Store</h2>
-              <button className="close-x" onClick={() => setDeleteTarget(null)}>&times;</button>
-            </div>
-            <div style={{ padding: '1.25rem 1.5rem' }}>
-              <p style={{ margin: '0 0 0.5rem', color: '#334155' }}>
-                Are you sure you want to delete <strong>"{deleteTarget.name}"</strong>?
-              </p>
-              <p style={{ margin: 0, fontSize: '0.83rem', color: '#94a3b8' }}>
-                This will unlink it from any associated vouchers and transactions.
-              </p>
-            </div>
-            <div className="modal-actions" style={{ padding: '0 1.5rem 1.25rem' }}>
-              <button className="cancel-inner-btn" onClick={() => setDeleteTarget(null)}>Cancel</button>
-              <button
-                className="save-btn"
-                style={{ background: '#c40000' }}
-                onClick={handleDelete}
-              >
-                <i className="fa-solid fa-trash"></i> Delete
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* ── Action Confirm Modal ── */}
+      <ActionConfirmModal 
+        {...confirmConfig}
+        onClose={() => setConfirmConfig(p => ({ ...p, show: false }))}
+      />
+
+      {/* ── Success Modal ── */}
+      <SuccessModal 
+        {...successConfig}
+        onClose={() => setSuccessConfig(p => ({ ...p, show: false }))}
+      />
     </div>
   );
 };

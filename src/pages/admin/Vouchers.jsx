@@ -3,6 +3,8 @@ import axios from 'axios';
 import VoucherModal from '../../components/VoucherModal';
 import Pagination from '../../components/Pagination';
 import RedeemVoucherPanel from '../../components/RedeemVoucherPanel';
+import ActionConfirmModal from '../../components/ActionConfirmModal';
+import SuccessModal from '../../components/SuccessModal';
 import '../../css/Vouchers.css';
 
 // BUG-01 FIX: Use environment variable instead of hardcoded localhost URL
@@ -38,9 +40,22 @@ const Vouchers = () => {
   const [viewOnly, setViewOnly] = useState(false);
   const [activeActions, setActiveActions] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
-  const actionsRef = useRef(null);
-  const [isStatusDropdownOpen, setIsStatusDropdownOpen] = useState(false);
   const statusFilterRef = useRef(null);
+
+  const [confirmConfig, setConfirmConfig] = useState({
+    show: false,
+    title: '',
+    message: '',
+    confirmText: '',
+    variant: 'primary',
+    onConfirm: () => {}
+  });
+
+  const [successConfig, setSuccessConfig] = useState({
+    show: false,
+    title: '',
+    message: ''
+  });
 
   useEffect(() => {
     fetchVouchers();
@@ -90,14 +105,30 @@ const Vouchers = () => {
   };
 
   const handleDeleteVoucher = async (id) => {
-    if (window.confirm('Are you sure you want to delete this voucher?')) {
-      try {
-        await axios.delete(`${BASE}/api/vouchers/${id}/`);
-        setVouchers(vouchers.filter(v => v.id !== id));
-      } catch (error) {
-        console.error('Error deleting voucher:', error);
-      }
+    try {
+      await axios.delete(`${BASE}/api/vouchers/${id}/`);
+      setVouchers(vouchers.filter(v => v.id !== id));
+      setSuccessConfig({
+        show: true,
+        title: 'Deleted!',
+        message: 'The voucher has been removed successfully.'
+      });
+    } catch (error) {
+      console.error('Error deleting voucher:', error);
+      alert('Failed to delete voucher.');
     }
+  };
+
+  const requestDeleteConfirm = (voucher) => {
+    setActiveActions(null);
+    setConfirmConfig({
+      show: true,
+      title: 'Delete Voucher',
+      message: `Are you sure you want to delete "${voucher.name}"? This action cannot be undone.`,
+      confirmText: 'Delete',
+      variant: 'danger',
+      onConfirm: () => handleDeleteVoucher(voucher.id)
+    });
   };
 
   const handleSaveVoucher = async (formData) => {
@@ -110,10 +141,26 @@ const Vouchers = () => {
         setVouchers([response.data, ...vouchers]);
       }
       setShowModal(false);
+      setSuccessConfig({
+        show: true,
+        title: voucherToEdit ? 'Updated!' : 'Created!',
+        message: `Voucher "${formData.name}" has been ${voucherToEdit ? 'updated' : 'created'} successfully.`
+      });
     } catch (error) {
       console.error('Error saving voucher:', error);
       alert('Error saving voucher. Please check if code is unique.');
     }
+  };
+
+  const requestSaveConfirm = (formData) => {
+    setConfirmConfig({
+      show: true,
+      title: voucherToEdit ? 'Confirm Edit' : 'Confirm Add',
+      message: `Are you sure you want to ${voucherToEdit ? 'update' : 'create'} this voucher?`,
+      confirmText: voucherToEdit ? 'Save Changes' : 'Create Voucher',
+      variant: 'success',
+      onConfirm: () => handleSaveVoucher(formData)
+    });
   };
 
   const toggleVoucherStatus = async (voucher) => {
@@ -123,9 +170,27 @@ const Vouchers = () => {
       });
       setVouchers(vouchers.map(v => v.id === voucher.id ? response.data : v));
       setActiveActions(null);
+      setSuccessConfig({
+        show: true,
+        title: response.data.is_active ? 'Activated!' : 'Disabled!',
+        message: `Voucher "${voucher.name}" is now ${response.data.is_active ? 'active' : 'inactive'}.`
+      });
     } catch (error) {
       console.error('Error toggling voucher status:', error);
+      alert('Failed to update voucher status.');
     }
+  };
+
+  const requestToggleStatusConfirm = (voucher) => {
+    setActiveActions(null);
+    setConfirmConfig({
+      show: true,
+      title: voucher.is_active ? 'Disable Voucher' : 'Activate Voucher',
+      message: `Are you sure you want to ${voucher.is_active ? 'disable' : 'activate'} "${voucher.name}"?`,
+      confirmText: voucher.is_active ? 'Disable' : 'Activate',
+      variant: voucher.is_active ? 'danger' : 'success',
+      onConfirm: () => toggleVoucherStatus(voucher)
+    });
   };
 
   const filteredVouchers = useMemo(() => {
@@ -290,8 +355,11 @@ const Vouchers = () => {
                               <button onClick={() => handleEditVoucher(voucher)}>
                                 <i className="fa-solid fa-pen-to-square"></i> Edit
                               </button>
-                              <button onClick={() => toggleVoucherStatus(voucher)}>
+                              <button onClick={() => requestToggleStatusConfirm(voucher)}>
                                 <i className={`fa-solid ${voucher.is_active ? 'fa-ban' : 'fa-check'}`}></i> {voucher.is_active ? 'Disable' : 'Activate'}
+                              </button>
+                              <button onClick={() => requestDeleteConfirm(voucher)} style={{ color: '#dc2626' }}>
+                                <i className="fa-solid fa-trash"></i> Delete
                               </button>
                             </div>
                           )}
@@ -324,9 +392,19 @@ const Vouchers = () => {
       <VoucherModal 
         show={showModal}
         onClose={() => { setShowModal(false); setViewOnly(false); }}
-        onSave={handleSaveVoucher}
+        onSave={requestSaveConfirm}
         voucherToEdit={voucherToEdit}
         readOnly={viewOnly}
+      />
+
+      <ActionConfirmModal 
+        {...confirmConfig}
+        onClose={() => setConfirmConfig(p => ({ ...p, show: false }))}
+      />
+
+      <SuccessModal 
+        {...successConfig}
+        onClose={() => setSuccessConfig(p => ({ ...p, show: false }))}
       />
     </div>
   );

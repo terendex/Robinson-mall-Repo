@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { FaEye, FaEyeSlash, FaCheck, FaTimes } from 'react-icons/fa';
 import axios from 'axios';
+import ActionConfirmModal from './ActionConfirmModal';
+import SuccessModal from './SuccessModal';
 import '../css/Settings.css';
 
 /**
@@ -51,6 +53,21 @@ const SettingsPage = () => {
     sms_notifications:   false,
   });
 
+  const [confirmConfig, setConfirmConfig] = useState({
+    show: false,
+    title: '',
+    message: '',
+    confirmText: '',
+    variant: 'primary',
+    onConfirm: () => {}
+  });
+
+  const [successConfig, setSuccessConfig] = useState({
+    show: false,
+    title: '',
+    message: ''
+  });
+
   // Load full profile from API on mount
   useEffect(() => {
     axios.get(`${import.meta.env.VITE_API_URL}/api/users/me/`)
@@ -96,13 +113,29 @@ const SettingsPage = () => {
       });
       const updated = { ...storedUser, ...res.data };
       localStorage.setItem('user', JSON.stringify(updated));
-      setProfileStatus({ type: 'success', msg: 'Profile updated successfully.' });
+      setSuccessConfig({
+        show: true,
+        title: 'Profile Updated!',
+        message: 'Your profile information has been saved successfully.'
+      });
     } catch (err) {
       const detail = err.response?.data?.detail || 'Failed to save changes.';
       setProfileStatus({ type: 'error', msg: detail });
     } finally {
       setProfileSaving(false);
     }
+  };
+
+  const requestProfileSaveConfirm = (e) => {
+    e.preventDefault();
+    setConfirmConfig({
+      show: true,
+      title: 'Save Profile Changes',
+      message: 'Are you sure you want to update your profile information?',
+      confirmText: 'Save Changes',
+      variant: 'success',
+      onConfirm: () => handleProfileSave(e)
+    });
   };
 
   // ── Save password ──
@@ -127,13 +160,38 @@ const SettingsPage = () => {
         new_password: security.new_password,
       });
       setSecurity({ current_password: '', new_password: '', confirm_password: '' });
-      setSecurityStatus({ type: 'success', msg: 'Password updated successfully.' });
+      setSuccessConfig({
+        show: true,
+        title: 'Security Updated!',
+        message: 'Your password has been changed successfully.'
+      });
     } catch (err) {
       const detail = err.response?.data?.detail || 'Failed to update password.';
       setSecurityStatus({ type: 'error', msg: detail });
     } finally {
       setSecuritySaving(false);
     }
+  };
+
+  const requestPasswordSaveConfirm = (e) => {
+    e.preventDefault();
+    if (!allRulesPassed) {
+      setSecurityStatus({ type: 'error', msg: 'New password does not meet the required criteria.' });
+      return;
+    }
+    if (security.new_password !== security.confirm_password) {
+      setSecurityStatus({ type: 'error', msg: 'New passwords do not match.' });
+      return;
+    }
+
+    setConfirmConfig({
+      show: true,
+      title: 'Update Password',
+      message: 'Are you sure you want to change your password? You will need to use the new password for your next login.',
+      confirmText: 'Update Password',
+      variant: 'danger',
+      onConfirm: () => handlePasswordSave(e)
+    });
   };
 
   const roleLabel = {
@@ -194,7 +252,7 @@ const SettingsPage = () => {
                   </div>
                 </div>
 
-                <form className="settings-form" onSubmit={handleProfileSave}>
+                <form className="settings-form" onSubmit={requestProfileSaveConfirm}>
                   <div className="form-row">
                     <div className="form-group">
                       <label>First Name</label>
@@ -291,7 +349,7 @@ const SettingsPage = () => {
                   </div>
                 </div>
 
-                <form className="settings-form" onSubmit={handlePasswordSave}>
+                <form className="settings-form" onSubmit={requestPasswordSaveConfirm}>
                   {/* Current Password */}
                   <div className="form-group">
                     <label>Current Password</label>
@@ -458,6 +516,16 @@ const SettingsPage = () => {
           </div>
         </div>
       </div>
+
+      <ActionConfirmModal 
+        {...confirmConfig}
+        onClose={() => setConfirmConfig(p => ({ ...p, show: false }))}
+      />
+
+      <SuccessModal 
+        {...successConfig}
+        onClose={() => setSuccessConfig(p => ({ ...p, show: false }))}
+      />
     </div>
   );
 };

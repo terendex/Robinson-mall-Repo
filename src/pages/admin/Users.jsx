@@ -3,6 +3,8 @@ import axios from 'axios';
 import UserModal from '../../components/UserModal';
 import ResetPasswordModal from '../../components/ResetPasswordModal';
 import Pagination from '../../components/Pagination';
+import ActionConfirmModal from '../../components/ActionConfirmModal';
+import SuccessModal from '../../components/SuccessModal';
 import '../../css/Users.css';
 import '../../css/Transactions.css';
 
@@ -22,8 +24,23 @@ const Users = () => {
   const [showModal, setShowModal] = useState(false);
   const [userToEdit, setUserToEdit] = useState(null);
   const [activeActions, setActiveActions] = useState(null);
-  const [currentPage, setCurrentPage] = useState(1);
+  const [currentPage, setCurrentPage]   = useState(1);
   const actionsRef = useRef(null);
+
+  const [confirmConfig, setConfirmConfig] = useState({
+    show: false,
+    title: '',
+    message: '',
+    confirmText: '',
+    variant: 'primary',
+    onConfirm: () => {}
+  });
+
+  const [successConfig, setSuccessConfig] = useState({
+    show: false,
+    title: '',
+    message: ''
+  });
 
   useEffect(() => {
     fetchUsers();
@@ -91,11 +108,28 @@ const Users = () => {
         localStorage.removeItem('accessToken');
         localStorage.removeItem('refreshToken');
         window.location.href = '/login';
+      } else {
+        setSuccessConfig({
+          show: true,
+          title: userToEdit ? 'User Updated!' : 'User Created!',
+          message: `The account for ${formData.username} has been ${userToEdit ? 'updated' : 'created'} successfully.`
+        });
       }
     } catch (error) {
       console.error('Error saving user:', error);
       alert('Error saving user. Please check if username/email already exists.');
     }
+  };
+
+  const requestSaveUserConfirm = (formData) => {
+    setConfirmConfig({
+      show: true,
+      title: userToEdit ? 'Confirm Edit' : 'Confirm Add',
+      message: `Are you sure you want to ${userToEdit ? 'update' : 'create'} this user account?`,
+      confirmText: userToEdit ? 'Save Changes' : 'Create User',
+      variant: 'success',
+      onConfirm: () => handleSaveUser(formData)
+    });
   };
 
   const toggleUserActive = async (user) => {
@@ -105,10 +139,54 @@ const Users = () => {
       });
       setUsers(users.map(u => u.id === user.id ? response.data : u));
       setActiveActions(null);
+      setSuccessConfig({
+        show: true,
+        title: response.data.is_active ? 'Account Enabled' : 'Account Disabled',
+        message: `The user account for ${user.username} is now ${response.data.is_active ? 'active' : 'inactive'}.`
+      });
     } catch (error) {
       console.error('Error toggling user status:', error);
       alert('Failed to update user status.');
     }
+  };
+
+  const handleDeleteUser = async (user) => {
+    try {
+      await axios.delete(`${BASE}/api/users/${user.id}/`);
+      setUsers(prev => prev.filter(u => u.id !== user.id));
+      setSuccessConfig({
+        show: true,
+        title: 'User Deleted',
+        message: `The account for ${user.username} has been permanently removed.`
+      });
+    } catch (error) {
+      console.error('Error deleting user:', error);
+      alert('Failed to delete user.');
+    }
+  };
+
+  const requestDeleteConfirm = (user) => {
+    setActiveActions(null);
+    setConfirmConfig({
+      show: true,
+      title: 'Delete User Account',
+      message: `Are you sure you want to permanently delete the account for "${user.username}"? This action cannot be undone.`,
+      confirmText: 'Delete Account',
+      variant: 'danger',
+      onConfirm: () => handleDeleteUser(user)
+    });
+  };
+
+  const requestToggleActiveConfirm = (user) => {
+    setActiveActions(null);
+    setConfirmConfig({
+      show: true,
+      title: user.is_active ? 'Disable Account' : 'Enable Account',
+      message: `Are you sure you want to ${user.is_active ? 'disable' : 'enable'} the account for ${user.username}?`,
+      confirmText: user.is_active ? 'Disable' : 'Enable',
+      variant: user.is_active ? 'danger' : 'success',
+      onConfirm: () => toggleUserActive(user)
+    });
   };
 
   // ISSUE-14 FIX: Remove setCurrentPage side-effect from useMemo
@@ -267,9 +345,16 @@ const Users = () => {
                             <button onClick={() => handleEditUser(user)}>
                               <i className="fa-solid fa-pen-to-square"></i> Edit
                             </button>
-                            <button onClick={() => toggleUserActive(user)}>
+                            <button onClick={() => requestToggleActiveConfirm(user)}>
                               <i className={`fa-solid ${user.is_active ? 'fa-user-slash' : 'fa-user-check'}`}></i> 
                               {user.is_active ? 'Disable Account' : 'Enable Account'}
+                            </button>
+                            <div className="action-divider"></div>
+                            <button 
+                              onClick={() => requestDeleteConfirm(user)}
+                              style={{ color: '#c40000' }}
+                            >
+                              <i className="fa-solid fa-trash-can"></i> Delete Account
                             </button>
                           </div>
                         )}
@@ -301,7 +386,17 @@ const Users = () => {
         show={showModal} 
         userToEdit={userToEdit}
         onClose={() => setShowModal(false)} 
-        onSave={handleSaveUser} 
+        onSave={requestSaveUserConfirm} 
+      />
+
+      <ActionConfirmModal 
+        {...confirmConfig}
+        onClose={() => setConfirmConfig(p => ({ ...p, show: false }))}
+      />
+
+      <SuccessModal 
+        {...successConfig}
+        onClose={() => setSuccessConfig(p => ({ ...p, show: false }))}
       />
     </div>
   );

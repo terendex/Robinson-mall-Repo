@@ -4,6 +4,8 @@ import TransactionDetailsModal from '../../components/Transactiondetailsmodal';
 import TransactionModal from '../../components/Transactionmodal';
 import { exportCSV, exportExcel, buildTransactionRows } from '../../utils/exportUtils';
 import Pagination from '../../components/Pagination';
+import ActionConfirmModal from '../../components/ActionConfirmModal';
+import SuccessModal from '../../components/SuccessModal';
 import '../../css/Transactions.css';
 
 // BUG-01 FIX: Use environment variable instead of hardcoded localhost URL
@@ -57,6 +59,21 @@ const Transactions = () => {
   // Row actions
   const [activeActions, setActiveActions] = useState(null);
   const [currentPage, setCurrentPage]     = useState(1);
+
+  const [confirmConfig, setConfirmConfig] = useState({
+    show: false,
+    title: '',
+    message: '',
+    confirmText: '',
+    variant: 'primary',
+    onConfirm: () => {}
+  });
+
+  const [successConfig, setSuccessConfig] = useState({
+    show: false,
+    title: '',
+    message: ''
+  });
 
 
   // Reject-reason inline modal state
@@ -117,6 +134,11 @@ const Transactions = () => {
       }
       setShowFormModal(false);
       setTransactionToEdit(null);
+      setSuccessConfig({
+        show: true,
+        title: transactionToEdit ? 'Updated!' : 'Created!',
+        message: `Transaction record has been ${transactionToEdit ? 'updated' : 'recorded'} successfully.`
+      });
     } catch (error) {
       console.error('Error saving transaction:', error);
       const errData = error.response?.data;
@@ -129,20 +151,46 @@ const Transactions = () => {
     }
   };
 
+  const requestSaveConfirm = (formData) => {
+    setConfirmConfig({
+      show: true,
+      title: transactionToEdit ? 'Confirm Edit' : 'Confirm Add',
+      message: `Are you sure you want to ${transactionToEdit ? 'update' : 'create'} this transaction record?`,
+      confirmText: transactionToEdit ? 'Save Changes' : 'Create Transaction',
+      variant: 'success',
+      onConfirm: () => handleSaveTransaction(formData)
+    });
+  };
+
   const handleDeleteTransaction = async (txnId) => {
-    if (!window.confirm('Are you sure you want to delete this transaction record? This action cannot be undone.')) return;
-    
     setStatusLoading(txnId);
     setActiveActions(null);
     try {
       await axios.delete(`${BASE}/api/transactions/${txnId}/`);
       setTransactions(prev => prev.filter(t => t.id !== txnId));
+      setSuccessConfig({
+        show: true,
+        title: 'Deleted!',
+        message: 'The transaction record has been removed.'
+      });
     } catch (err) {
       console.error('Error deleting transaction:', err);
       alert('Failed to delete transaction.');
     } finally {
       setStatusLoading(null);
     }
+  };
+
+  const requestDeleteConfirm = (txn) => {
+    setActiveActions(null);
+    setConfirmConfig({
+      show: true,
+      title: 'Delete Transaction',
+      message: `Are you sure you want to delete transaction ${txn.transaction_id}? This action cannot be undone.`,
+      confirmText: 'Delete',
+      variant: 'danger',
+      onConfirm: () => handleDeleteTransaction(txn.id)
+    });
   };
 
   // ── Status update helpers ──────────────────────────────────────────
@@ -155,12 +203,29 @@ const Transactions = () => {
         { status: 'Approved' }
       );
       setTransactions(prev => prev.map(t => t.id === txn.id ? response.data : t));
+      setSuccessConfig({
+        show: true,
+        title: 'Approved!',
+        message: `Transaction ${txn.transaction_id} has been approved.`
+      });
     } catch (err) {
       console.error('Error marking approved:', err);
       alert(err.response?.data?.detail || 'Failed to update status.');
     } finally {
       setStatusLoading(null);
     }
+  };
+
+  const requestApproveConfirm = (txn) => {
+    setActiveActions(null);
+    setConfirmConfig({
+      show: true,
+      title: 'Approve Transaction',
+      message: `Are you sure you want to approve transaction ${txn.transaction_id}?`,
+      confirmText: 'Approve',
+      variant: 'success',
+      onConfirm: () => markApproved(txn)
+    });
   };
 
   const openRejectModal = (txn) => {
@@ -183,6 +248,11 @@ const Transactions = () => {
         { status: 'Rejected', rejection_reason: rejectReason }
       );
       setTransactions(prev => prev.map(t => t.id === rejectTarget.id ? response.data : t));
+      setSuccessConfig({
+        show: true,
+        title: 'Rejected!',
+        message: `Transaction ${rejectTarget.transaction_id} has been rejected.`
+      });
     } catch (err) {
       console.error('Error rejecting transaction:', err);
       alert(err.response?.data?.rejection_reason || err.response?.data?.detail || 'Failed to reject.');
@@ -602,11 +672,11 @@ const Transactions = () => {
               <>
                 <div className="txn-action-divider"></div>
                 <button
-                  className="txn-action-item txn-action-redeem"
-                  onClick={() => markApproved(txn)}
-                >
-                  <i className="fa-solid fa-circle-check"></i> Mark as Approved
-                </button>
+                   className="txn-action-item txn-action-redeem"
+                   onClick={() => requestApproveConfirm(txn)}
+                 >
+                   <i className="fa-solid fa-circle-check"></i> Mark as Approved
+                 </button>
                 <button
                   className="txn-action-item txn-action-reject"
                   onClick={() => openRejectModal(txn)}
@@ -621,12 +691,12 @@ const Transactions = () => {
               <>
                 <div className="txn-action-divider"></div>
                 <button 
-                  className="txn-action-item txn-action-reject" 
-                  onClick={() => handleDeleteTransaction(txn.id)}
-                  style={{ color: '#c40000' }}
-                >
-                  <i className="fa-regular fa-trash-can"></i> Delete Transaction
-                </button>
+                   className="txn-action-item txn-action-reject" 
+                   onClick={() => requestDeleteConfirm(txn)}
+                   style={{ color: '#c40000' }}
+                 >
+                   <i className="fa-regular fa-trash-can"></i> Delete Transaction
+                 </button>
               </>
             )}
           </div>
@@ -701,8 +771,18 @@ const Transactions = () => {
       <TransactionModal
         show={showFormModal}
         onClose={() => { setShowFormModal(false); setTransactionToEdit(null); }}
-        onSave={handleSaveTransaction}
+        onSave={requestSaveConfirm}
         transactionToEdit={transactionToEdit}
+      />
+
+      <ActionConfirmModal 
+        {...confirmConfig}
+        onClose={() => setConfirmConfig(p => ({ ...p, show: false }))}
+      />
+
+      <SuccessModal 
+        {...successConfig}
+        onClose={() => setSuccessConfig(p => ({ ...p, show: false }))}
       />
     </div>
   );
