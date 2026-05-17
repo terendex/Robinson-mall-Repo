@@ -31,7 +31,15 @@ class UserViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAdmin]
 
     def get_queryset(self):
-        return User.objects.all().order_by('-date_joined')
+        user = self.request.user
+        qs = User.objects.all().order_by('-date_joined')
+        if not user.is_authenticated:
+            return qs.none()
+        if user.role == 'staff':
+            return qs.filter(role='customer')
+        elif user.role == 'manager':
+            return qs.exclude(role='admin')
+        return qs
 
     def get_permissions(self):
         if self.action in ['register', 'login']:
@@ -116,24 +124,10 @@ class UserViewSet(viewsets.ModelViewSet):
             'refresh': str(refresh),
         }, status=status.HTTP_200_OK)
     def perform_create(self, serializer):
-        """
-        BUG-03 FIX: When creating a new admin, save first then DEMOTE existing admins
-        to 'manager' instead of deleting them. This prevents data loss and avoids
-        a window where no admin exists.
-        """
-        role = self.request.data.get('role')
-        instance = serializer.save()
-        if role == 'admin':
-            User.objects.filter(role='admin').exclude(pk=instance.pk).update(role='manager')
+        serializer.save()
 
     def perform_update(self, serializer):
-        """
-        BUG-03 FIX: Same safe demotion pattern on promotion via update.
-        """
-        role = self.request.data.get('role')
-        instance = serializer.save()
-        if role == 'admin':
-            User.objects.filter(role='admin').exclude(pk=instance.pk).update(role='manager')
+        serializer.save()
 
     @action(detail=False, methods=['post'], permission_classes=[AllowAny])
     def register(self, request):
@@ -535,38 +529,43 @@ class ClaimViewSet(viewsets.ModelViewSet):
         user = self.request.user
         voucher = serializer.validated_data.get('voucher')
 
-        if voucher:
-            from rest_framework.exceptions import ValidationError
-            from django.db.models import F, Sum
-
-            # 1. One-per-user enforcement
-            target_user = user if user.role == 'customer' else serializer.validated_data.get('user', user)
-            if Claim.objects.filter(user=target_user, voucher=voucher).exists():
-                raise ValidationError("This user has already claimed this voucher.")
-
-            # 2. Voucher usage limit enforcement
-            if voucher.usage_count >= voucher.usage_limit:
-                raise ValidationError("This voucher has reached its maximum usage limit.")
-
-            # 3. Campaign budget enforcement
-            if voucher.campaign and voucher.campaign.budget > 0:
-                campaign = voucher.campaign
-                spent = Transaction.objects.filter(
-                    voucher_code__in=campaign.vouchers.values_list('code', flat=True),
-                    status='Approved'
-                ).aggregate(total=Sum('amount'))['total'] or 0
+        from django.db import transaction
+        with transaction.atomic():
+            if voucher:
+                from rest_framework.exceptions import ValidationError
+                from django.db.models import F, Sum
                 
-                if spent >= campaign.budget:
-                    raise ValidationError("This campaign's budget has been fully consumed.")
+                # Lock the voucher to prevent TOCTOU race conditions
+                voucher = Voucher.objects.select_for_update().get(pk=voucher.pk)
 
-            # Increment usage count
-            voucher.usage_count = F('usage_count') + 1
-            voucher.save(update_fields=['usage_count'])
+                # 1. One-per-user enforcement
+                target_user = user if user.role == 'customer' else serializer.validated_data.get('user', user)
+                if Claim.objects.filter(user=target_user, voucher=voucher).exists():
+                    raise ValidationError("This user has already claimed this voucher.")
 
-        if user.role == 'customer':
-            serializer.save(user=user)
-        else:
-            serializer.save()
+                # 2. Voucher usage limit enforcement
+                if voucher.usage_count >= voucher.usage_limit:
+                    raise ValidationError("This voucher has reached its maximum usage limit.")
+
+                # 3. Campaign budget enforcement
+                if voucher.campaign and voucher.campaign.budget > 0:
+                    campaign = voucher.campaign
+                    spent = Transaction.objects.filter(
+                        voucher_code__in=campaign.vouchers.values_list('code', flat=True),
+                        status='Approved'
+                    ).aggregate(total=Sum('amount'))['total'] or 0
+                    
+                    if spent >= campaign.budget:
+                        raise ValidationError("This campaign's budget has been fully consumed.")
+
+                # Increment usage count
+                voucher.usage_count = F('usage_count') + 1
+                voucher.save(update_fields=['usage_count'])
+
+            if user.role == 'customer':
+                serializer.save(user=user, amount=0)
+            else:
+                serializer.save()
 
     @action(detail=False, methods=['get'], permission_classes=[IsAuthenticated])
     def lookup(self, request):
@@ -604,11 +603,16 @@ class ClaimViewSet(viewsets.ModelViewSet):
         if user.role not in ['admin', 'manager', 'staff']:
             return Response({'detail': 'Not authorised.'}, status=403)
 
-        claim = self.get_object()
         action_type = request.data.get('action', 'approve')  # 'approve' or 'reject'
 
         from django.db import transaction
         with transaction.atomic():
+            # Lock the claim to prevent concurrent redemptions
+            claim = Claim.objects.select_for_update().get(pk=pk)
+            
+            if claim.status != 'Pending':
+                return Response({'detail': f'This claim has already been processed ({claim.status}).'}, status=400)
+
             if action_type == 'reject':
                 claim.status = 'Rejected'
                 claim.save(update_fields=['status', 'updated_at'])
@@ -633,13 +637,25 @@ class ClaimViewSet(viewsets.ModelViewSet):
                     rejection_reason=request.data.get('rejection_reason', 'Claim rejected by staff.')
                 )
             else:
-                if claim.status == 'Approved':
-                    return Response({'detail': 'This voucher has already been claimed.'}, status=400)
-                
                 # Enforce unique receipt validation before approving
-                if claim.receipt_no and Transaction.objects.filter(receipt_no=claim.receipt_no).exists():
-                    return Response({'detail': 'A transaction with this SI number already exists. Possible duplicate claim.'}, status=400)
+                if claim.receipt_no and Transaction.objects.filter(receipt_no=claim.receipt_no, store=claim.store).exists():
+                    return Response({'detail': 'A transaction with this SI number already exists for this store. Possible duplicate claim.'}, status=400)
+                
+                # Campaign budget enforcement at time of approval
+                if claim.voucher and claim.voucher.campaign and claim.voucher.campaign.budget > 0:
+                    campaign = Campaign.objects.select_for_update().get(pk=claim.voucher.campaign.pk)
+                    spent = Transaction.objects.filter(
+                        voucher_code__in=campaign.vouchers.values_list('code', flat=True),
+                        status='Approved'
+                    ).aggregate(total=Sum('amount'))['total'] or 0
                     
+                    claim_amount = claim.amount or 0
+                    if (spent + claim_amount) > campaign.budget:
+                        return Response(
+                            {'detail': f"Approving this claim ({claim_amount}) would exceed the campaign budget (Remaining: {max(0, campaign.budget - spent)})."},
+                            status=400
+                        )
+
                 claim.status = 'Approved'
                 claim.save(update_fields=['status', 'updated_at'])
                 # Generate atomic success transaction
@@ -668,8 +684,7 @@ class NotificationViewSet(viewsets.ModelViewSet):
         return super().get_permissions()
 
     def perform_create(self, serializer):
-        # Admin UI triggers these via context, bind to themselves
-        serializer.save(user=self.request.user)
+        serializer.save()
 
     def get_queryset(self):
         """
@@ -797,10 +812,32 @@ class TransactionViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        transaction.status = new_status
-        if new_status == 'Rejected':
-            transaction.rejection_reason = rejection_reason
-        transaction.save(update_fields=['status', 'rejection_reason', 'updated_at'])
+        from django.db import transaction as db_transaction
+        with db_transaction.atomic():
+            # Lock transaction
+            transaction = Transaction.objects.select_for_update().get(pk=transaction.pk)
+            old_status = transaction.status
+            
+            if old_status == 'Approved' and new_status == 'Rejected':
+                # Sync claim status and voucher usage
+                from django.db.models import F
+                claim_qs = Claim.objects.filter(receipt_no=transaction.receipt_no, store=transaction.store)
+                if transaction.user:
+                    claim_qs = claim_qs.filter(user=transaction.user)
+                claim = claim_qs.first()
+                
+                if claim and claim.status == 'Approved':
+                    claim.status = 'Rejected'
+                    claim.save(update_fields=['status', 'updated_at'])
+                    
+                    if claim.voucher:
+                        claim.voucher.usage_count = F('usage_count') - 1
+                        claim.voucher.save(update_fields=['usage_count'])
+                        
+            transaction.status = new_status
+            if new_status == 'Rejected':
+                transaction.rejection_reason = rejection_reason
+            transaction.save(update_fields=['status', 'rejection_reason', 'updated_at'])
 
         serializer = self.get_serializer(transaction)
         return Response(serializer.data)
