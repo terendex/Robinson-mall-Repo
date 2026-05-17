@@ -261,7 +261,10 @@ const Shops = () => {
                           <span className="vouchers-badge">{store.voucher_count ?? 0} Vouchers</span>
                         </td>
                         <td>
-                          {store.created_at ? new Date(store.created_at).toISOString().split('T')[0] : '—'}
+                          {store.created_at ? (() => {
+                            const d = new Date(store.created_at);
+                            return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+                          })() : '—'}
                         </td>
                         <td
                           className="shop-actions-cell"

@@ -216,7 +216,8 @@ const TransactionModal = ({ show, onClose, onSave, transactionToEdit }) => {
     if (transactionToEdit) {
       const toDatetimeLocal = (str) => {
         if (!str) return '';
-        return new Date(str).toISOString().slice(0, 16);
+        const d = new Date(str);
+        return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
       };
       setFormData({
         receipt_no: transactionToEdit.receipt_no  || '',
@@ -253,7 +254,8 @@ const TransactionModal = ({ show, onClose, onSave, transactionToEdit }) => {
     // For EDIT: compare current state vs initial transactionToEdit values
     const toDatetimeLocal = (str) => {
       if (!str) return '';
-      return new Date(str).toISOString().slice(0, 16);
+      const d = new Date(str);
+      return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
     };
     return (
       formData.receipt_no !== (transactionToEdit.receipt_no || '') ||

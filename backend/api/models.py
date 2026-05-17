@@ -146,7 +146,7 @@ class Claim(models.Model):
     )
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='claims', null=True, blank=True)
     voucher = models.ForeignKey(Voucher, on_delete=models.CASCADE, related_name='claims', null=True, blank=True)
-    store = models.ForeignKey(Store, on_delete=models.CASCADE, related_name='claims', null=True, blank=True)
+    store = models.ForeignKey(Store, on_delete=models.SET_NULL, related_name='claims', null=True, blank=True)
     receipt_no = models.CharField(max_length=100, default='', blank=True, null=True)
     amount = models.DecimalField(max_digits=10, decimal_places=2, default=0, blank=True, null=True)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='Pending', blank=True, null=True)
@@ -334,15 +334,9 @@ def user_saved(sender, instance, created, **kwargs):
                 n_type='info'
             )
     else:
-        # BUG-LOGIC FIX: Skip "Account Updated" notification if ONLY last_login changed (login event)
-        update_fields = kwargs.get('update_fields')
-        if update_fields and list(update_fields) == ['last_login']:
-            return
-
-        notify_management(
-            title="Account Updated",
-            message=f"The account details for {instance.email} ({instance.role}) were modified."
-        )
+        # BUG-LOGIC FIX: Skip "Account Updated" notification on every profile save
+        # to prevent spamming the database with alerts.
+        pass
 
 @receiver(post_delete, sender=User)
 def user_deleted(sender, instance, **kwargs):
@@ -367,8 +361,18 @@ def claim_saved(sender, instance, created, **kwargs):
             user=instance.user,
             title="Claim Received",
             message=f"Your claim for {instance.voucher.name} is now pending review.",
-            notification_type='success'
+            notification_type='info'
         )
+    else:
+        # Only notify customer if status is processed.
+        # Note: If the claim is re-saved, it might send another, but claims are rarely re-saved after processing.
+        if instance.status in ['Approved', 'Rejected']:
+            Notification.objects.create(
+                user=instance.user,
+                title=f"Claim {instance.status}",
+                message=f"Your claim for {instance.voucher.name} has been {instance.status.lower()}.",
+                notification_type='success' if instance.status == 'Approved' else 'error'
+            )
 
 @receiver(post_save, sender=Transaction)
 def transaction_saved(sender, instance, created, **kwargs):

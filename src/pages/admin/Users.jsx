@@ -413,7 +413,12 @@ const Users = () => {
                           {getRoleLabel(user.role)}
                         </span>
                       </td>
-                      <td>{new Date(user.date_joined || Date.now()).toISOString().split('T')[0]}</td>
+                      <td>
+                        {(() => {
+                          const d = new Date(user.date_joined || Date.now());
+                          return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+                        })()}
+                      </td>
                       <td>
                         <span className={`status-pill ${user.is_active ? 'active' : 'pending'}`}>
                           {user.is_active ? 'Active' : 'Disabled'}

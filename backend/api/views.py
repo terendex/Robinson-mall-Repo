@@ -52,10 +52,11 @@ class UserViewSet(viewsets.ModelViewSet):
 
         # PATCH — partial update
         data = request.data.copy()
-        # Prevent role escalation
+        # Prevent role escalation and direct password modification
         data.pop('role', None)
         data.pop('is_staff', None)
         data.pop('is_superuser', None)
+        data.pop('password', None)
 
         # Handle password change separately
         old_password = data.pop('old_password', None)
@@ -83,6 +84,13 @@ class UserViewSet(viewsets.ModelViewSet):
                 return Response({'detail': 'Password must contain at least one number.'}, status=status.HTTP_400_BAD_REQUEST)
             if not re.search(r'[!@#$%^&*(),.?":{}|<>]', new_password):
                 return Response({'detail': 'Password must contain at least one special character.'}, status=status.HTTP_400_BAD_REQUEST)
+
+            from django.contrib.auth.password_validation import validate_password
+            from django.core.exceptions import ValidationError
+            try:
+                validate_password(new_password, user=user)
+            except ValidationError as e:
+                return Response({'detail': ' '.join(e.messages)}, status=status.HTTP_400_BAD_REQUEST)
 
             user.set_password(new_password)
             user.save(update_fields=['password'])
@@ -136,6 +144,7 @@ class UserViewSet(viewsets.ModelViewSet):
         data['role'] = 'customer'
         data.pop('is_staff', None)
         data.pop('is_superuser', None)
+        data.pop('is_active', None)
         
         serializer = self.get_serializer(data=data)
         if serializer.is_valid():
@@ -349,6 +358,13 @@ class PasswordResetView(views.APIView):
         if not re.search(r'[!@#$%^&*(),.?":{}|<>]', password):
             return Response({'detail': 'Password must contain at least one special character.'}, status=status.HTTP_400_BAD_REQUEST)
 
+        from django.contrib.auth.password_validation import validate_password
+        from django.core.exceptions import ValidationError
+        try:
+            validate_password(password, user=user)
+        except ValidationError as e:
+            return Response({'detail': ' '.join(e.messages)}, status=status.HTTP_400_BAD_REQUEST)
+
         user.set_password(password)
         user.save()
 
@@ -397,10 +413,18 @@ class CampaignViewSet(viewsets.ModelViewSet):
         start_date = serializer.validated_data.get('start_date')
         today = timezone.localtime().date()
 
+        end_date = serializer.validated_data.get('end_date')
+
         if start_date and start_date < today:
             from rest_framework.exceptions import ValidationError
             raise ValidationError(
                 {'start_date': 'Start date cannot be in the past.'}
+            )
+
+        if start_date and end_date and end_date < start_date:
+            from rest_framework.exceptions import ValidationError
+            raise ValidationError(
+                {'end_date': 'End date cannot be before start date.'}
             )
 
         auto_status = 'Active' if (not start_date or start_date <= today) else 'Scheduled'
@@ -416,10 +440,18 @@ class CampaignViewSet(viewsets.ModelViewSet):
         start_date = serializer.validated_data.get('start_date', instance.start_date)
         today = timezone.localtime().date()
 
+        end_date = serializer.validated_data.get('end_date', instance.end_date)
+
         if start_date and start_date < today:
             from rest_framework.exceptions import ValidationError
             raise ValidationError(
                 {'start_date': 'Start date cannot be in the past.'}
+            )
+            
+        if start_date and end_date and end_date < start_date:
+            from rest_framework.exceptions import ValidationError
+            raise ValidationError(
+                {'end_date': 'End date cannot be before start date.'}
             )
 
         # Only re-derive status if not already Completed
@@ -475,6 +507,11 @@ class ClaimViewSet(viewsets.ModelViewSet):
     queryset = Claim.objects.all()
     serializer_class = ClaimSerializer
     permission_classes = [IsAuthenticated]
+
+    def get_permissions(self):
+        if self.action in ['update', 'partial_update', 'destroy']:
+            return [IsStaff()]
+        return super().get_permissions()
 
     def get_queryset(self):
         user = self.request.user
@@ -550,6 +587,15 @@ class NotificationViewSet(viewsets.ModelViewSet):
     queryset = Notification.objects.all()
     serializer_class = NotificationSerializer
     permission_classes = [IsAuthenticated]
+
+    def get_permissions(self):
+        if self.action in ['create', 'update', 'partial_update', 'destroy']:
+            return [IsStaff()]
+        return super().get_permissions()
+
+    def perform_create(self, serializer):
+        # Admin UI triggers these via context, bind to themselves
+        serializer.save(user=self.request.user)
 
     def get_queryset(self):
         """

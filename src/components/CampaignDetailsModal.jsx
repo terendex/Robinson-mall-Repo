@@ -42,7 +42,11 @@ const CampaignDetailsModal = ({ show, onClose, campaign, offer, onClaim, claimin
   // ── Admin / Staff / Manager view ──────────────────────────
   if (campaign) {
     const sc = statusColors[campaign.status] || { bg: '#f1f5f9', text: '#64748b', border: '#e2e8f0' };
-    const fmt = (d) => d ? new Date(d).toISOString().split('T')[0] : '—';
+    const fmt = (d) => {
+      if (!d) return '—';
+      const date = new Date(d);
+      return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+    };
     const budget = campaign.budget != null
       ? `₱${Number(campaign.budget).toLocaleString(undefined, { minimumFractionDigits: 2 })}` : '—';
     const spendTarget = campaign.spending_target != null && campaign.spending_target > 0

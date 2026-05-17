@@ -5,7 +5,11 @@ const TransactionDetailsModal = ({ show, onClose, transaction }) => {
 
   if (!show || !transaction) return null;
 
-  const formatDate = (d) => d ? new Date(d).toISOString().split('T')[0] : 'N/A';
+  const formatDate = (d) => {
+    if (!d) return 'N/A';
+    const date = new Date(d);
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+  };
   const formatAmount = (a) => (a || a === 0) ? `₱${Number(a).toLocaleString('en-PH', { minimumFractionDigits: 2 })}` : 'N/A';
   const storeName = transaction.store_display_name || transaction.store_name || null;
 

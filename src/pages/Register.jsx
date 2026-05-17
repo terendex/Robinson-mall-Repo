@@ -120,11 +120,15 @@ const Register = () => {
     }
 
     try {
+      const formattedBirthday = birthday 
+        ? `${birthday.getFullYear()}-${String(birthday.getMonth() + 1).padStart(2, '0')}-${String(birthday.getDate()).padStart(2, '0')}`
+        : null;
+
       const response = await axios.post(`${import.meta.env.VITE_API_URL}/api/users/register/`, {
         first_name: firstName,
         last_name: lastName,
         email: email,
-        birthday: birthday ? birthday.toISOString().split('T')[0] : null,
+        birthday: formattedBirthday,
         password: password,
         role: 'customer',
       });
