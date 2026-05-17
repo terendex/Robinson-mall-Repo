@@ -1,6 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import '../css/Modal.css';
 import ErrorModal from './ErrorModal';
+import { FaCheck, FaTimes } from 'react-icons/fa';
+
+const PASSWORD_RULES = [
+  { key: 'length',  label: 'At least 8 characters',                     test: pw => pw.length >= 8 },
+  { key: 'upper',   label: 'At least one uppercase letter (A–Z)',        test: pw => /[A-Z]/.test(pw) },
+  { key: 'lower',   label: 'At least one lowercase letter (a–z)',        test: pw => /[a-z]/.test(pw) },
+  { key: 'special', label: 'At least one special character (!@#$%^&*…)', test: pw => /[!@#$%^&*()\-_=+[\]{};':"\\|,.<>/?`~]/.test(pw) },
+];
 
 /**
  * UserModal Component
@@ -59,6 +67,9 @@ const UserModal = ({ show, onClose, onSave, userToEdit }) => {
     );
   }, [formData, userToEdit]);
 
+  const newPw = formData.password || '';
+  const ruleResults = PASSWORD_RULES.map(r => ({ ...r, passed: r.test(newPw) }));
+
   if (!show) return null;
 
   const handleChange = (e) => {
@@ -85,6 +96,25 @@ const UserModal = ({ show, onClose, onSave, userToEdit }) => {
         message: 'A password is required when creating a new user account.'
       });
       return;
+    }
+
+    if (formData.password) {
+      if (formData.password.length < 8) {
+        setErrorConfig({ show: true, title: 'Weak Password', message: 'Password must be at least 8 characters long.' });
+        return;
+      }
+      if (!/[A-Z]/.test(formData.password)) {
+        setErrorConfig({ show: true, title: 'Weak Password', message: 'Password must contain at least one uppercase letter.' });
+        return;
+      }
+      if (!/[a-z]/.test(formData.password)) {
+        setErrorConfig({ show: true, title: 'Weak Password', message: 'Password must contain at least one lowercase letter.' });
+        return;
+      }
+      if (!/[!@#$%^&*()\-_=+[\]{};':"\\|,.<>/?`~]/.test(formData.password)) {
+        setErrorConfig({ show: true, title: 'Weak Password', message: 'Password must contain at least one special character.' });
+        return;
+      }
     }
 
     onSave(formData);
@@ -162,6 +192,16 @@ const UserModal = ({ show, onClose, onSave, userToEdit }) => {
                   placeholder="Enter password"
                   required={!userToEdit || formData.role === 'admin'}
                 />
+                {(formData.role === 'admin' || !userToEdit || formData.password.length > 0) && (
+                  <ul className="pw-requirements">
+                    {ruleResults.map(r => (
+                      <li key={r.key} className={r.passed ? 'req-pass' : 'req-fail'}>
+                        {r.passed ? <FaCheck className="req-icon" /> : <FaTimes className="req-icon" />}
+                        {r.label}
+                      </li>
+                    ))}
+                  </ul>
+                )}
               </div>
               {formData.role === 'admin' && (
                 <div className="form-group">
