@@ -99,6 +99,10 @@ class Voucher(models.Model):
         ('Entertainment', 'Entertainment'),
         ('Beauty', 'Beauty'),
         ('Electronics', 'Electronics'),
+        ('Sports & Fitness', 'Sports & Fitness'),
+        ('Home & Living', 'Home & Living'),
+        ('Travel', 'Travel'),
+        ('Health & Wellness', 'Health & Wellness'),
     )
 
     DISCOUNT_CHOICES = (5, 10, 15, 20, 25, 30, 50)
@@ -154,11 +158,34 @@ class Claim(models.Model):
     receipt_no = models.CharField(max_length=100, default='', blank=True, null=True)
     amount = models.DecimalField(max_digits=10, decimal_places=2, default=0, blank=True, null=True)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='Pending', blank=True, null=True)
+    # Human-readable unique claim reference shown to the customer and scanned by staff
+    # Format: {INITIALS}-{FIRSTNAME}+{8-char UUID hex uppercase}  e.g. JV-JOSHUA+A1B2C3D4
+    claim_ref = models.CharField(max_length=50, unique=True, blank=True, db_index=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    def save(self, *args, **kwargs):
+        """Auto-generate claim_ref on first save if not already set."""
+        if not self.claim_ref:
+            import uuid
+            user = self.user
+            if user:
+                initials = ((user.first_name or '')[:1] + (user.last_name or '')[:1]).upper() or (user.email or 'XX')[:2].upper()
+                name_part = ((user.first_name or '') or (user.email or ''))[:6].upper()
+            else:
+                initials = 'XX'
+                name_part = 'GUEST'
+            for _ in range(5):
+                candidate = f"{initials}-{name_part}+{uuid.uuid4().hex[:8].upper()}"
+                if not Claim.objects.filter(claim_ref=candidate).exists():
+                    self.claim_ref = candidate
+                    break
+            else:
+                self.claim_ref = f"CLM+{uuid.uuid4().hex[:12].upper()}"
+        super().save(*args, **kwargs)
+
     def __str__(self):
-        return f"Claim {self.receipt_no} - {self.status}"
+        return f"Claim {self.claim_ref or self.id} - {self.status}"
 
 class Transaction(models.Model):
     """

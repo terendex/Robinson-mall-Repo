@@ -172,7 +172,11 @@ class ClaimSerializer(serializers.ModelSerializer):
     voucher_code = serializers.ReadOnlyField(source='voucher.code')
     store_name   = serializers.ReadOnlyField(source='store.name')
 
-    amount = serializers.DecimalField(max_digits=10, decimal_places=2, min_value=0)
+    # amount is optional on creation — defaults to 0. Staff can update it later.
+    amount = serializers.DecimalField(
+        max_digits=10, decimal_places=2, min_value=0,
+        required=False, allow_null=True, default=0,
+    )
 
     class Meta:
         model = Claim

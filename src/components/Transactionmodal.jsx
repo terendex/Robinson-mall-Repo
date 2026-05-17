@@ -208,13 +208,18 @@ const TransactionModal = ({ show, onClose, onSave, transactionToEdit }) => {
   useEffect(() => {
     if (!show) return;
     setFetchError('');
-    Promise.all([
-      axios.get(`${BASE}/api/stores/`),
-      axios.get(`${BASE}/api/users/?role=customer`),
-    ])
+
+    const fetches = [axios.get(`${BASE}/api/stores/`)];
+    // Customers cannot query the users list (403) and don't need it
+    // (their name is pre-filled from their own session)
+    if (!isCustomer) {
+      fetches.push(axios.get(`${BASE}/api/users/?role=customer`));
+    }
+
+    Promise.all(fetches)
       .then(([storesRes, usersRes]) => {
         setStores(storesRes.data);
-        setUsers(usersRes.data);
+        if (usersRes) setUsers(usersRes.data);
       })
       .catch(err => {
         console.error('Failed to load form data:', err);
@@ -222,7 +227,7 @@ const TransactionModal = ({ show, onClose, onSave, transactionToEdit }) => {
         setFetchError(
           code === 401 || code === 403
             ? 'Your session has expired. Please save your work and log in again.'
-            : 'Could not load stores or customers. Check your connection and try again.'
+            : 'Could not load stores. Check your connection and try again.'
         );
       });
   }, [show]);

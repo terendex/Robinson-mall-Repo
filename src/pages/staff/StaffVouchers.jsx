@@ -77,47 +77,7 @@ const StaffVouchers = () => {
   const totalPages    = Math.ceil(filteredVouchers.length / PAGE_SIZE);
   const pagedVouchers = filteredVouchers.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
 
-  /* ── Redeem: lookup claim by ID ── */
-  const handleLookup = async () => {
-    const raw = redeemInput.trim();
-    if (!raw) return;
-    setLookupLoading(true);
-    setLookupResult(null);
-    setLookupError('');
-    setRedeemMsg({ type: '', text: '' });
-    try {
-      const res = await axios.get(`${BASE}/api/claims/lookup/?q=${encodeURIComponent(raw)}`);
-      setLookupResult(res.data);
-    } catch (err) {
-      const msg = err.response?.data?.detail || 'Claim not found. Check the reference and try again.';
-      setLookupError(msg);
-    } finally {
-      setLookupLoading(false);
-    }
-  };
-
-  /* ── Redeem: confirm or reject ── */
-  const handleRedeem = async (action) => {
-    if (!lookupResult) return;
-    setRedeemLoading(true);
-    try {
-      const res = await axios.patch(`${BASE}/api/claims/${lookupResult.id}/redeem/`, { action });
-      setRedeemMsg({
-        type: 'success',
-        text: action === 'approve' ? '✅ Voucher successfully redeemed!' : '❌ Voucher marked as rejected.',
-      });
-      setLookupResult(res.data);
-    } catch (err) {
-      const msg = err.response?.data?.detail || 'Failed to update claim status.';
-      setRedeemMsg({ type: 'error', text: msg });
-    } finally {
-      setRedeemLoading(false);
-    }
-  };
-
-  const statusLabel  = (s) => s === 'Approved' ? 'Claimed' : s === 'Rejected' ? 'Expired' : 'Not Claimed';
-  const statusColor  = (s) => s === 'Approved' ? '#15803d' : s === 'Rejected' ? '#b91c1c' : '#c2410c';
-  const statusBg     = (s) => s === 'Approved' ? '#dcfce7' : s === 'Rejected' ? '#fee2e2' : '#fff7ed';
+  // Redeem tab logic is handled entirely by <RedeemVoucherPanel />
 
   return (
     <div className="vouchers-page">
@@ -140,7 +100,7 @@ const StaffVouchers = () => {
               Vouchers
             </button>
             <button
-              onClick={() => { setTab('redeem'); setLookupResult(null); setLookupError(''); setRedeemMsg({ type: '', text: '' }); setRedeemInput(''); }}
+              onClick={() => setTab('redeem')}
               style={{
                 padding: '0.5rem 1.1rem', borderRadius: 8, fontWeight: 700, fontSize: '0.85rem',
                 border: '1.5px solid', cursor: 'pointer', transition: 'all 0.18s',

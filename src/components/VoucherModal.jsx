@@ -121,6 +121,7 @@ const DisplayRow = ({ label, value, wide, highlight, mono }) => (
 
 const PRESET_DISCOUNTS = [5, 10, 15, 20, 25, 30, 50];
 const PRESET_LIMITS = [100, 500, 1000, 5000];
+// Must match backend VOUCHER_TYPES choices exactly
 const VOUCHER_TYPE_PRESETS = [
   'Fashion', 'Food & Beverage', 'Entertainment',
   'Beauty', 'Electronics', 'Sports & Fitness',
@@ -129,7 +130,7 @@ const VOUCHER_TYPE_PRESETS = [
 
 const VoucherModal = ({ show, onClose, onSave, voucherToEdit, readOnly }) => {
   const [campaigns, setCampaigns] = useState([]);
-  const [stores, setStores] = useState([]);
+  const [stores, setStores]       = useState([]);
 
   const [formData, setFormData] = useState({
     name:                '',
@@ -187,10 +188,17 @@ const VoucherModal = ({ show, onClose, onSave, voucherToEdit, readOnly }) => {
 
   const isDirty = React.useMemo(() => {
     if (!voucherToEdit) {
-      // For NEW: check if all required fields are populated
-      return !!(formData.campaign && formData.name.trim() && formData.code.trim() && formData.discount_percentage && formData.usage_limit);
+      // For NEW: all required fields must be filled
+      return !!(
+        formData.campaign &&
+        formData.name.trim() &&
+        formData.code.trim() &&
+        formData.voucher_type &&
+        formData.discount_percentage &&
+        formData.usage_limit
+      );
     }
-    // For EDIT: compare current state vs initial voucherToEdit values
+    // For EDIT: any field differing from the saved values enables save
     return (
       formData.name !== (voucherToEdit.name || '') ||
       formData.code !== (voucherToEdit.code || '') ||
@@ -420,24 +428,19 @@ const VoucherModal = ({ show, onClose, onSave, voucherToEdit, readOnly }) => {
             />
           </div>
 
-          {/* Voucher Type — free-text with preset suggestions via datalist */}
+          {/* Voucher Type — fixed choices matching backend model */}
           <div className="form-group">
-            <label>Voucher Type <span style={{ fontSize: '0.75rem', color: '#888' }}>(select or type custom)</span></label>
-            <input
-              type="text"
+            <label>Voucher Type</label>
+            <select
               name="voucher_type"
               value={formData.voucher_type}
               onChange={handleChange}
-              placeholder="e.g. Fashion, Food & Beverage, Electronics…"
-              list="voucher-type-presets"
-              autoComplete="off"
               required
-            />
-            <datalist id="voucher-type-presets">
+            >
               {VOUCHER_TYPE_PRESETS.map(t => (
-                <option key={t} value={t} />
+                <option key={t} value={t}>{t}</option>
               ))}
-            </datalist>
+            </select>
           </div>
 
           {/* Discount % with quick-select presets */}

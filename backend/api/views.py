@@ -636,7 +636,9 @@ class ClaimViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['get'], permission_classes=[IsAuthenticated])
     def lookup(self, request):
         """
-        GET /api/claims/lookup/?q=CLAIM-5  (or just ?q=5)
+        GET /api/claims/lookup/?q=JV-JOSHUA+A1B2C3D4   (new claim_ref format)
+        GET /api/claims/lookup/?q=CLAIM-5              (legacy CLAIM-id format)
+        GET /api/claims/lookup/?q=5                    (plain numeric ID)
         Staff/Manager use this after scanning a customer's QR code.
         Returns the claim with all related info for verification.
         """
@@ -645,15 +647,36 @@ class ClaimViewSet(viewsets.ModelViewSet):
             return Response({'detail': 'Not authorised.'}, status=403)
 
         raw = request.query_params.get('q', '').strip()
-        # Accept "CLAIM-5", "claim-5", or just "5"
-        claim_id_str = raw.upper().replace('CLAIM-', '').strip()
-        if not claim_id_str.isdigit():
-            return Response({'detail': 'Invalid claim reference. Expected CLAIM-<id> or a numeric ID.'}, status=400)
+        if not raw:
+            return Response({'detail': 'Query parameter ?q is required.'}, status=400)
 
-        try:
-            claim = Claim.objects.get(pk=int(claim_id_str))
-        except Claim.DoesNotExist:
-            return Response({'detail': f'No claim found with ID {claim_id_str}.'}, status=404)
+        claim = None
+
+        # 1. Try matching the new claim_ref format (contains '+' or '-')
+        if '+' in raw or (raw.upper() != raw.lstrip('CLAIM-').upper() and not raw.lstrip('CLAIM-').isdigit()):
+            try:
+                claim = Claim.objects.get(claim_ref__iexact=raw)
+            except Claim.DoesNotExist:
+                pass
+
+        # 2. Try legacy CLAIM-{id} or plain numeric ID
+        if claim is None:
+            claim_id_str = raw.upper().replace('CLAIM-', '').strip()
+            if claim_id_str.isdigit():
+                try:
+                    claim = Claim.objects.get(pk=int(claim_id_str))
+                except Claim.DoesNotExist:
+                    pass
+
+        # 3. Last-resort: try claim_ref directly
+        if claim is None:
+            try:
+                claim = Claim.objects.get(claim_ref__iexact=raw)
+            except Claim.DoesNotExist:
+                pass
+
+        if claim is None:
+            return Response({'detail': f'No claim found matching "{raw}".'}, status=404)
 
         serializer = self.get_serializer(claim)
         return Response(serializer.data)
@@ -825,18 +848,22 @@ class TransactionViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         """
-        BUG-02 FIX: Customers must NOT create transactions directly — the correct
-        flow is Customer Claim → Staff QR Scan → Transaction.
-        Force status=Pending for all; staff/admin also link the user FK if provided.
+        All authenticated users (including customers) may submit transactions.
+        - Status is always forced to 'Pending' on creation.
+        - For customers, the user FK and user_name are auto-set from their
+          own session so they cannot impersonate another user.
+        - Staff/Admin can optionally set the user field for on-behalf submissions.
         """
         user = self.request.user
         if user.role == 'customer':
-            from rest_framework.exceptions import PermissionDenied
-            raise PermissionDenied(
-                "Customers cannot create transactions directly. "
-                "Please submit a claim and have store staff scan your QR code."
+            full_name = f"{user.first_name} {user.last_name}".strip() or user.email
+            serializer.save(
+                status='Pending',
+                user=user,
+                user_name=full_name,
             )
-        serializer.save(status='Pending')
+        else:
+            serializer.save(status='Pending')
 
     def get_queryset(self):
         user = self.request.user

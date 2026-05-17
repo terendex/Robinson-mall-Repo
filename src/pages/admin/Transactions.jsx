@@ -494,10 +494,8 @@ const Transactions = () => {
               )}
             </div>
 
-            {/* BUG-02 FIX: Only staff/admin can create transactions.
-                Customers must use the Claims flow (submit claim → staff scans QR).
-                Manager is view-only but can still add transactions if needed. */}
-            {(canManage || isManager) && (
+            {/* All roles including customers can initiate a new transaction */}
+            {(canManage || isManager || isCustomer) && (
               <button className="new-transaction-btn" onClick={openNewModal}>
                 <i className="fa-solid fa-plus"></i> New Transaction
               </button>

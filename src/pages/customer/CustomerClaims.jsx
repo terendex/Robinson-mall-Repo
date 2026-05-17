@@ -9,39 +9,39 @@ const PAGE_SIZE = 6;
 const BASE = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
 
 const FILTER_OPTIONS = [
-  { label: 'All',         value: 'all',         icon: 'fa-list' },
-  { label: 'Locked',      value: 'locked',      icon: 'fa-lock' },
+  { label: 'All', value: 'all', icon: 'fa-list' },
+  { label: 'Locked', value: 'locked', icon: 'fa-lock' },
   { label: 'Not Claimed', value: 'not_claimed', icon: 'fa-clock' },
-  { label: 'Claimed',     value: 'claimed',     icon: 'fa-circle-check' },
-  { label: 'Expired',     value: 'expired',     icon: 'fa-circle-xmark' },
+  { label: 'Claimed', value: 'claimed', icon: 'fa-circle-check' },
+  { label: 'Expired', value: 'expired', icon: 'fa-circle-xmark' },
 ];
 
 const STATUS_LABEL_MAP = {
-  locked:      'Locked',
+  locked: 'Locked',
   not_claimed: 'Not Claimed',
-  claimed:     'Claimed',
-  expired:     'Expired',
+  claimed: 'Claimed',
+  expired: 'Expired',
 };
 
 const STATUS_ICON_MAP = {
-  locked:      'fa-lock',
+  locked: 'fa-lock',
   not_claimed: 'fa-clock',
-  claimed:     'fa-circle-check',
-  expired:     'fa-circle-xmark',
+  claimed: 'fa-circle-check',
+  expired: 'fa-circle-xmark',
 };
 
 const ACCENT_MAP = {
-  locked:      'linear-gradient(to bottom, #94a3b8, #64748b)',
+  locked: 'linear-gradient(to bottom, #94a3b8, #64748b)',
   not_claimed: 'linear-gradient(to bottom, #f97316, #c2410c)',
-  claimed:     'linear-gradient(to bottom, #22c55e, #15803d)',
-  expired:     'linear-gradient(to bottom, #ef4444, #b91c1c)',
+  claimed: 'linear-gradient(to bottom, #22c55e, #15803d)',
+  expired: 'linear-gradient(to bottom, #ef4444, #b91c1c)',
 };
 
 const PILL_CLASS_MAP = {
-  locked:      'claim-pill-locked',
+  locked: 'claim-pill-locked',
   not_claimed: 'claim-pill-not_claimed',
-  claimed:     'claim-pill-claimed',
-  expired:     'claim-pill-expired',
+  claimed: 'claim-pill-claimed',
+  expired: 'claim-pill-expired',
 };
 
 const fmt = (n) =>
@@ -97,14 +97,15 @@ const QRModal = ({ claimRef, onClose }) => (
  *   5. Store staff scans QR on their portal → marks as Claimed.
  */
 const CustomerClaims = ({ user }) => {
-  const [campaigns,   setCampaigns]   = useState([]);
-  const [mySpend,     setMySpend]     = useState({});
-  const [myClaims,    setMyClaims]    = useState([]);
-  const [loading,     setLoading]     = useState(true);
-  const [filter,      setFilter]      = useState('all');
+  const [campaigns, setCampaigns] = useState([]);
+  const [mySpend, setMySpend] = useState({});
+  const [myClaims, setMyClaims] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [filter, setFilter] = useState('all');
   const [currentPage, setCurrentPage] = useState(1);
-  const [qrRef,       setQrRef]       = useState(null);   // CLAIM-{id} string shown in QR modal
-  const [claimMsg,    setClaimMsg]    = useState({ type: '', text: '' });
+  const [qrRef, setQrRef] = useState(null);   // CLAIM-{id} string shown in QR modal
+  const [claimMsg, setClaimMsg] = useState({ type: '', text: '' });
+  const [claimingId, setClaimingId] = useState(null);   // voucherId currently being claimed
   const autoCreating = useRef(false);                      // guard against double-run
 
   /* ── Fetch all data ── */
@@ -145,8 +146,8 @@ const CustomerClaims = ({ user }) => {
     const created = [];
     for (const camp of active) {
       const threshold = parseFloat(camp.spending_target > 0 ? camp.spending_target : camp.budget || 0);
-      const spend     = spendMap[camp.id] || 0;
-      const unlocked  = threshold > 0 && spend >= threshold;
+      const spend = spendMap[camp.id] || 0;
+      const unlocked = threshold > 0 && spend >= threshold;
       if (!unlocked) continue;
 
       for (const v of (camp.vouchers || [])) {
@@ -156,10 +157,10 @@ const CustomerClaims = ({ user }) => {
         if (alreadyExists) continue;
 
         try {
-          await axios.post(`${BASE}/api/claims/`, { voucher: v.id, user: user.id });
+          await axios.post(`${BASE}/api/claims/`, { voucher: v.id });
           created.push(v.name);
-        } catch {
-          /* silently skip — claim may already exist with a race condition */
+        } catch (err) {
+          console.error('Auto-claim creation failed for voucher', v.id, err?.response?.data || err.message);
         }
       }
     }
@@ -170,6 +171,24 @@ const CustomerClaims = ({ user }) => {
     }
   }, [user.id, load]);
 
+  /* ── Manually generate a claim for an unlocked voucher ── */
+  const handleGetQR = useCallback(async (voucherId) => {
+    setClaimingId(voucherId);
+    setClaimMsg({ type: '', text: '' });
+    try {
+      await axios.post(`${BASE}/api/claims/`, { voucher: voucherId });
+      await load();
+      setClaimMsg({ type: 'success', text: 'Your QR code is ready! Show it to store staff to redeem.' });
+    } catch (err) {
+      const msg = err?.response?.data?.detail
+        || (typeof err?.response?.data === 'object' ? Object.values(err.response.data).flat().join(' ') : '')
+        || 'Could not generate QR code. Please try again.';
+      setClaimMsg({ type: 'error', text: msg });
+    } finally {
+      setClaimingId(null);
+    }
+  }, [load]);
+
   useEffect(() => {
     load().then(result => {
       if (result) autoCreateClaims(result.active, result.spendMap, result.claims);
@@ -177,34 +196,34 @@ const CustomerClaims = ({ user }) => {
   }, [load, autoCreateClaims]);
 
   /* ── Helpers ── */
-  const getSpend     = (camp) => mySpend[camp.id] || 0;
+  const getSpend = (camp) => mySpend[camp.id] || 0;
   const getThreshold = (camp) => parseFloat(camp.spending_target > 0 ? camp.spending_target : camp.budget || 0);
-  const isUnlocked   = (camp) => getThreshold(camp) > 0 && getSpend(camp) >= getThreshold(camp);
-  const getPct       = (camp) => {
+  const isUnlocked = (camp) => getThreshold(camp) > 0 && getSpend(camp) >= getThreshold(camp);
+  const getPct = (camp) => {
     const t = getThreshold(camp);
     return t ? Math.min(100, (getSpend(camp) / t) * 100) : 0;
   };
 
   /* ── Build flat voucher entries ── */
   const voucherEntries = campaigns.flatMap(camp => {
-    const unlocked  = isUnlocked(camp);
-    const spend     = getSpend(camp);
+    const unlocked = isUnlocked(camp);
+    const spend = getSpend(camp);
     const threshold = getThreshold(camp);
-    const pct       = getPct(camp);
+    const pct = getPct(camp);
 
     return (camp.vouchers || []).map(v => {
       const existClaim = myClaims.find(cl => cl.voucher === v.id || cl.voucher_code === v.code);
       return {
-        key:          `${camp.id}-${v.id}`,
-        voucherId:    v.id,
-        voucherName:  v.name,
-        voucherCode:  v.code,
-        voucherType:  v.voucher_type,
-        discount:     v.discount_percentage,
-        campaignId:   camp.id,
+        key: `${camp.id}-${v.id}`,
+        voucherId: v.id,
+        voucherName: v.name,
+        voucherCode: v.code,
+        voucherType: v.voucher_type,
+        discount: v.discount_percentage,
+        campaignId: camp.id,
         campaignName: camp.name,
         unlocked,
-        claim:        existClaim || null,
+        claim: existClaim || null,
         spend,
         threshold,
         pct,
@@ -219,7 +238,7 @@ const CustomerClaims = ({ user }) => {
     return 'expired';
   };
 
-  const filtered   = filter === 'all'
+  const filtered = filter === 'all'
     ? voucherEntries
     : voucherEntries.filter(e => getDisplayStatus(e) === filter);
   const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
@@ -297,9 +316,8 @@ const CustomerClaims = ({ user }) => {
         <div className="customer-cards-container">
           <div className="campaign-grid">
             {pagedItems.map((entry) => {
-              const ds      = getDisplayStatus(entry);
-              const claimId = entry.claim?.id;
-              const claimRef = claimId ? `CLAIM-${claimId}` : null;
+              const ds = getDisplayStatus(entry);
+              const claimRef = entry.claim?.claim_ref || null;
 
               return (
                 <div
@@ -403,13 +421,24 @@ const CustomerClaims = ({ user }) => {
                             <i className="fa-solid fa-store" style={{ marginRight: '4px', color: '#f97316', fontSize: '0.75rem' }}></i>
                             Show QR at the store
                           </span>
-                          {claimRef && (
+                          {claimRef ? (
                             <button
                               className="cv-claim-btn"
                               style={{ width: 'auto', padding: '0.35rem 0.9rem', fontSize: '0.82rem', boxShadow: 'none', background: '#ea580c' }}
                               onClick={() => setQrRef(claimRef)}
                             >
                               <i className="fa-solid fa-qrcode"></i> Show QR
+                            </button>
+                          ) : (
+                            <button
+                              className="cv-claim-btn"
+                              style={{ width: 'auto', padding: '0.35rem 0.9rem', fontSize: '0.82rem', boxShadow: 'none', background: '#c2410c' }}
+                              disabled={claimingId === entry.voucherId}
+                              onClick={() => handleGetQR(entry.voucherId)}
+                            >
+                              {claimingId === entry.voucherId
+                                ? <><i className="fa-solid fa-spinner fa-spin"></i> Generating…</>
+                                : <><i className="fa-solid fa-qrcode"></i> Get My QR</>}
                             </button>
                           )}
                         </>
