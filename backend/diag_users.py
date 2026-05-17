@@ -16,7 +16,7 @@ def check():
     print(f"Total users: {count}")
     for user in User.objects.all():
         active_status = "Active" if user.is_active else "Disabled"
-        print(f"User: {user.username} | Role: {user.role} | Name: {user.first_name} {user.last_name} | Status: {active_status}")
+        print(f"User: {user.email} | Role: {user.role} | Name: {user.first_name} {user.last_name} | Status: {active_status}")
     sys.stdout.flush()
 
 if __name__ == '__main__':

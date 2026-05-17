@@ -126,7 +126,6 @@ const Register = () => {
         birthday: birthday ? birthday.toISOString().split('T')[0] : null,
         password: password,
         role: 'customer',
-        username: email,
       });
 
       if (response.status === 201) {
@@ -136,7 +135,7 @@ const Register = () => {
       let msg = 'Failed to create account. Please try again later.';
       if (err.response && err.response.data) {
         const errorData = err.response.data;
-        if (errorData.email || errorData.username) {
+        if (errorData.email) {
           msg = "A user with that email already exists. Please try logging in instead.";
         } else {
           const errorMessages = Object.values(errorData).flat();

@@ -95,7 +95,7 @@ const CustomerDashboard = ({ user }) => {
   return (
     <div className="customer-dashboard">
       <div className="customer-dashboard-header">
-        <h1>Welcome Back, {user.first_name || user.username}! 👋</h1>
+        <h1>Welcome Back, {user.first_name || user.email}! 👋</h1>
         <p>Explore the latest deals and track your rewards progress.</p>
       </div>
 

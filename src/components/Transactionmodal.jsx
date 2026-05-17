@@ -220,7 +220,7 @@ const TransactionModal = ({ show, onClose, onSave, transactionToEdit }) => {
       };
       setFormData({
         receipt_no: transactionToEdit.receipt_no  || '',
-        user_name:  transactionToEdit.user_name   || (isCustomer ? `${user.first_name} ${user.last_name}`.trim() || user.username : ''),
+        user_name:  transactionToEdit.user_name   || (isCustomer ? `${user.first_name} ${user.last_name}`.trim() || user.email : ''),
         store:      transactionToEdit.store        || '',
         store_name: transactionToEdit.store_display_name || transactionToEdit.store_name || '',
         amount:     transactionToEdit.amount       || '',
@@ -230,7 +230,7 @@ const TransactionModal = ({ show, onClose, onSave, transactionToEdit }) => {
     } else {
       setFormData({
         receipt_no: '',
-        user_name:  isCustomer ? `${user.first_name} ${user.last_name}`.trim() || user.username : '',
+        user_name:  isCustomer ? `${user.first_name} ${user.last_name}`.trim() || user.email : '',
         store:      '',
         store_name: '',
         amount:     '',
@@ -552,13 +552,13 @@ const TransactionModal = ({ show, onClose, onSave, transactionToEdit }) => {
                   setFormData(prev => ({
                     ...prev,
                     user_name: item
-                      ? `${item.first_name} ${item.last_name}`.trim() || item.username
+                      ? `${item.first_name} ${item.last_name}`.trim() || item.email
                       : text,
                   }))
                 }
                 options={users}
                 placeholder="Type or search customer name…"
-                getLabel={u => `${u.first_name} ${u.last_name}`.trim() || u.username}
+                getLabel={u => `${u.first_name} ${u.last_name}`.trim() || u.email}
                 getValue={u => u.id}
               />
             </div>

@@ -14,14 +14,18 @@ class User(AbstractUser):
         ('staff', 'Staff'),
         ('customer', 'Customer'),
     )
+    username = None
     email = models.EmailField(unique=True, blank=False)
     role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='customer')
     phone_number = models.CharField(max_length=15, blank=True, null=True, default='')
     birthday = models.DateField(blank=True, null=True)
     password_reset_token = models.CharField(max_length=100, blank=True, null=True)
 
+    USERNAME_FIELD = 'email'
+    REQUIRED_FIELDS = ['first_name', 'last_name']
+
     def __str__(self):
-        return self.username
+        return self.email
 
 class Store(models.Model):
     """
@@ -298,13 +302,13 @@ def user_saved(sender, instance, created, **kwargs):
             # Existing specific logic for customers
             notify_management(
                 title="New Customer Joined",
-                message=f"Customer {instance.get_full_name() or instance.username} has registered.",
+                message=f"Customer {instance.get_full_name() or instance.email} has registered.",
                 n_type='success'
             )
         else:
             notify_management(
                 title="Management Account Created",
-                message=f"A new {instance.role} account ({instance.username}) has been added.",
+                message=f"A new {instance.role} account ({instance.email}) has been added.",
                 n_type='info'
             )
     else:
@@ -315,14 +319,14 @@ def user_saved(sender, instance, created, **kwargs):
 
         notify_management(
             title="Account Updated",
-            message=f"The account details for {instance.username} ({instance.role}) were modified."
+            message=f"The account details for {instance.email} ({instance.role}) were modified."
         )
 
 @receiver(post_delete, sender=User)
 def user_deleted(sender, instance, **kwargs):
     notify_management(
         title="Account Removed",
-        message=f"The account for {instance.username} has been deleted.",
+        message=f"The account for {instance.email} has been deleted.",
         n_type='warning'
     )
 
@@ -333,7 +337,7 @@ def claim_saved(sender, instance, created, **kwargs):
         # Existing logic for new claims
         notify_management(
             title="New Claim Submitted",
-            message=f"New claim for {instance.voucher.name} by {instance.user.get_full_name() or instance.username}.",
+            message=f"New claim for {instance.voucher.name} by {instance.user.get_full_name() or instance.user.email}.",
             n_type='warning'
         )
         # Also notify the specific customer

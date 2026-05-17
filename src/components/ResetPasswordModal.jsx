@@ -34,7 +34,7 @@ const ResetPasswordModal = ({ show, user, onClose, onSave }) => {
         </div>
         <form onSubmit={handleSubmit} className="modal-form">
           <div className="user-context">
-            <p>Resetting password for <strong>{user.first_name || user.username}</strong></p>
+            <p>Resetting password for <strong>{user.first_name || user.email}</strong></p>
           </div>
           <div className="form-group">
             <label>New Password</label>

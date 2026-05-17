@@ -8,7 +8,6 @@ import ErrorModal from './ErrorModal';
  */
 const UserModal = ({ show, onClose, onSave, userToEdit }) => {
   const [formData, setFormData] = useState({
-    username: '',
     email: '',
     role: 'customer',
     password: '',
@@ -26,7 +25,6 @@ const UserModal = ({ show, onClose, onSave, userToEdit }) => {
   useEffect(() => {
     if (userToEdit) {
       setFormData({
-        username: userToEdit.username || '',
         email: userToEdit.email || '',
         role: userToEdit.role || 'customer',
         first_name: userToEdit.first_name || '',
@@ -36,7 +34,6 @@ const UserModal = ({ show, onClose, onSave, userToEdit }) => {
       });
     } else {
       setFormData({
-        username: '',
         email: '',
         role: 'customer',
         first_name: '',
@@ -49,12 +46,11 @@ const UserModal = ({ show, onClose, onSave, userToEdit }) => {
 
   const isDirty = React.useMemo(() => {
     if (!userToEdit) {
-      // For NEW user: username, email, password are required
-      return !!(formData.username.trim() && formData.email.trim() && formData.password);
+      // For NEW user: email, password are required
+      return !!(formData.email.trim() && formData.password);
     }
     // For EDIT: compare current state vs initial userToEdit values
     return (
-      formData.username !== (userToEdit.username || '') ||
       formData.email !== (userToEdit.email || '') ||
       formData.role !== (userToEdit.role || 'customer') ||
       formData.first_name !== (userToEdit.first_name || '') ||
@@ -132,17 +128,6 @@ const UserModal = ({ show, onClose, onSave, userToEdit }) => {
                 placeholder="Last name"
               />
             </div>
-          </div>
-          <div className="form-group">
-            <label>Username</label>
-            <input
-              type="text"
-              name="username"
-              value={formData.username}
-              onChange={handleChange}
-              placeholder="Enter username"
-              required
-            />
           </div>
           <div className="form-group">
             <label>Email Address</label>

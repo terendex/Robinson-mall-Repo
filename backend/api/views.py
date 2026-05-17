@@ -99,7 +99,6 @@ class UserViewSet(viewsets.ModelViewSet):
             'id': user.id,
             'role': user.role,
             'email': user.email,
-            'username': user.username,
             'first_name': user.first_name,
             'last_name': user.last_name,
             'phone_number': user.phone_number,
@@ -152,14 +151,15 @@ class UserViewSet(viewsets.ModelViewSet):
             login(request, user)
             refresh = RefreshToken.for_user(user)
             return Response({
-                'id': user.id,
-                'role': user.role,
-                'email': user.email,
-                'username': user.username,
-                'first_name': user.first_name,
-                'last_name': user.last_name,
-                'access': str(refresh.access_token),
-                'refresh': str(refresh),
+                'user': {
+                    'id': user.id,
+                    'email': user.email,
+                    'role': user.role,
+                    'first_name': user.first_name,
+                    'last_name': user.last_name,
+                    'access': str(refresh.access_token),
+                    'refresh': str(refresh),
+                }
             }, status=status.HTTP_200_OK)
         return Response({'error': 'Invalid credentials'}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -191,7 +191,7 @@ class PasswordResetRequestView(views.APIView):
         # ── Branded HTML email body ───────────────────────────────────
         subject = 'Password Reset Request – Robinson Mall'
         plain_text = (
-            f"Hi {user.first_name or user.username},\n\n"
+            f"Hi {user.first_name or user.email},\n\n"
             f"We received a request to reset the password for your Robinson Mall account.\n\n"
             f"Click the link below to set a new password (valid for 5 minutes):\n{reset_link}\n\n"
             f"If you didn't request this, you can safely ignore this email — your password won't change.\n\n"
@@ -227,7 +227,7 @@ class PasswordResetRequestView(views.APIView):
                   <tr>
                     <td style="padding:40px 40px 32px;">
                       <p style="margin:0 0 6px;font-size:15px;color:#1a1a1a;font-weight:600;">
-                        Hi {user.first_name or user.username},
+                        Hi {user.first_name or user.email},
                       </p>
                       <p style="margin:0 0 24px;font-size:14px;color:#555;line-height:1.7;">
                         We received a request to reset the password for your Robinson Mall account.
@@ -616,13 +616,13 @@ class TransactionViewSet(viewsets.ModelViewSet):
             qs = Transaction.objects.all()
         else:
             from django.db.models import Q
-            full_name  = f"{user.first_name} {user.last_name}".strip() or user.username
-
+            full_name  = f"{user.first_name} {user.last_name}".strip() or user.email
+            phone      = user.phone_number or ""
             # Staff often enter "First L" (first name + last initial) so match that too
             matchers = (
                 Q(user=user) |
                 Q(user_name__iexact=full_name) |
-                Q(user_name__iexact=user.username)
+                Q(user_name__iexact=user.email)
             )
             if user.first_name and user.last_name:
                 # "Joshua V"  →  first="Joshua", last="Villareal"
@@ -738,7 +738,7 @@ class DashboardStatsView(views.APIView):
         attention_list = [
             {
                 'id': c.id,
-                'user_name': c.user.get_full_name() or c.user.username if c.user else 'Anonymous',
+                'user_name': c.user.get_full_name() or c.user.email if c.user else 'Anonymous',
                 'voucher_name': c.voucher.name if c.voucher else '—',
                 'amount': float(c.amount or 0),
                 'status': c.status,
@@ -762,7 +762,7 @@ class DashboardStatsView(views.APIView):
 
         activity = []
         for c in recent_claims:
-            user_display = c.user.get_full_name() or c.user.username if c.user else 'Anonymous'
+            user_display = c.user.get_full_name() or c.user.email if c.user else 'Anonymous'
             activity.append({
                 'type': 'claim',
                 'description': f'{user_display} claim {c.status.lower()}',

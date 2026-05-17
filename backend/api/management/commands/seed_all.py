@@ -20,33 +20,28 @@ class Command(BaseCommand):
         # Seed users
         users_data = [
             {
-                "username": "admin@example.com",
                 "email": "admin@example.com",
                 "password": "adminpassword",
                 "role": "admin",
                 "phone_number": "0917 123 4567"
             },
             {
-                "username": "manager@example.com",
                 "email": "manager@example.com",
                 "password": "managerpassword",
                 "role": "manager",
             },
             {
-                "username": "staff@example.com",
                 "email": "staff@example.com",
                 "password": "staffpassword",
                 "role": "staff",
             },
             {
-                "username": "customer@example.com",
                 "email": "customer@example.com",
                 "password": "customerpassword",
                 "role": "customer",
                 "phone_number": "0912 345 6789"
             },
             {
-                "username": "maria_santos",
                 "email": "maria@example.com",
                 "password": "Password123!",
                 "role": "customer",
@@ -55,7 +50,6 @@ class Command(BaseCommand):
                 "phone_number": "+63 947-264-9274"
             },
             {
-                "username": "juan_dela_cruz",
                 "email": "juan@example.com",
                 "password": "Password123!",
                 "role": "customer",
@@ -64,7 +58,6 @@ class Command(BaseCommand):
                 "phone_number": "+63 977-452-1694"
             },
             {
-                "username": "ana_garcia",
                 "email": "ana@example.com",
                 "password": "Password123!",
                 "role": "customer",
@@ -73,7 +66,6 @@ class Command(BaseCommand):
                 "phone_number": "+63 905-753-2144"
             },
             {
-                "username": "pedro_reyes",
                 "email": "pedro@example.com",
                 "password": "Password123!",
                 "role": "customer",
@@ -82,7 +74,6 @@ class Command(BaseCommand):
                 "phone_number": "+63 926-843-7282"
             },
             {
-                "username": "sofia_cruz",
                 "email": "sofia@example.com",
                 "password": "Password123!",
                 "role": "customer",
@@ -96,7 +87,7 @@ class Command(BaseCommand):
         for u_data in users_data:
             try:
                 user = User.objects.create_user(
-                    username=u_data['username'],
+                    
                     email=u_data['email'],
                     password=u_data['password'],
                     role=u_data['role'],
@@ -105,9 +96,9 @@ class Command(BaseCommand):
                     phone_number=u_data.get('phone_number', ''),
                     is_active=u_data.get('is_active', True)
                 )
-                created_users[u_data['username']] = user
+                created_users[u_data['email']] = user
             except Exception as e:
-                self.stdout.write(self.style.ERROR(f"Error creating user {u_data['username']}: {str(e)}"))
+                self.stdout.write(self.style.ERROR(f"Error creating user {u_data['email']}: {str(e)}"))
 
         # Seed Stores
         stores_data = [

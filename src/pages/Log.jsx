@@ -59,7 +59,7 @@ export default function Log({ onLogin }) {
         setErrorConfig({
           show: true,
           title: 'Login Failed',
-          message: 'Invalid username or password. Please check your credentials and try again.'
+          message: 'Invalid email or password. Please check your credentials and try again.'
         });
       }
     } catch (err) {

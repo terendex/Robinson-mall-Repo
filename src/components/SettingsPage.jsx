@@ -28,7 +28,6 @@ const SettingsPage = () => {
     first_name:   storedUser.first_name   || '',
     last_name:    storedUser.last_name    || '',
     email:        storedUser.email        || '',
-    username:     storedUser.username     || '',
     phone_number: '',
   });
   const [profileStatus, setProfileStatus]   = useState({ type: '', msg: '' });
@@ -78,7 +77,6 @@ const SettingsPage = () => {
           first_name:   res.data.first_name   || '',
           last_name:    res.data.last_name    || '',
           email:        res.data.email        || '',
-          username:     res.data.username     || '',
           phone_number: res.data.phone_number || '',
         };
         setProfile(data);
@@ -301,17 +299,8 @@ const SettingsPage = () => {
                     />
                   </div>
 
+
                   <div className="form-row">
-                    <div className="form-group">
-                      <label>Username</label>
-                      <input
-                        type="text"
-                        value={profile.username}
-                        readOnly
-                        className="settings-input-readonly"
-                        title="Username cannot be changed"
-                      />
-                    </div>
                     <div className="form-group">
                       <label>Phone Number</label>
                       <input

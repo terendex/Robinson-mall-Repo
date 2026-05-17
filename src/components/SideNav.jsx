@@ -15,7 +15,7 @@ const SideNav = ({ user, isOpen, closeSidebar }) => {
   const displayName = user
     ? (user.first_name && user.last_name
       ? `${user.first_name} ${user.last_name}`
-      : user.username)
+      : user.email)
     : 'Admin User';
 
   const displayEmail = user?.email || 'admin@example.com';

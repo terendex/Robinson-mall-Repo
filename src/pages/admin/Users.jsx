@@ -87,7 +87,6 @@ const Users = () => {
   const handleSaveUser = async (formData) => {
     try {
       const payload = {
-        username: formData.username,
         email: formData.email,
         role: formData.role,
         first_name: formData.first_name,
@@ -126,7 +125,7 @@ const Users = () => {
         setSuccessConfig({
           show: true,
           title: userToEdit ? 'User Updated!' : 'User Created!',
-          message: `The account for ${formData.username} has been ${userToEdit ? 'updated' : 'created'} successfully.`
+          message: `The account for ${formData.email} has been ${userToEdit ? 'updated' : 'created'} successfully.`
         });
       }
     } catch (error) {
@@ -174,7 +173,7 @@ const Users = () => {
       setSuccessConfig({
         show: true,
         title: response.data.is_active ? 'Account Enabled' : 'Account Disabled',
-        message: `The user account for ${user.username} is now ${response.data.is_active ? 'active' : 'inactive'}.`
+        message: `The user account for ${user.email} is now ${response.data.is_active ? 'active' : 'inactive'}.`
       });
     } catch (error) {
       console.error('Error toggling user status:', error);
@@ -193,7 +192,7 @@ const Users = () => {
       setSuccessConfig({
         show: true,
         title: 'User Deleted',
-        message: `The account for ${user.username} has been permanently removed.`
+        message: `The account for ${user.email} has been permanently removed.`
       });
     } catch (error) {
       console.error('Error deleting user:', error);
@@ -210,7 +209,7 @@ const Users = () => {
     setConfirmConfig({
       show: true,
       title: 'Delete User Account',
-      message: `Are you sure you want to permanently delete the account for "${user.username}"? This action cannot be undone.`,
+      message: `Are you sure you want to permanently delete the account for "${user.email}"? This action cannot be undone.`,
       confirmText: 'Delete Account',
       variant: 'danger',
       onConfirm: () => handleDeleteUser(user)
@@ -222,7 +221,7 @@ const Users = () => {
     setConfirmConfig({
       show: true,
       title: user.is_active ? 'Disable Account' : 'Enable Account',
-      message: `Are you sure you want to ${user.is_active ? 'disable' : 'enable'} the account for ${user.username}?`,
+      message: `Are you sure you want to ${user.is_active ? 'disable' : 'enable'} the account for ${user.email}?`,
       confirmText: user.is_active ? 'Disable' : 'Enable',
       variant: user.is_active ? 'danger' : 'success',
       onConfirm: () => toggleUserActive(user)
@@ -237,7 +236,7 @@ const Users = () => {
       
       const searchLower = searchQuery.toLowerCase();
       return (
-        user.username.toLowerCase().includes(searchLower) ||
+        user.email.toLowerCase().includes(searchLower) ||
         user.email.toLowerCase().includes(searchLower) ||
         user.role.toLowerCase().includes(searchLower) ||
         (user.first_name + ' ' + user.last_name).toLowerCase().includes(searchLower)
@@ -277,7 +276,7 @@ const Users = () => {
     if (user.first_name || user.last_name) {
       return `${user.first_name} ${user.last_name}`.trim();
     }
-    return user.username;
+    return user.email;
   };
 
   const getInitials = (user) => {

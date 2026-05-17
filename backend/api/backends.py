@@ -6,15 +6,10 @@ class EmailOrUsernameModelBackend(ModelBackend):
     def authenticate(self, request, username=None, password=None, **kwargs):
         UserModel = get_user_model()
         try:
-            # Try to fetch the user by username
-            user = UserModel.objects.get(username=username)
+            # The "username" parameter is just the identifier (email in this case)
+            user = UserModel.objects.get(email=username)
         except UserModel.DoesNotExist:
-            try:
-                # If the user doesn't exist, try to fetch them by email
-                user = UserModel.objects.get(email=username)
-            except UserModel.DoesNotExist:
-                # If no user is found by username or email, return None
-                return None
+            return None
 
         # ISSUE-11: Check password AND that the account is active.
         # Disabled accounts (is_active=False) must not be allowed to log in.
