@@ -349,28 +349,35 @@ def user_deleted(sender, instance, **kwargs):
 # ── Claim & Transaction Signals ────────────────────────────────────
 @receiver(post_save, sender=Claim)
 def claim_saved(sender, instance, created, **kwargs):
+    # C-04 FIX: Guard against null voucher/user before accessing attributes.
+    # Both FKs are nullable on the Claim model — touching .name or .email on
+    # a None reference raises AttributeError and kills the entire save.
+    voucher_name = instance.voucher.name if instance.voucher else 'Unknown Voucher'
+    user_display = (
+        instance.user.get_full_name() or instance.user.email
+    ) if instance.user else 'Anonymous'
+
     if created:
-        # Existing logic for new claims
         notify_management(
             title="New Claim Submitted",
-            message=f"New claim for {instance.voucher.name} by {instance.user.get_full_name() or instance.user.email}.",
+            message=f"New claim for {voucher_name} by {user_display}.",
             n_type='warning'
         )
-        # Also notify the specific customer
-        Notification.objects.create(
-            user=instance.user,
-            title="Claim Received",
-            message=f"Your claim for {instance.voucher.name} is now pending review.",
-            notification_type='info'
-        )
+        # Only notify the specific customer if user is not null
+        if instance.user:
+            Notification.objects.create(
+                user=instance.user,
+                title="Claim Received",
+                message=f"Your claim for {voucher_name} is now pending review.",
+                notification_type='info'
+            )
     else:
-        # Only notify customer if status is processed.
-        # Note: If the claim is re-saved, it might send another, but claims are rarely re-saved after processing.
-        if instance.status in ['Approved', 'Rejected']:
+        # Only notify customer if status is processed and user is not null
+        if instance.status in ['Approved', 'Rejected'] and instance.user:
             Notification.objects.create(
                 user=instance.user,
                 title=f"Claim {instance.status}",
-                message=f"Your claim for {instance.voucher.name} has been {instance.status.lower()}.",
+                message=f"Your claim for {voucher_name} has been {instance.status.lower()}.",
                 notification_type='success' if instance.status == 'Approved' else 'error'
             )
 

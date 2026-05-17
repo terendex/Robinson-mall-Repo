@@ -201,15 +201,30 @@ const TransactionModal = ({ show, onClose, onSave, transactionToEdit }) => {
     setCameraError('');
   }, []);
 
+  // M-11 FIX: Track fetch errors so staff see a UI warning instead of a silent console log
+  const [fetchError, setFetchError] = useState('');
+
   // Fetch stores + customers on open
   useEffect(() => {
     if (!show) return;
-    axios.get(`${BASE}/api/stores/`)
-      .then(res => setStores(res.data))
-      .catch(err => console.error('Failed to load stores:', err));
-    axios.get(`${BASE}/api/users/?role=customer`)
-      .then(res => setUsers(res.data))
-      .catch(err => console.error('Failed to load users:', err));
+    setFetchError('');
+    Promise.all([
+      axios.get(`${BASE}/api/stores/`),
+      axios.get(`${BASE}/api/users/?role=customer`),
+    ])
+      .then(([storesRes, usersRes]) => {
+        setStores(storesRes.data);
+        setUsers(usersRes.data);
+      })
+      .catch(err => {
+        console.error('Failed to load form data:', err);
+        const code = err?.response?.status;
+        setFetchError(
+          code === 401 || code === 403
+            ? 'Your session has expired. Please save your work and log in again.'
+            : 'Could not load stores or customers. Check your connection and try again.'
+        );
+      });
   }, [show]);
 
   useEffect(() => {
@@ -410,6 +425,25 @@ const TransactionModal = ({ show, onClose, onSave, transactionToEdit }) => {
           <h2>{transactionToEdit ? (isCustomer ? 'Transaction Details' : 'Edit Transaction') : (isCustomer ? 'Submit New Transaction' : 'Record New Transaction')}</h2>
           <button className="close-x" onClick={onClose}>&times;</button>
         </div>
+
+        {/* M-11 FIX: Show a visible warning when stores/users failed to load */}
+        {fetchError && (
+          <div style={{
+            margin: '0 0 12px',
+            padding: '10px 14px',
+            background: '#fff3cd',
+            border: '1px solid #ffc107',
+            borderRadius: '6px',
+            fontSize: '0.82rem',
+            color: '#856404',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+          }}>
+            <i className="fa-solid fa-triangle-exclamation" />
+            {fetchError}
+          </div>
+        )}
 
         <input
           type="file"

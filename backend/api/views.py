@@ -65,6 +65,7 @@ class UserViewSet(viewsets.ModelViewSet):
         data.pop('is_staff', None)
         data.pop('is_superuser', None)
         data.pop('password', None)
+        data.pop('is_active', None)   # C-05 FIX: Prevent suspended-account self-reactivation
 
         # Handle password change separately
         old_password = data.pop('old_password', None)
@@ -127,6 +128,15 @@ class UserViewSet(viewsets.ModelViewSet):
         serializer.save()
 
     def perform_update(self, serializer):
+        """
+        H-06 FIX: Prevent role escalation by non-admin callers.
+        Only admins may change another user's role, is_staff, or is_superuser.
+        """
+        caller = self.request.user
+        if caller.role != 'admin':
+            serializer.validated_data.pop('role', None)
+            serializer.validated_data.pop('is_staff', None)
+            serializer.validated_data.pop('is_superuser', None)
         serializer.save()
 
     @action(detail=False, methods=['post'], permission_classes=[AllowAny])
@@ -182,7 +192,12 @@ class PasswordResetRequestView(views.APIView):
         try:
             user = User.objects.get(email=email)
         except User.DoesNotExist:
-            return Response({'detail': 'No account associated with this email address was found.'}, status=status.HTTP_400_BAD_REQUEST)
+            # M-10 FIX: Return the same 200 response as success to prevent user enumeration.
+            # Distinguishing "not found" from "found" leaks which emails are registered.
+            return Response(
+                {'detail': 'If a user with that email exists, a password reset link has been sent.'},
+                status=status.HTTP_200_OK
+            )
 
         # Generate standard secure token and uid
         token = default_token_generator.make_token(user)
@@ -458,17 +473,11 @@ class CampaignViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         today = timezone.localtime().date()
         
-        # Auto-update Scheduled to Active when start_date is hit
-        scheduled_campaigns = Campaign.objects.filter(status='Scheduled', start_date__lte=today)
-        for campaign in scheduled_campaigns:
-            campaign.status = 'Active'
-            campaign.save(update_fields=['status'])
-
-        # Auto-update Active to Completed when end_date has passed
-        active_campaigns = Campaign.objects.filter(status='Active', end_date__lt=today)
-        for campaign in active_campaigns:
-            campaign.status = 'Completed'
-            campaign.save(update_fields=['status'])
+        # H-09 FIX: Use bulk update() instead of individual .save() calls.
+        # Per-object .save() fired post_save signals that created one notification
+        # row per staff/manager/admin on every list request, flooding the DB.
+        Campaign.objects.filter(status='Scheduled', start_date__lte=today).update(status='Active')
+        Campaign.objects.filter(status='Active', end_date__lt=today).update(status='Completed')
 
         return super().get_queryset().order_by('-created_at')
 
@@ -567,6 +576,26 @@ class ClaimViewSet(viewsets.ModelViewSet):
             else:
                 serializer.save()
 
+    def perform_update(self, serializer):
+        """
+        C-01 FIX: When a claim is rejected via the generic PATCH endpoint
+        (not the dedicated redeem action), the usage_count decrement was never
+        fired. This override handles that so rejected claims always free their slot.
+        """
+        from django.db import transaction as db_transaction
+        from django.db.models import F
+        instance = serializer.instance
+        old_status = instance.status
+        new_status = serializer.validated_data.get('status', old_status)
+
+        with db_transaction.atomic():
+            serializer.save()
+            # Decrement when transitioning TO Rejected from any non-Rejected state
+            if new_status == 'Rejected' and old_status != 'Rejected' and instance.voucher:
+                Voucher.objects.filter(pk=instance.voucher.pk).update(
+                    usage_count=F('usage_count') - 1
+                )
+
     @action(detail=False, methods=['get'], permission_classes=[IsAuthenticated])
     def lookup(self, request):
         """
@@ -637,9 +666,18 @@ class ClaimViewSet(viewsets.ModelViewSet):
                     rejection_reason=request.data.get('rejection_reason', 'Claim rejected by staff.')
                 )
             else:
-                # Enforce unique receipt validation before approving
-                if claim.receipt_no and Transaction.objects.filter(receipt_no=claim.receipt_no, store=claim.store).exists():
-                    return Response({'detail': 'A transaction with this SI number already exists for this store. Possible duplicate claim.'}, status=400)
+                # C-02 FIX: Lock the voucher row to serialize concurrent approval attempts.
+                # Without this, two staff members approving different claims for the same
+                # voucher simultaneously could both pass budget/limit checks before either commits.
+                if claim.voucher:
+                    claim.voucher = Voucher.objects.select_for_update().get(pk=claim.voucher.pk)
+
+                # H-07 FIX: Check SI uniqueness globally (not just per-store) to prevent
+                # the same physical receipt from being approved across multiple stores.
+                if claim.receipt_no and Transaction.objects.filter(
+                    receipt_no=claim.receipt_no, status='Approved'
+                ).exists():
+                    return Response({'detail': 'This SI number has already been used in an approved transaction. Possible duplicate claim.'}, status=400)
                 
                 # Campaign budget enforcement at time of approval
                 if claim.voucher and claim.voucher.campaign and claim.voucher.campaign.budget > 0:
@@ -817,22 +855,42 @@ class TransactionViewSet(viewsets.ModelViewSet):
             # Lock transaction
             transaction = Transaction.objects.select_for_update().get(pk=transaction.pk)
             old_status = transaction.status
-            
+
+            # C-03 FIX: Enforce valid status transitions — prevent illegal reversals.
+            # Without this, a Rejected transaction could be re-Approved, generating
+            # duplicate conversions without a real redemption event.
+            if old_status == new_status:
+                return Response(
+                    {'detail': f'Transaction is already {old_status}.'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            if old_status in ('Approved', 'Rejected') and new_status == 'Approved':
+                return Response(
+                    {'detail': 'Cannot re-approve a transaction that has already been processed.'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
             if old_status == 'Approved' and new_status == 'Rejected':
                 # Sync claim status and voucher usage
                 from django.db.models import F
-                claim_qs = Claim.objects.filter(receipt_no=transaction.receipt_no, store=transaction.store)
-                if transaction.user:
-                    claim_qs = claim_qs.filter(user=transaction.user)
-                claim = claim_qs.first()
-                
-                if claim and claim.status == 'Approved':
-                    claim.status = 'Rejected'
-                    claim.save(update_fields=['status', 'updated_at'])
-                    
-                    if claim.voucher:
-                        claim.voucher.usage_count = F('usage_count') - 1
-                        claim.voucher.save(update_fields=['usage_count'])
+                # H-08 FIX: Only sync when receipt_no is non-empty.
+                # filter(receipt_no='') matches ALL blank-receipt claims at the store,
+                # causing cascading incorrect rejection of unrelated claims.
+                if transaction.receipt_no:
+                    claim_qs = Claim.objects.filter(
+                        receipt_no=transaction.receipt_no, store=transaction.store
+                    )
+                    if transaction.user:
+                        claim_qs = claim_qs.filter(user=transaction.user)
+                    claim = claim_qs.first()
+
+                    if claim and claim.status == 'Approved':
+                        claim.status = 'Rejected'
+                        claim.save(update_fields=['status', 'updated_at'])
+
+                        if claim.voucher:
+                            claim.voucher.usage_count = F('usage_count') - 1
+                            claim.voucher.save(update_fields=['usage_count'])
                         
             transaction.status = new_status
             if new_status == 'Rejected':

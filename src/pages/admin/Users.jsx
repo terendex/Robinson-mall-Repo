@@ -75,6 +75,16 @@ const Users = () => {
       setUsers(response.data);
     } catch (error) {
       console.error('Error fetching users:', error);
+      // M-12 FIX: Surface the error to the admin instead of silently keeping stale data.
+      const code = error?.response?.status;
+      setErrorConfig({
+        show: true,
+        title: code === 401 || code === 403 ? 'Session Expired' : 'Failed to Load Users',
+        message:
+          code === 401 || code === 403
+            ? 'Your session has expired. Please log out and log back in to view current user data.'
+            : 'Could not retrieve the user list. The data shown may be outdated. Please refresh the page.',
+      });
     } finally {
       setLoading(false);
     }
