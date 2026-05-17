@@ -38,7 +38,8 @@ class UserViewSet(viewsets.ModelViewSet):
         if user.role == 'staff':
             return qs.filter(role='customer')
         elif user.role == 'manager':
-            return qs.exclude(role='admin')
+            # MF-03 FIX: Managers must not see peer-manager accounts (cross-role PII).
+            return qs.filter(role__in=['staff', 'customer'])
         return qs
 
     def get_permissions(self):
@@ -112,18 +113,23 @@ class UserViewSet(viewsets.ModelViewSet):
             else:
                 return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-        # Return fresh user data
-        refresh = RefreshToken.for_user(user)
-        return Response({
+        # CF-01 FIX: Only mint a new JWT pair when the password was actually changed.
+        # Issuing tokens on every PATCH meant old stolen refresh tokens were never
+        # invalidated (BLACKLIST_AFTER_ROTATION=False). Non-password updates return
+        # user data only; the caller's current access token remains valid.
+        payload = {
             'id': user.id,
             'role': user.role,
             'email': user.email,
             'first_name': user.first_name,
             'last_name': user.last_name,
             'phone_number': user.phone_number,
-            'access': str(refresh.access_token),
-            'refresh': str(refresh),
-        }, status=status.HTTP_200_OK)
+        }
+        if new_password:
+            refresh = RefreshToken.for_user(user)
+            payload['access'] = str(refresh.access_token)
+            payload['refresh'] = str(refresh)
+        return Response(payload, status=status.HTTP_200_OK)
     def perform_create(self, serializer):
         serializer.save()
 
@@ -375,6 +381,11 @@ class PasswordResetView(views.APIView):
             return Response({'detail': ' '.join(e.messages)}, status=status.HTTP_400_BAD_REQUEST)
 
         user.set_password(password)
+        # CF-05 FIX: Force-update last_login so Django's HMAC token generator
+        # changes its internal base, making this reset link invalid for any
+        # future POST. Without this, accounts with last_login=None (never
+        # logged in) could reuse the same reset link indefinitely.
+        user.last_login = timezone.now()
         user.save()
 
         return Response({'detail': 'Password has been reset successfully.'}, status=status.HTTP_200_OK)
@@ -472,12 +483,17 @@ class CampaignViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         today = timezone.localtime().date()
-        
-        # H-09 FIX: Use bulk update() instead of individual .save() calls.
-        # Per-object .save() fired post_save signals that created one notification
-        # row per staff/manager/admin on every list request, flooding the DB.
-        Campaign.objects.filter(status='Scheduled', start_date__lte=today).update(status='Active')
-        Campaign.objects.filter(status='Active', end_date__lt=today).update(status='Completed')
+
+        # HF-01 FIX: Gate the DB writes behind a per-hour cache key so they fire
+        # at most once per hour per process rather than on every incoming request.
+        # Without this, every GET /api/campaigns/ caused two UPDATE statements,
+        # creating write contention under polling-heavy frontends.
+        from django.core.cache import cache
+        cache_key = f'campaign_status_updated_{today}'
+        if not cache.get(cache_key):
+            Campaign.objects.filter(status='Scheduled', start_date__lte=today).update(status='Active')
+            Campaign.objects.filter(status='Active', end_date__lt=today).update(status='Completed')
+            cache.set(cache_key, True, 3600)  # re-run at most once per hour
 
         return super().get_queryset().order_by('-created_at')
 
@@ -512,6 +528,12 @@ class ClaimViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
 
     def get_permissions(self):
+        # CF-06 FIX: Explicitly declare every action's permission so there
+        # is no silent fallback. 'create' intentionally stays IsAuthenticated
+        # because both customers (self-service) and staff (on-behalf) must
+        # be able to submit claims. perform_create enforces user scoping.
+        if self.action == 'create':
+            return [IsAuthenticated()]
         if self.action in ['update', 'partial_update', 'destroy']:
             return [IsStaff()]
         return super().get_permissions()
@@ -543,8 +565,8 @@ class ClaimViewSet(viewsets.ModelViewSet):
             if voucher:
                 from rest_framework.exceptions import ValidationError
                 from django.db.models import F, Sum
-                
-                # Lock the voucher to prevent TOCTOU race conditions
+
+                # Lock the voucher row to serialise concurrent claim attempts
                 voucher = Voucher.objects.select_for_update().get(pk=voucher.pk)
 
                 # 1. One-per-user enforcement
@@ -563,36 +585,51 @@ class ClaimViewSet(viewsets.ModelViewSet):
                         voucher_code__in=campaign.vouchers.values_list('code', flat=True),
                         status='Approved'
                     ).aggregate(total=Sum('amount'))['total'] or 0
-                    
+
                     if spent >= campaign.budget:
                         raise ValidationError("This campaign's budget has been fully consumed.")
 
-                # Increment usage count
-                voucher.usage_count = F('usage_count') + 1
-                voucher.save(update_fields=['usage_count'])
-
+            # CF-02 FIX: Save the Claim row FIRST, THEN increment usage_count.
+            # Previously the count was bumped before serializer.save(); if save()
+            # raised a ValidationError or IntegrityError, the atomic rollback
+            # would unwind the Claim but usage_count was already flushed via
+            # F()-expression update, permanently leaking a usage slot.
             if user.role == 'customer':
                 serializer.save(user=user, amount=0)
             else:
                 serializer.save()
+
+            if voucher:
+                from django.db.models import F
+                Voucher.objects.filter(pk=voucher.pk).update(
+                    usage_count=F('usage_count') + 1
+                )
 
     def perform_update(self, serializer):
         """
         C-01 FIX: When a claim is rejected via the generic PATCH endpoint
         (not the dedicated redeem action), the usage_count decrement was never
         fired. This override handles that so rejected claims always free their slot.
+
+        CF-03 FIX: Re-acquire a row-level lock on the Claim before reading its
+        current status. Previously, two concurrent PATCH requests could both read
+        old_status='Pending', both pass the guard, and double-decrement usage_count.
         """
         from django.db import transaction as db_transaction
         from django.db.models import F
         instance = serializer.instance
-        old_status = instance.status
-        new_status = serializer.validated_data.get('status', old_status)
+        new_status = serializer.validated_data.get('status', instance.status)
 
         with db_transaction.atomic():
+            # CF-03 FIX: Re-fetch under a write lock to get the authoritative status.
+            locked = Claim.objects.select_for_update().get(pk=instance.pk)
+            current_status = locked.status
+
             serializer.save()
-            # Decrement when transitioning TO Rejected from any non-Rejected state
-            if new_status == 'Rejected' and old_status != 'Rejected' and instance.voucher:
-                Voucher.objects.filter(pk=instance.voucher.pk).update(
+
+            # Decrement only when transitioning TO Rejected from a non-Rejected state
+            if new_status == 'Rejected' and current_status != 'Rejected' and locked.voucher:
+                Voucher.objects.filter(pk=locked.voucher.pk).update(
                     usage_count=F('usage_count') - 1
                 )
 
@@ -731,14 +768,30 @@ class NotificationViewSet(viewsets.ModelViewSet):
         """
         return Notification.objects.filter(user=self.request.user).order_by('-created_at')
 
+    def get_object(self):
+        """
+        CF-07 FIX: DRF's default get_object() resolves PK from the class-level
+        queryset (Notification.objects.all()), bypassing the user-filtered
+        get_queryset(). Any staff member could DELETE/UPDATE another user's
+        notification by guessing its integer PK.
+
+        Enforce ownership: only the notification's owner (or an admin) may
+        write to it. Read-only actions (retrieve) are left unrestricted within
+        the already-filtered queryset.
+        """
+        obj = super().get_object()
+        if self.action in ['destroy', 'update', 'partial_update']:
+            if self.request.user.role != 'admin' and obj.user != self.request.user:
+                from rest_framework.exceptions import PermissionDenied
+                raise PermissionDenied(
+                    "You do not have permission to modify another user's notification."
+                )
+        return obj
+
     @action(detail=False, methods=['post'])
     def mark_all_as_read(self, request):
         """
         ISSUE-01 FIX: Only mark the requesting user's OWN notifications as read.
-        Global notifications (user=None) are shared state — marking them as read
-        for one user would clear them for all users. Per-user read state would
-        require a separate ReadReceipt table (schema change). For now, only
-        personal notifications are marked as read.
         """
         Notification.objects.filter(
             user=request.user,
@@ -831,10 +884,16 @@ class TransactionViewSet(viewsets.ModelViewSet):
     def update_status(self, request, pk=None):
         """
         Dedicated status-update endpoint.
-        Accepts: { "status": "Redeemed" | "Rejected", "rejection_reason": "..." }
-        Validates transition rules and rejection reason requirement.
+        Accepts: { "status": "Approved" | "Rejected", "rejection_reason": "..." }
+
+        CF-04 FIX: Replaced select_for_update() guard with a conditional atomic
+        UPDATE for the Approved path. SQLite WAL mode does not implement true
+        row-level locking, so two concurrent Pending->Approved requests could
+        both pass the old_status guard before either committed. Using
+        filter(status='Pending').update() is inherently atomic — only one writer
+        wins; the second gets rows_updated=0 and returns a 400.
         """
-        transaction = self.get_object()
+        txn = self.get_object()
         new_status = request.data.get('status')
         rejection_reason = request.data.get('rejection_reason', '').strip()
 
@@ -843,7 +902,6 @@ class TransactionViewSet(viewsets.ModelViewSet):
                 {'detail': 'Status must be Approved or Rejected.'},
                 status=status.HTTP_400_BAD_REQUEST
             )
-
         if new_status == 'Rejected' and not rejection_reason:
             return Response(
                 {'rejection_reason': 'A rejection reason is required when rejecting a transaction.'},
@@ -852,52 +910,56 @@ class TransactionViewSet(viewsets.ModelViewSet):
 
         from django.db import transaction as db_transaction
         with db_transaction.atomic():
-            # Lock transaction
-            transaction = Transaction.objects.select_for_update().get(pk=transaction.pk)
-            old_status = transaction.status
+            if new_status == 'Approved':
+                # Atomic conditional update — only succeeds if row is still Pending.
+                rows_updated = Transaction.objects.filter(
+                    pk=pk, status='Pending'
+                ).update(status='Approved', updated_at=timezone.now())
 
-            # C-03 FIX: Enforce valid status transitions — prevent illegal reversals.
-            # Without this, a Rejected transaction could be re-Approved, generating
-            # duplicate conversions without a real redemption event.
-            if old_status == new_status:
-                return Response(
-                    {'detail': f'Transaction is already {old_status}.'},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-            if old_status in ('Approved', 'Rejected') and new_status == 'Approved':
-                return Response(
-                    {'detail': 'Cannot re-approve a transaction that has already been processed.'},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-
-            if old_status == 'Approved' and new_status == 'Rejected':
-                # Sync claim status and voucher usage
-                from django.db.models import F
-                # H-08 FIX: Only sync when receipt_no is non-empty.
-                # filter(receipt_no='') matches ALL blank-receipt claims at the store,
-                # causing cascading incorrect rejection of unrelated claims.
-                if transaction.receipt_no:
-                    claim_qs = Claim.objects.filter(
-                        receipt_no=transaction.receipt_no, store=transaction.store
+                if rows_updated == 0:
+                    txn.refresh_from_db()
+                    return Response(
+                        {'detail': f'Transaction could not be approved (current status: {txn.status}). It may have already been processed.'},
+                        status=status.HTTP_400_BAD_REQUEST
                     )
-                    if transaction.user:
-                        claim_qs = claim_qs.filter(user=transaction.user)
-                    claim = claim_qs.first()
+                txn.refresh_from_db()
 
-                    if claim and claim.status == 'Approved':
-                        claim.status = 'Rejected'
-                        claim.save(update_fields=['status', 'updated_at'])
+            else:  # Rejected
+                # Use select_for_update for Rejected path so we can read old_status
+                # and conditionally sync the linked Claim (Approved->Rejected cascade).
+                txn = Transaction.objects.select_for_update().get(pk=pk)
+                old_status = txn.status
 
-                        if claim.voucher:
-                            claim.voucher.usage_count = F('usage_count') - 1
-                            claim.voucher.save(update_fields=['usage_count'])
-                        
-            transaction.status = new_status
-            if new_status == 'Rejected':
-                transaction.rejection_reason = rejection_reason
-            transaction.save(update_fields=['status', 'rejection_reason', 'updated_at'])
+                # C-03 FIX: Enforce valid transitions.
+                if old_status == 'Rejected':
+                    return Response(
+                        {'detail': 'Transaction is already Rejected.'},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
 
-        serializer = self.get_serializer(transaction)
+                if old_status == 'Approved':
+                    # Cascade: sync Claim back to Rejected and free the voucher slot.
+                    from django.db.models import F
+                    if txn.receipt_no:
+                        claim_qs = Claim.objects.filter(
+                            receipt_no=txn.receipt_no, store=txn.store
+                        )
+                        if txn.user:
+                            claim_qs = claim_qs.filter(user=txn.user)
+                        claim = claim_qs.first()
+                        if claim and claim.status == 'Approved':
+                            claim.status = 'Rejected'
+                            claim.save(update_fields=['status', 'updated_at'])
+                            if claim.voucher:
+                                Voucher.objects.filter(pk=claim.voucher.pk).update(
+                                    usage_count=F('usage_count') - 1
+                                )
+
+                txn.status = 'Rejected'
+                txn.rejection_reason = rejection_reason
+                txn.save(update_fields=['status', 'rejection_reason', 'updated_at'])
+
+        serializer = self.get_serializer(txn)
         return Response(serializer.data)
 
 
@@ -964,11 +1026,16 @@ class DashboardStatsView(views.APIView):
         ]
 
         # ── Top Campaigns by Reach ────────────────────────────────────
-        top_campaigns = Campaign.objects.order_by('-reach')[:5]
+        # HF-04 FIX: Campaign.reach is a stale DB field that was never auto-updated.
+        # Annotate with a live distinct-claim count for accurate rankings.
+        from django.db.models import Count as DbCount
+        top_campaigns = Campaign.objects.annotate(
+            live_reach=DbCount('vouchers__claims', distinct=True)
+        ).order_by('-live_reach')[:5]
         top_campaigns_list = [
             {
                 'name': c.name,
-                'reach': c.reach or 0,
+                'reach': c.live_reach or 0,
             }
             for c in top_campaigns
         ]

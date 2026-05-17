@@ -112,9 +112,13 @@ class Voucher(models.Model):
     is_active = models.BooleanField(default=True)
 
     # Campaign FK — required (campaign must precede voucher)
+    # HF-05 FIX: Changed SET_NULL to PROTECT. Deleting a Campaign with active
+    # vouchers would have set campaign=NULL, silently disabling budget enforcement
+    # for all pending claims against those vouchers. PROTECT forces the caller to
+    # reassign or delete vouchers first, preserving data integrity.
     campaign = models.ForeignKey(
         Campaign,
-        on_delete=models.SET_NULL,
+        on_delete=models.PROTECT,
         related_name='vouchers',
         null=True,
         blank=True,
@@ -211,10 +215,20 @@ class Transaction(models.Model):
     updated_at   = models.DateTimeField(auto_now=True)
 
     def save(self, *args, **kwargs):
-        """Auto-generate a short transaction_id on first save. Sync store_name from FK."""
+        """Auto-generate a unique transaction_id on first save. Sync store_name from FK."""
         if not self.transaction_id:
             import uuid
-            self.transaction_id = 'TXN-' + uuid.uuid4().hex[:8].upper()
+            # MF-02 FIX: Retry up to 5 times on collision before falling back to
+            # a longer 12-char ID. Using only 8 hex chars (~4B combinations) means
+            # collisions become statistically likely at scale and would previously
+            # raise an unhandled IntegrityError (500) to the client.
+            for _ in range(5):
+                candidate = 'TXN-' + uuid.uuid4().hex[:8].upper()
+                if not Transaction.objects.filter(transaction_id=candidate).exists():
+                    self.transaction_id = candidate
+                    break
+            else:
+                self.transaction_id = 'TXN-' + uuid.uuid4().hex[:12].upper()
         # Keep de-normalised store_name in sync with the FK
         if self.store_id and not self.store_name:
             self.store_name = self.store.name

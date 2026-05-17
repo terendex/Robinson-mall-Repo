@@ -15,6 +15,17 @@ SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-fallback-for-dev-only
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get('DEBUG', 'True').lower() == 'true'
 
+# HF-06 FIX: Refuse to start in production with an insecure SECRET_KEY.
+# The fallback key is publicly known — using it in production allows anyone
+# to forge JWT tokens (JWT signing key derives from SECRET_KEY, settings.py:175).
+_INSECURE_KEY = 'django-insecure-fallback-for-dev-only'
+if not DEBUG and SECRET_KEY == _INSECURE_KEY:
+    raise RuntimeError(
+        "SECURITY ERROR: SECRET_KEY is set to the insecure development fallback "
+        "but DEBUG=False. Set the SECRET_KEY environment variable to a strong "
+        "random value before deploying to production."
+    )
+
 ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1,testserver').split(',')
 FRONTEND_URL = os.environ.get('FRONTEND_URL', 'http://localhost:5173')
 

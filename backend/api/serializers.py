@@ -238,11 +238,14 @@ class TransactionSerializer(serializers.ModelSerializer):
                         {'rejection_reason': 'A rejection reason is required when rejecting a transaction.'}
                     )
 
-        # SI (receipt_no) uniqueness check on creation
+        # HF-02 FIX: Scope the SI uniqueness check to Approved transactions only,
+        # matching the guard used in ClaimViewSet.redeem(). Checking all statuses
+        # previously allowed a Pending transaction and an approved claim redemption
+        # to share the same receipt_no if timed correctly, enabling double-use.
         receipt_no = data.get('receipt_no')
         if not instance and receipt_no:
-            if Transaction.objects.filter(receipt_no=receipt_no).exists():
-                raise serializers.ValidationError({'receipt_no': 'A transaction with this SI number already exists.'})
+            if Transaction.objects.filter(receipt_no=receipt_no, status='Approved').exists():
+                raise serializers.ValidationError({'receipt_no': 'A transaction with this SI number has already been approved.'})
 
         # Ensure SI and Transaction ID cannot be the same value
         # Note: transaction_id is auto-generated in model.save(), but if provided in data (unlikely per Meta)
