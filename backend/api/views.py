@@ -39,7 +39,7 @@ class UserViewSet(viewsets.ModelViewSet):
         if self.action == 'me':
             return [IsAuthenticated()]
         if self.action in ['list', 'retrieve']:
-            return [IsAuthenticated()]
+            return [IsStaff()]
         return super().get_permissions()
 
     @action(detail=False, methods=['get', 'patch'], permission_classes=[IsAuthenticated])
@@ -531,6 +531,43 @@ class ClaimViewSet(viewsets.ModelViewSet):
 
         return queryset.order_by('-created_at')
 
+    def perform_create(self, serializer):
+        user = self.request.user
+        voucher = serializer.validated_data.get('voucher')
+
+        if voucher:
+            from rest_framework.exceptions import ValidationError
+            from django.db.models import F, Sum
+
+            # 1. One-per-user enforcement
+            target_user = user if user.role == 'customer' else serializer.validated_data.get('user', user)
+            if Claim.objects.filter(user=target_user, voucher=voucher).exists():
+                raise ValidationError("This user has already claimed this voucher.")
+
+            # 2. Voucher usage limit enforcement
+            if voucher.usage_count >= voucher.usage_limit:
+                raise ValidationError("This voucher has reached its maximum usage limit.")
+
+            # 3. Campaign budget enforcement
+            if voucher.campaign and voucher.campaign.budget > 0:
+                campaign = voucher.campaign
+                spent = Transaction.objects.filter(
+                    voucher_code__in=campaign.vouchers.values_list('code', flat=True),
+                    status='Approved'
+                ).aggregate(total=Sum('amount'))['total'] or 0
+                
+                if spent >= campaign.budget:
+                    raise ValidationError("This campaign's budget has been fully consumed.")
+
+            # Increment usage count
+            voucher.usage_count = F('usage_count') + 1
+            voucher.save(update_fields=['usage_count'])
+
+        if user.role == 'customer':
+            serializer.save(user=user)
+        else:
+            serializer.save()
+
     @action(detail=False, methods=['get'], permission_classes=[IsAuthenticated])
     def lookup(self, request):
         """
@@ -560,7 +597,7 @@ class ClaimViewSet(viewsets.ModelViewSet):
     def redeem(self, request, pk=None):
         """
         PATCH /api/claims/{id}/redeem/
-        Marks a claim as Approved (Claimed). Staff/Manager only.
+        Marks a claim as Approved (Claimed) and generates an atomic Transaction. Staff/Manager only.
         Optionally accepts { "rejection_reason": "..." } to reject instead.
         """
         user = request.user
@@ -568,21 +605,58 @@ class ClaimViewSet(viewsets.ModelViewSet):
             return Response({'detail': 'Not authorised.'}, status=403)
 
         claim = self.get_object()
-
         action_type = request.data.get('action', 'approve')  # 'approve' or 'reject'
-        if action_type == 'reject':
-            claim.status = 'Rejected'
-        else:
-            if claim.status == 'Approved':
-                return Response({'detail': 'This voucher has already been claimed.'}, status=400)
-            claim.status = 'Approved'
 
-        claim.save(update_fields=['status', 'updated_at'])
+        from django.db import transaction
+        with transaction.atomic():
+            if action_type == 'reject':
+                claim.status = 'Rejected'
+                claim.save(update_fields=['status', 'updated_at'])
+                
+                # Decrement voucher usage_count to free it up
+                if claim.voucher:
+                    from django.db.models import F
+                    claim.voucher.usage_count = F('usage_count') - 1
+                    claim.voucher.save(update_fields=['usage_count'])
+
+                # Log rejection transaction
+                Transaction.objects.create(
+                    user=claim.user,
+                    user_name=claim.user.get_full_name() if claim.user else '',
+                    store=claim.store,
+                    store_name=claim.store.name if claim.store else '',
+                    voucher_name=claim.voucher.name if claim.voucher else '',
+                    voucher_code=claim.voucher.code if claim.voucher else '',
+                    receipt_no=claim.receipt_no or '',
+                    amount=claim.amount or 0,
+                    status='Rejected',
+                    rejection_reason=request.data.get('rejection_reason', 'Claim rejected by staff.')
+                )
+            else:
+                if claim.status == 'Approved':
+                    return Response({'detail': 'This voucher has already been claimed.'}, status=400)
+                
+                # Enforce unique receipt validation before approving
+                if claim.receipt_no and Transaction.objects.filter(receipt_no=claim.receipt_no).exists():
+                    return Response({'detail': 'A transaction with this SI number already exists. Possible duplicate claim.'}, status=400)
+                    
+                claim.status = 'Approved'
+                claim.save(update_fields=['status', 'updated_at'])
+                # Generate atomic success transaction
+                Transaction.objects.create(
+                    user=claim.user,
+                    user_name=claim.user.get_full_name() if claim.user else '',
+                    store=claim.store,
+                    store_name=claim.store.name if claim.store else '',
+                    voucher_name=claim.voucher.name if claim.voucher else '',
+                    voucher_code=claim.voucher.code if claim.voucher else '',
+                    receipt_no=claim.receipt_no or '',
+                    amount=claim.amount or 0,
+                    status='Approved'
+                )
+
         serializer = self.get_serializer(claim)
         return Response(serializer.data)
-
-
-
 class NotificationViewSet(viewsets.ModelViewSet):
     queryset = Notification.objects.all()
     serializer_class = NotificationSerializer
