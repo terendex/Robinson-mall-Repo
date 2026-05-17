@@ -48,12 +48,6 @@ const SettingsPage = () => {
   const [showNew, setShowNew]               = useState(false);
   const [showConfirm, setShowConfirm]       = useState(false);
 
-  // ── Notifications tab state ──
-  const [notifPrefs, setNotifPrefs] = useState({
-    email_notifications: true,
-    push_notifications:  true,
-    sms_notifications:   false,
-  });
 
   const [confirmConfig, setConfirmConfig] = useState({
     show: false,
@@ -144,6 +138,12 @@ const SettingsPage = () => {
 
   const requestProfileSaveConfirm = (e) => {
     e.preventDefault();
+
+    if (profile.phone_number && !/^09\d{9}$/.test(profile.phone_number)) {
+      setProfileStatus({ type: 'error', msg: 'Phone number must be an 11-digit number starting with 09 (e.g., 09369643053).' });
+      return;
+    }
+
     setConfirmConfig({
       show: true,
       title: 'Save Profile Changes',
@@ -220,7 +220,6 @@ const SettingsPage = () => {
   const tabs = [
     { id: 'general',       label: 'General',       icon: 'fa-user' },
     { id: 'security',      label: 'Security',      icon: 'fa-shield-halved' },
-    { id: 'notifications', label: 'Notifications', icon: 'fa-bell' },
   ];
 
   return (
@@ -228,7 +227,7 @@ const SettingsPage = () => {
       <div className="settings-container">
         <div className="settings-header">
           <h1>System Settings</h1>
-          <p>Manage your account information, security, and notification preferences.</p>
+          <p>Manage your account information and security preferences.</p>
         </div>
 
         <div className="settings-content">
@@ -307,8 +306,9 @@ const SettingsPage = () => {
                       <input
                         type="tel"
                         value={profile.phone_number}
-                        onChange={e => setProfile(p => ({ ...p, phone_number: e.target.value }))}
-                        placeholder="+63 917 000 0000"
+                        onChange={e => setProfile(p => ({ ...p, phone_number: e.target.value.replace(/\D/g, '') }))}
+                        placeholder="e.g. 09123456789"
+                        maxLength="11"
                       />
                     </div>
                   </div>
@@ -464,65 +464,6 @@ const SettingsPage = () => {
               </div>
             )}
 
-            {/* ── Notifications Tab ── */}
-            {activeTab === 'notifications' && (
-              <div className="settings-section">
-                <h3>Notification Preferences</h3>
-                <p style={{ color: '#64748b', marginBottom: '1.5rem', fontSize: '0.875rem' }}>
-                  Choose how you'd like to be notified about activity.
-                </p>
-
-                <div className="toggle-list">
-                  {[
-                    {
-                      key: 'email_notifications',
-                      label: 'Email Notifications',
-                      desc: 'Receive updates and alerts to your email address',
-                    },
-                    {
-                      key: 'push_notifications',
-                      label: 'Push Notifications',
-                      desc: 'Receive in-app and browser push notifications',
-                    },
-                    {
-                      key: 'sms_notifications',
-                      label: 'SMS Notifications',
-                      desc: 'Receive important alerts via text message',
-                    },
-                  ].map(item => (
-                    <div key={item.key} className="toggle-item">
-                      <div className="toggle-info">
-                        <span className="toggle-label">{item.label}</span>
-                        <span className="toggle-desc">{item.desc}</span>
-                      </div>
-                      <label className="switch">
-                        <input
-                          type="checkbox"
-                          checked={notifPrefs[item.key]}
-                          onChange={e => setNotifPrefs(p => ({ ...p, [item.key]: e.target.checked }))}
-                        />
-                        <span className="slider round"></span>
-                      </label>
-                    </div>
-                  ))}
-                </div>
-
-                <div className="settings-form-actions" style={{ marginTop: '2rem' }}>
-                  <button type="button" className="settings-cancel-btn">Cancel</button>
-                  <button
-                    type="button"
-                    className="settings-save-btn"
-                    onClick={() => setSuccessConfig({
-                      show: true,
-                      title: 'Preferences Saved',
-                      message: 'Your notification preferences have been updated successfully.'
-                    })}
-                  >
-                    Save All Changes
-                  </button>
-                </div>
-              </div>
-            )}
 
           </div>
         </div>
