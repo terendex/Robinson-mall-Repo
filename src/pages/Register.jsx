@@ -14,6 +14,7 @@ const PASSWORD_RULES = [
   { key: 'length',  label: 'At least 8 characters',                      test: pw => pw.length >= 8 },
   { key: 'upper',   label: 'At least one uppercase letter (A–Z)',         test: pw => /[A-Z]/.test(pw) },
   { key: 'lower',   label: 'At least one lowercase letter (a–z)',         test: pw => /[a-z]/.test(pw) },
+  { key: 'number',  label: 'At least one number (0–9)',                   test: pw => /[0-9]/.test(pw) },
   { key: 'special', label: 'At least one special character (!@#$%^&*…)',  test: pw => /[!@#$%^&*()\-_=+\[\]{};':"\\|,.<>/?`~]/.test(pw) },
 ];
 

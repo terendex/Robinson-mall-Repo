@@ -7,6 +7,7 @@ import ActionConfirmModal from '../../components/ActionConfirmModal';
 import SuccessModal from '../../components/SuccessModal';
 import ErrorModal from '../../components/ErrorModal';
 import '../../css/Users.css';
+import '../../css/Claims.css';
 import '../../css/Transactions.css';
 
 // BUG-01 FIX: Use environment variable instead of hardcoded localhost URL
@@ -22,6 +23,9 @@ const Users = () => {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  const [roleFilters, setRoleFilters] = useState({ manager: false, staff: false, customer: false });
+  const [isRoleDropdownOpen, setIsRoleDropdownOpen] = useState(false);
+  const roleFilterRef = useRef(null);
   const [showModal, setShowModal] = useState(false);
   const [userToEdit, setUserToEdit] = useState(null);
   const [activeActions, setActiveActions] = useState(null);
@@ -55,6 +59,9 @@ const Users = () => {
     const handleClickOutside = (event) => {
       if (actionsRef.current && !actionsRef.current.contains(event.target)) {
         setActiveActions(null);
+      }
+      if (roleFilterRef.current && !roleFilterRef.current.contains(event.target)) {
+        setIsRoleDropdownOpen(false);
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
@@ -93,6 +100,10 @@ const Users = () => {
         last_name: formData.last_name,
         password: formData.password
       };
+
+      if (!payload.password) {
+        delete payload.password;
+      }
 
       if (userToEdit) {
         // Update user
@@ -228,23 +239,31 @@ const Users = () => {
     });
   };
 
+  const handleRoleFilterToggle = (role) => {
+    setRoleFilters(prev => ({ ...prev, [role]: !prev[role] }));
+    setCurrentPage(1);
+  };
+
   // ISSUE-14 FIX: Remove setCurrentPage side-effect from useMemo
   const filteredUsers = useMemo(() => {
+    const anyRoleSelected = Object.values(roleFilters).some(v => v);
     return users.filter(user => {
       // Exclude admins from the display
       if (user.role === 'admin') return false;
       
+      const matchesRole = anyRoleSelected ? roleFilters[user.role] : true;
+      if (!matchesRole) return false;
+
       const searchLower = searchQuery.toLowerCase();
       return (
-        user.email.toLowerCase().includes(searchLower) ||
         user.email.toLowerCase().includes(searchLower) ||
         user.role.toLowerCase().includes(searchLower) ||
         (user.first_name + ' ' + user.last_name).toLowerCase().includes(searchLower)
       );
     });
-  }, [users, searchQuery]);
+  }, [users, searchQuery, roleFilters]);
 
-  // Reset to page 1 when search changes (extracted from useMemo — fixes anti-pattern)
+  // Reset to page 1 when search or filter changes
   useEffect(() => { setCurrentPage(1); }, [searchQuery]);
 
   // Pagination slice
@@ -320,14 +339,42 @@ const Users = () => {
 
         <div className="user-list-section">
           <div className="user-list-header">
-            <div className="user-search-pills">
-              <i className="fa-solid fa-magnifying-glass"></i>
-              <input 
-                type="text" 
-                placeholder="Search by name, email, or role" 
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
+            <div className="claim-table-controls">
+              <div className="claim-search-wrapper" style={{ flex: 1 }}>
+                <i className="fa-solid fa-magnifying-glass"></i>
+                <input 
+                  type="text" 
+                  placeholder="Search by name, email, or role" 
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+              </div>
+
+              <div className="filter-dropdown-container" ref={roleFilterRef}>
+                <button 
+                  className={`filter-button ${isRoleDropdownOpen ? 'active' : ''}`}
+                  onClick={() => setIsRoleDropdownOpen(!isRoleDropdownOpen)}
+                >
+                  <i className="fa-solid fa-filter"></i> Filter Role
+                </button>
+                {isRoleDropdownOpen && (
+                  <div className="filter-dropdown-menu">
+                    {[
+                      { val: 'manager', lbl: 'Store Manager' },
+                      { val: 'staff', lbl: 'Staff Member' },
+                      { val: 'customer', lbl: 'Customer' }
+                    ].map(({ val, lbl }) => (
+                      <label key={val} className="filter-option">
+                        <input 
+                          type="checkbox" 
+                          checked={roleFilters[val]}
+                          onChange={() => handleRoleFilterToggle(val)} 
+                        /> {lbl}
+                      </label>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 

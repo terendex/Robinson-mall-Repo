@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import '../css/Modal.css';
 import ErrorModal from './ErrorModal';
-import { FaCheck, FaTimes } from 'react-icons/fa';
+import { FaCheck, FaTimes, FaEye, FaEyeSlash } from 'react-icons/fa';
 
 const PASSWORD_RULES = [
   { key: 'length',  label: 'At least 8 characters',                     test: pw => pw.length >= 8 },
   { key: 'upper',   label: 'At least one uppercase letter (A–Z)',        test: pw => /[A-Z]/.test(pw) },
   { key: 'lower',   label: 'At least one lowercase letter (a–z)',        test: pw => /[a-z]/.test(pw) },
+  { key: 'number',  label: 'At least one number (0–9)',                  test: pw => /[0-9]/.test(pw) },
   { key: 'special', label: 'At least one special character (!@#$%^&*…)', test: pw => /[!@#$%^&*()\-_=+[\]{};':"\\|,.<>/?`~]/.test(pw) },
 ];
 
@@ -29,6 +30,9 @@ const UserModal = ({ show, onClose, onSave, userToEdit }) => {
     title: '',
     message: ''
   });
+
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   useEffect(() => {
     if (userToEdit) {
@@ -57,13 +61,11 @@ const UserModal = ({ show, onClose, onSave, userToEdit }) => {
       // For NEW user: email, password are required
       return !!(formData.email.trim() && formData.password);
     }
-    // For EDIT: compare current state vs initial userToEdit values
     return (
       formData.email !== (userToEdit.email || '') ||
       formData.role !== (userToEdit.role || 'customer') ||
       formData.first_name !== (userToEdit.first_name || '') ||
-      formData.last_name !== (userToEdit.last_name || '') ||
-      formData.password !== ''
+      formData.last_name !== (userToEdit.last_name || '')
     );
   }, [formData, userToEdit]);
 
@@ -80,7 +82,7 @@ const UserModal = ({ show, onClose, onSave, userToEdit }) => {
   const handleSubmit = (e) => {
     e.preventDefault();
     
-    if (formData.role === 'admin' && formData.password !== formData.confirmPassword) {
+    if (!userToEdit && formData.role === 'admin' && formData.password !== formData.confirmPassword) {
       setErrorConfig({
         show: true,
         title: 'Password Mismatch',
@@ -109,6 +111,10 @@ const UserModal = ({ show, onClose, onSave, userToEdit }) => {
       }
       if (!/[a-z]/.test(formData.password)) {
         setErrorConfig({ show: true, title: 'Weak Password', message: 'Password must contain at least one lowercase letter.' });
+        return;
+      }
+      if (!/[0-9]/.test(formData.password)) {
+        setErrorConfig({ show: true, title: 'Weak Password', message: 'Password must contain at least one number.' });
         return;
       }
       if (!/[!@#$%^&*()\-_=+[\]{};':"\\|,.<>/?`~]/.test(formData.password)) {
@@ -180,19 +186,25 @@ const UserModal = ({ show, onClose, onSave, userToEdit }) => {
             </select>
           </div>
           
-          {(formData.role === 'admin' || !userToEdit) && (
+          {!userToEdit && (
             <div className="form-row">
               <div className="form-group">
                 <label>{formData.role === 'admin' ? 'Admin Password' : 'Password'}</label>
-                <input
-                  type="password"
-                  name="password"
-                  value={formData.password}
-                  onChange={handleChange}
-                  placeholder="Enter password"
-                  required={!userToEdit || formData.role === 'admin'}
-                />
-                {(formData.role === 'admin' || !userToEdit || formData.password.length > 0) && (
+                <div className="modal-input-wrap">
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    name="password"
+                    value={formData.password}
+                    onChange={handleChange}
+                    placeholder="Enter password"
+                    required
+                    style={{ paddingRight: '45px' }}
+                  />
+                  <span className="modal-pw-eye" onClick={() => setShowPassword(v => !v)}>
+                    {showPassword ? <FaEyeSlash /> : <FaEye />}
+                  </span>
+                </div>
+                {true && (
                   <ul className="pw-requirements">
                     {ruleResults.map(r => (
                       <li key={r.key} className={r.passed ? 'req-pass' : 'req-fail'}>
@@ -206,14 +218,20 @@ const UserModal = ({ show, onClose, onSave, userToEdit }) => {
               {formData.role === 'admin' && (
                 <div className="form-group">
                   <label>Confirm Admin Password</label>
-                  <input
-                    type="password"
-                    name="confirmPassword"
-                    value={formData.confirmPassword}
-                    onChange={handleChange}
-                    placeholder="Retype admin password"
-                    required
-                  />
+                  <div className="modal-input-wrap">
+                    <input
+                      type={showConfirmPassword ? 'text' : 'password'}
+                      name="confirmPassword"
+                      value={formData.confirmPassword}
+                      onChange={handleChange}
+                      placeholder="Retype admin password"
+                      required
+                      style={{ paddingRight: '45px' }}
+                    />
+                    <span className="modal-pw-eye" onClick={() => setShowConfirmPassword(v => !v)}>
+                      {showConfirmPassword ? <FaEyeSlash /> : <FaEye />}
+                    </span>
+                  </div>
                 </div>
               )}
             </div>

@@ -64,6 +64,26 @@
   letter-spacing: -0.5px;
 }
 
+.modal-input-wrap {
+  position: relative;
+  width: 100%;
+}
+
+.modal-pw-eye {
+  position: absolute;
+  right: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #94a3b8;
+  cursor: pointer;
+  font-size: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.2s;
+  z-index: 2;
+}
+
 .close-x {
   background: #f8fafc;
   border: none;
@@ -126,6 +146,29 @@
   background: #fff;
   outline: none;
   box-shadow: 0 0 0 4px rgba(197, 0, 0, 0.1);
+}
+
+.modal-input-wrap {
+  position: relative;
+  width: 100%;
+}
+
+.modal-pw-eye {
+  position: absolute;
+  right: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #94a3b8;
+  cursor: pointer;
+  font-size: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.2s;
+  z-index: 2;
+}
+.modal-pw-eye:hover {
+  color: #475569;
 }
 
 /* Password requirements checklist */

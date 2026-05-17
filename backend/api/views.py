@@ -79,6 +79,8 @@ class UserViewSet(viewsets.ModelViewSet):
                 return Response({'detail': 'Password must contain at least one uppercase letter.'}, status=status.HTTP_400_BAD_REQUEST)
             if not re.search(r'[a-z]', new_password):
                 return Response({'detail': 'Password must contain at least one lowercase letter.'}, status=status.HTTP_400_BAD_REQUEST)
+            if not re.search(r'[0-9]', new_password):
+                return Response({'detail': 'Password must contain at least one number.'}, status=status.HTTP_400_BAD_REQUEST)
             if not re.search(r'[!@#$%^&*(),.?":{}|<>]', new_password):
                 return Response({'detail': 'Password must contain at least one special character.'}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -151,15 +153,13 @@ class UserViewSet(viewsets.ModelViewSet):
             login(request, user)
             refresh = RefreshToken.for_user(user)
             return Response({
-                'user': {
-                    'id': user.id,
-                    'email': user.email,
-                    'role': user.role,
-                    'first_name': user.first_name,
-                    'last_name': user.last_name,
-                    'access': str(refresh.access_token),
-                    'refresh': str(refresh),
-                }
+                'id': user.id,
+                'email': user.email,
+                'role': user.role,
+                'first_name': user.first_name,
+                'last_name': user.last_name,
+                'access': str(refresh.access_token),
+                'refresh': str(refresh),
             }, status=status.HTTP_200_OK)
         return Response({'error': 'Invalid credentials'}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -344,6 +344,8 @@ class PasswordResetView(views.APIView):
             return Response({'detail': 'Password must contain at least one uppercase letter.'}, status=status.HTTP_400_BAD_REQUEST)
         if not re.search(r'[a-z]', password):
             return Response({'detail': 'Password must contain at least one lowercase letter.'}, status=status.HTTP_400_BAD_REQUEST)
+        if not re.search(r'[0-9]', password):
+            return Response({'detail': 'Password must contain at least one number.'}, status=status.HTTP_400_BAD_REQUEST)
         if not re.search(r'[!@#$%^&*(),.?":{}|<>]', password):
             return Response({'detail': 'Password must contain at least one special character.'}, status=status.HTTP_400_BAD_REQUEST)
 
