@@ -79,7 +79,7 @@ const StaffCampaigns = () => {
     });
   }, [campaigns, searchQuery, statusFilters]);
 
-  useMemo(() => { setCurrentPage(1); }, [searchQuery, statusFilters]);
+  useEffect(() => { setCurrentPage(1); }, [searchQuery, statusFilters]);
 
   const totalPages     = Math.ceil(filteredCampaigns.length / PAGE_SIZE);
   const pagedCampaigns = filteredCampaigns.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);

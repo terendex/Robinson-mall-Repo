@@ -33,6 +33,8 @@ const RedeemVoucherPanel = () => {
   const [scanActive, setScanActive] = useState(false);
 
   const html5QrRef = useRef(null);
+  const isMounted = useRef(true);
+  const cameraState = useRef('stopped'); // 'stopped' | 'starting' | 'scanning' | 'stopping'
 
   const [confirmConfig, setConfirmConfig] = useState({
     show: false, title: '', message: '', confirmText: '', variant: 'primary', onConfirm: () => {}
@@ -42,21 +44,44 @@ const RedeemVoucherPanel = () => {
 
   // ── Camera lifecycle ──────────────────────────────────
   useEffect(() => {
+    isMounted.current = true;
+    return () => {
+      isMounted.current = false;
+      if (html5QrRef.current) {
+        const qr = html5QrRef.current;
+        html5QrRef.current = null;
+        cameraState.current = 'stopping';
+        qr.stop().catch(() => {});
+      }
+    };
+  }, []);
+
+  useEffect(() => {
     if (inputMode === 'camera') {
       startCamera();
     } else {
       stopCamera();
     }
-    return () => { stopCamera(); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [inputMode]);
 
   const startCamera = async () => {
+    if (cameraState.current !== 'stopped') {
+      // Already starting, scanning, or stopping
+      return;
+    }
+
     setCameraError('');
     setScanActive(false);
+    cameraState.current = 'starting';
 
     // Give the DOM a tick to render the div before attaching the scanner
     await new Promise(r => setTimeout(r, 100));
+
+    if (!isMounted.current || cameraState.current === 'stopping') {
+      cameraState.current = 'stopped';
+      return;
+    }
 
     try {
       const qr = new Html5Qrcode(QR_REGION_ID);
@@ -66,6 +91,7 @@ const RedeemVoucherPanel = () => {
         { facingMode: 'environment' },
         { fps: 10, qrbox: { width: 240, height: 240 } },
         (decodedText) => {
+          if (!isMounted.current) return;
           // decodedText is the raw QR value — normalise to "CLAIM-N" format
           const match = decodedText.match(/\d+/);
           const ref = match ? `CLAIM-${match[0]}` : decodedText;
@@ -77,23 +103,52 @@ const RedeemVoucherPanel = () => {
         },
         () => { /* ignore per-frame errors */ }
       );
+
+      // Check if we were stopped while starting
+      if (!isMounted.current || cameraState.current === 'stopping') {
+        cameraState.current = 'stopped';
+        html5QrRef.current = null;
+        qr.stop().catch(() => {});
+        return;
+      }
+
+      cameraState.current = 'scanning';
       setScanActive(true);
     } catch (err) {
-      setCameraError(
-        err?.message?.includes('Permission')
-          ? 'Camera permission denied. Please allow camera access and try again.'
-          : `Camera error: ${err?.message || 'Could not start camera.'}`
-      );
+      cameraState.current = 'stopped';
+      html5QrRef.current = null;
+      if (isMounted.current) {
+        setCameraError(
+          err?.message?.includes('Permission')
+            ? 'Camera permission denied. Please allow camera access and try again.'
+            : `Camera error: ${err?.message || 'Could not start camera.'}`
+        );
+      }
     }
   };
 
   const stopCamera = () => {
-    if (html5QrRef.current) {
-      html5QrRef.current.stop().catch(() => {});
-      html5QrRef.current.clear?.();
-      html5QrRef.current = null;
-    }
     setScanActive(false);
+
+    if (cameraState.current === 'starting') {
+      cameraState.current = 'stopping';
+      return;
+    }
+
+    if (html5QrRef.current) {
+      const qr = html5QrRef.current;
+      html5QrRef.current = null;
+      cameraState.current = 'stopping';
+
+      qr.stop().then(() => {
+        cameraState.current = 'stopped';
+      }).catch((err) => {
+        console.warn("Failed to stop QR camera:", err);
+        cameraState.current = 'stopped';
+      });
+    } else {
+      cameraState.current = 'stopped';
+    }
   };
 
   // ── Lookup ────────────────────────────────────────────
@@ -328,7 +383,7 @@ const RedeemVoucherPanel = () => {
 
           {/* Card body */}
           <div style={{ padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '0.75rem' }}>
               {[
                 { label: 'Customer', value: lookupResult.user_name || `User #${lookupResult.user}` },
                 { label: 'Voucher',  value: lookupResult.voucher_name || '—' },

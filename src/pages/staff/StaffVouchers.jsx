@@ -72,7 +72,7 @@ const StaffVouchers = () => {
     });
   }, [vouchers, searchQuery, statusFilter]);
 
-  useMemo(() => { setCurrentPage(1); }, [searchQuery, statusFilter]);
+  useEffect(() => { setCurrentPage(1); }, [searchQuery, statusFilter]);
 
   const totalPages    = Math.ceil(filteredVouchers.length / PAGE_SIZE);
   const pagedVouchers = filteredVouchers.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
@@ -85,7 +85,7 @@ const StaffVouchers = () => {
         <div className="vouchers-header">
           <h1>Vouchers</h1>
           {/* Tab switcher */}
-          <div style={{ display: 'flex', gap: '0.5rem' }}>
+          <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
             <button
               onClick={() => setTab('vouchers')}
               style={{

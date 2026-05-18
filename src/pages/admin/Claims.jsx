@@ -305,7 +305,7 @@ const Claims = () => {
   }, [claims, searchQuery, statusFilters, amountFilter]);
 
   // Reset page on filter change (anti-pattern fix: was inside useMemo)
-  useMemo(() => { setCurrentPage(1); }, [searchQuery, amountFilter]);
+  useEffect(() => { setCurrentPage(1); }, [searchQuery, amountFilter]);
 
   const totalPages  = Math.ceil(filteredClaims.length / PAGE_SIZE);
   const pagedClaims = filteredClaims.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);

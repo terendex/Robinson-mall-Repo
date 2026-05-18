@@ -2294,12 +2294,20 @@
   }
 
   .claims-filter-bar {
+    display: flex;
     gap: 0.5rem;
     overflow-x: auto;
+    width: 100%;
+    max-width: 100%;
     padding-bottom: 0.5rem;
     margin-bottom: 1.25rem;
     -webkit-overflow-scrolling: touch;
     flex-wrap: nowrap; /* Horizontal scroll on mobile */
+    scrollbar-width: none; /* Hide scrollbar for Firefox */
+  }
+
+  .claims-filter-bar::-webkit-scrollbar {
+    display: none; /* Hide scrollbar for Chrome/Safari/Edge */
   }
 
   .filter-pill {

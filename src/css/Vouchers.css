@@ -378,14 +378,7 @@
   }
 
   .vouchers-table {
-    min-width: 700px;
-  }
-
-  .vouchers-table th:nth-child(2),
-  .vouchers-table td:nth-child(2),
-  .vouchers-table th:nth-child(4),
-  .vouchers-table td:nth-child(4) {
-    display: none;
+    min-width: 780px;
   }
 }
 

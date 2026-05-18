@@ -100,7 +100,7 @@ const StaffClaims = () => {
     });
   }, [claims, searchQuery, statusFilters, amountFilter]);
 
-  useMemo(() => { setCurrentPage(1); }, [searchQuery, statusFilters, amountFilter]);
+  useEffect(() => { setCurrentPage(1); }, [searchQuery, statusFilters, amountFilter]);
 
   const totalPages  = Math.ceil(filteredClaims.length / PAGE_SIZE);
   const pagedClaims = filteredClaims.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);

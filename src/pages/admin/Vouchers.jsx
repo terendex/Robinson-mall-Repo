@@ -226,7 +226,7 @@ const Vouchers = () => {
   }, [vouchers, searchQuery, statusFilter]);
 
   // Reset to page 1 on search/filter change
-  useMemo(() => { setCurrentPage(1); }, [searchQuery, statusFilter]);
+  useEffect(() => { setCurrentPage(1); }, [searchQuery, statusFilter]);
 
   // Pagination
   const totalPages    = Math.ceil(filteredVouchers.length / PAGE_SIZE);
@@ -237,7 +237,7 @@ const Vouchers = () => {
       <div className="vouchers-container">
         <div className="vouchers-header">
           <h1>Vouchers</h1>
-          <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+          <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
             {tab === 'vouchers' && (
               <button className="create-voucher-btn" onClick={handleAddVoucher}>
                 <i className="fa-solid fa-plus"></i> Create Voucher
