@@ -589,6 +589,12 @@ class ClaimViewSet(viewsets.ModelViewSet):
                     if spent >= campaign.budget:
                         raise ValidationError("This campaign's budget has been fully consumed.")
 
+                # 4. Campaign expiration check
+                if voucher.campaign:
+                    today = timezone.localtime().date()
+                    if voucher.campaign.end_date < today or voucher.campaign.status in ['Completed', 'Inactive']:
+                        raise ValidationError("This voucher's campaign has already ended or is inactive.")
+
             # CF-02 FIX: Save the Claim row FIRST, THEN increment usage_count.
             # Previously the count was bumped before serializer.save(); if save()
             # raised a ValidationError or IntegrityError, the atomic rollback
@@ -753,6 +759,12 @@ class ClaimViewSet(viewsets.ModelViewSet):
                             {'detail': f"Approving this claim ({claim_amount}) would exceed the campaign budget (Remaining: {max(0, campaign.budget - spent)})."},
                             status=400
                         )
+
+                # Campaign expiration check at time of approval
+                if claim.voucher and claim.voucher.campaign:
+                    today = timezone.localtime().date()
+                    if claim.voucher.campaign.end_date < today or claim.voucher.campaign.status in ['Completed', 'Inactive']:
+                        return Response({'detail': "Cannot approve claim for an expired or inactive campaign voucher."}, status=400)
 
                 claim.status = 'Approved'
                 claim.save(update_fields=['status', 'updated_at'])

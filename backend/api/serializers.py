@@ -80,6 +80,7 @@ class VoucherSerializer(serializers.ModelSerializer):
     # Read-only derived fields from FK relationships
     campaign_name = serializers.ReadOnlyField(source='campaign.name')
     store_name    = serializers.ReadOnlyField(source='store.name')
+    expiry_date   = serializers.ReadOnlyField(source='campaign.end_date')
 
     class Meta:
         model = Voucher
@@ -88,6 +89,7 @@ class VoucherSerializer(serializers.ModelSerializer):
             'usage_limit', 'usage_count', 'is_active',
             'campaign', 'campaign_name',
             'store', 'store_name',
+            'expiry_date',
             'created_at', 'updated_at',
         )
 

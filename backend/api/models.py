@@ -282,6 +282,16 @@ class Transaction(models.Model):
         # Keep de-normalised store_name in sync with the FK
         if self.store_id and not self.store_name:
             self.store_name = self.store.name
+
+        # Automatically connect the expiration of voucher to the end date of the campaign it dwells in
+        if not self.expiry_date and self.voucher_code:
+            try:
+                voucher = Voucher.objects.filter(code=self.voucher_code).first()
+                if voucher and voucher.campaign:
+                    self.expiry_date = voucher.campaign.end_date
+            except Exception:
+                pass
+
         super().save(*args, **kwargs)
 
     def __str__(self):

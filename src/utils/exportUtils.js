@@ -32,7 +32,12 @@ export function exportCSV(rows, filename) {
     }
 
     const headers = Object.keys(rows[0]);
+    const exportType = filename.split('-')[0].toUpperCase();
     const csvLines = [
+      `"ROBINSON MALL - REWARDS & LOYALTY PORTAL"`,
+      `"Export Type: ${exportType} REPORT"`,
+      `"Generated On: ${new Date().toLocaleString()}"`,
+      ``, // blank spacing line
       headers.map(h => `"${h}"`).join(','),
       ...rows.map(row =>
         headers.map(h => {
@@ -64,18 +69,54 @@ export function exportExcel(rows, sheetName, filename) {
       return;
     }
 
-    const worksheet = XLSX.utils.json_to_sheet(rows);
+    // 1. Create workbook and metadata worksheet with premium header styling
+    const workbook = XLSX.utils.book_new();
+    const worksheet = XLSX.utils.aoa_to_sheet([
+      [`ROBINSON MALL - REWARDS & LOYALTY PORTAL`],
+      [`Export Type: ${sheetName.toUpperCase()} REPORT`],
+      [`Generated On: ${new Date().toLocaleString()}`],
+      [], // blank spacing row
+    ]);
 
-    // Auto-fit column widths based on max character length
+    // 2. Add JSON data starting at Row 5 (origin A5)
+    XLSX.utils.sheet_add_json(worksheet, rows, { origin: 'A5' });
+
+    // 3. Apply custom cell formatting and number formats for visual excellence
     const headers = Object.keys(rows[0]);
-    worksheet['!cols'] = headers.map(h => ({
-      wch: Math.max(
+    const range = XLSX.utils.decode_range(worksheet['!ref']);
+
+    for (let R = range.s.r; R <= range.e.r; ++R) {
+      for (let C = range.s.c; C <= range.e.c; ++C) {
+        const cellAddress = XLSX.utils.encode_cell({ r: R, c: C });
+        const cell = worksheet[cellAddress];
+        if (!cell) continue;
+
+        // Skip metadata header block (rows 1-4)
+        if (R < 4) continue;
+
+        // Apply clean number formatting to numerical fields
+        if (typeof cell.v === 'number') {
+          const headerName = headers[C];
+          if (headerName && (headerName.toLowerCase().includes('amount') || headerName.includes('₱'))) {
+            cell.t = 'n';
+            cell.z = '₱#,##0.00'; // Format as Philippine Peso currency
+          } else {
+            cell.t = 'n';
+            cell.z = '#,##0'; // Regular integers
+          }
+        }
+      }
+    }
+
+    // 4. Auto-fit column widths based on headers and data length (excluding top metadata title rows)
+    worksheet['!cols'] = headers.map((h, colIndex) => {
+      const maxLen = Math.max(
         h.length,
         ...rows.map(r => String(r[h] ?? '').length)
-      ) + 2,
-    }));
+      );
+      return { wch: maxLen + 4 }; // Generous padding for clean appearance
+    });
 
-    const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, sheetName);
 
     const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
@@ -99,7 +140,7 @@ export function buildTransactionRows(transactions) {
     'Transaction ID':  t.transaction_id || `TXN-${t.id}`,
     'Customer':        t.user_name   || 'Anonymous',
     'Store':           t.store_name  || '—',
-    'Amount (₱)':      t.amount      ? Number(t.amount).toFixed(2) : '0.00',
+    'Amount (₱)':      t.amount      ? Number(t.amount) : 0.00,
     'Voucher':         t.voucher_name || '—',
     'Voucher Code':    t.voucher_code || '—',
     'Receipt No.':     t.receipt_no  || '—',
@@ -117,7 +158,7 @@ export function buildReportRows(claims, period) {
     'Voucher':         c.voucher_name || '—',
     'Voucher Code':    c.voucher_code || '—',
     'Store':           c.store_name  || '—',
-    'Amount (₱)':      c.amount      ? Number(c.amount).toFixed(2) : '0.00',
+    'Amount (₱)':      c.amount      ? Number(c.amount) : 0.00,
     'Receipt No.':     c.receipt_no  || '—',
     'Date':            c.created_at  ? new Date(c.created_at).toLocaleString() : '—',
     'Period Filter':   period,

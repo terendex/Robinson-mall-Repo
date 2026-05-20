@@ -222,6 +222,7 @@ const CustomerClaims = ({ user }) => {
         discount: v.discount_percentage,
         campaignId: camp.id,
         campaignName: camp.name,
+        campaignEndDate: camp.end_date,
         unlocked,
         claim: existClaim || null,
         spend,
@@ -339,8 +340,14 @@ const CustomerClaims = ({ user }) => {
                     </div>
 
                     <h3>{entry.voucherName}</h3>
-                    <p className="voucher-store-loc">
-                      <i className="fa-solid fa-tag"></i> {entry.campaignName}
+                    <p className="voucher-store-loc" style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px' }}>
+                      <span><i className="fa-solid fa-tag"></i> {entry.campaignName}</span>
+                      {entry.campaignEndDate && (
+                        <span style={{ fontSize: '0.75rem', color: '#cc2c2c', fontWeight: 600 }}>
+                          <i className="fa-solid fa-calendar-day" style={{ marginRight: '4px' }}></i>
+                          Expires: {new Date(entry.campaignEndDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
+                        </span>
+                      )}
                     </p>
 
                     {/* Spending progress */}
