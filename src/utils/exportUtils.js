@@ -145,7 +145,6 @@ export function buildTransactionRows(transactions) {
     'Voucher Code':    t.voucher_code || '—',
     'Receipt No.':     t.receipt_no  || '—',
     'Date':            t.created_at  ? new Date(t.created_at).toLocaleString() : '—',
-    'Expiry Date':     t.expiry_date || '—',
     'Status':          t.status      || '—',
   }));
 }
