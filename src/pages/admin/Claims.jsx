@@ -81,10 +81,6 @@ const Claims = () => {
   const [editNote, setEditNote]               = useState('');
   const [editLoading, setEditLoading]         = useState(false);
 
-  // Reject-reason modal
-  const [showRejectModal, setShowRejectModal] = useState(false);
-  const [rejectTarget, setRejectTarget]       = useState(null);
-  const [rejectReason, setRejectReason]       = useState('');
   const [statusLoading, setStatusLoading]     = useState(null);
 
   // Action menu pos (fixed, escapes overflow clip)
@@ -146,42 +142,7 @@ const Claims = () => {
     });
   };
 
-  const openRejectModal = (claim) => {
-    setRejectTarget(claim);
-    setRejectReason('');
-    setShowRejectModal(true);
-    setActiveActions(null);
-  };
 
-  const confirmReject = async () => {
-    if (!rejectReason.trim()) { 
-      setErrorConfig({
-        show: true,
-        title: 'Requirement Missing',
-        message: 'Please provide a rejection reason.'
-      });
-      return; 
-    }
-    setStatusLoading(rejectTarget.id);
-    setShowRejectModal(false);
-    try {
-      const res = await axios.patch(`${BASE}/api/claims/${rejectTarget.id}/`, {
-        status: 'Rejected',
-        rejection_reason: rejectReason,
-      });
-      setClaims(prev => prev.map(c => c.id === rejectTarget.id ? res.data : c));
-    } catch (err) { console.error(err); }
-    finally { 
-      setStatusLoading(null); 
-      setRejectTarget(null); 
-      setRejectReason(''); 
-      setSuccessConfig({
-        show: true,
-        title: 'Expired!',
-        message: 'The claim has been marked as expired successfully.'
-      });
-    }
-  };
 
   // ── View / Edit helpers ──────────────────────────────────
   const openViewModal = (claim) => {
@@ -416,7 +377,15 @@ const Claims = () => {
                         <td>
                           <div className="voucher-cell">
                             <span className="voucher-title">{claim.voucher_name}</span>
-                            <span className="voucher-code">{claim.voucher_code}</span>
+                            <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap', marginTop: '2px' }}>
+                              <span className="voucher-code">{claim.voucher_code}</span>
+                              {claim.expiry_date && claim.status !== 'Approved' && (
+                                <span style={{ fontSize: '10.5px', color: '#b91c1c', fontWeight: '600', display: 'inline-flex', alignItems: 'center' }}>
+                                  <i className="fa-solid fa-clock" style={{ marginRight: '3px' }}></i>
+                                  Expires: {new Date(claim.expiry_date).toLocaleDateString()}
+                                </span>
+                              )}
+                            </div>
                           </div>
                         </td>
                         <td><span className="store-name">{claim.store_name}</span></td>
@@ -474,11 +443,7 @@ const Claims = () => {
                 <i className="fa-solid fa-circle-check"></i> Mark as Claimed
               </button>
             )}
-            {claim.status !== 'Rejected' && (
-              <button className="txn-action-item txn-action-reject" onClick={() => openRejectModal(claim)}>
-                <i className="fa-solid fa-circle-xmark"></i> Mark as Expired
-              </button>
-            )}
+
             <div className="txn-action-divider"></div>
             <button 
               className="txn-action-item" 
@@ -491,45 +456,7 @@ const Claims = () => {
         );
       })()}
 
-      {/* ── Reject Reason Modal ── */}
-      {showRejectModal && rejectTarget && (
-        <div className="modal-overlay">
-          <div className="modal-content" style={{ maxWidth: 480 }}>
-            <div style={{
-              background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
-              padding: '14px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-            }}>
-              <span style={{ color: '#fff', fontWeight: '700', fontSize: '15px' }}>Mark as Expired</span>
-              <button onClick={() => { setShowRejectModal(false); setRejectTarget(null); }}
-                style={{ background: 'rgba(255,255,255,0.1)', border: 'none', color: '#fff', borderRadius: '50%', width: 28, height: 28, cursor: 'pointer', fontSize: 14 }}>×</button>
-            </div>
-            <div style={{ padding: '1.25rem 1.5rem' }}>
-              <p style={{ margin: '0 0 0.5rem', fontSize: '0.9rem', color: '#555' }}>
-                Claim: <strong>{rejectTarget.receipt_no || `CLM-${String(rejectTarget.id).padStart(4, '0')}`}</strong>
-              </p>
-              <p style={{ margin: '0 0 1rem', fontSize: '0.87rem', color: '#888' }}>
-                Customer: {rejectTarget.user_name || 'Anonymous'}
-              </p>
-              <div className="form-group">
-                <label style={{ fontWeight: 600 }}>Reason for Expiration <span style={{ color: '#c40000' }}>*</span></label>
-                <textarea rows={4} value={rejectReason} onChange={e => setRejectReason(e.target.value)}
-                  placeholder="Explain why this claim is being marked as expired…"
-                  style={{ width: '100%', padding: '0.65rem 0.85rem', border: '1.5px solid #ddd',
-                    borderRadius: '8px', fontSize: '0.9rem', resize: 'vertical',
-                    fontFamily: 'inherit', outline: 'none', boxSizing: 'border-box' }}
-                  autoFocus />
-              </div>
-            </div>
-            <div className="modal-actions" style={{ padding: '0 1.5rem 1.25rem' }}>
-              <button className="cancel-inner-btn" onClick={() => { setShowRejectModal(false); setRejectTarget(null); }}>Cancel</button>
-              <button className="save-btn" style={{ background: '#c40000' }} onClick={confirmReject}
-                disabled={!rejectReason.trim()}>
-                <i className="fa-solid fa-circle-xmark"></i> Confirm Expiration
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+
 
       {/* ── Edit Claim Modal ── */}
       {showEditModal && editClaim && (
@@ -555,14 +482,14 @@ const Claims = () => {
                   style={{ width: '100%', padding: '0.65rem 0.85rem', border: '1.5px solid #ddd', borderRadius: '8px', fontSize: '0.9rem' }}>
                   <option value="Pending">Not Claimed</option>
                   <option value="Approved">Claimed</option>
-                  <option value="Rejected">Expired</option>
+                  <option value="Rejected">Rejected</option>
                 </select>
               </div>
               {editStatus === 'Rejected' && (
                 <div className="form-group">
-                  <label style={{ fontWeight: 600 }}>Reason for Expiration <span style={{ color: '#c40000' }}>*</span></label>
+                  <label style={{ fontWeight: 600 }}>Rejection Reason <span style={{ color: '#c40000' }}>*</span></label>
                   <textarea rows={3} value={editNote} onChange={e => setEditNote(e.target.value)}
-                    placeholder="Explain the reason for expiration…"
+                    placeholder="Explain the reason for rejecting this claim…"
                     style={{ width: '100%', padding: '0.65rem 0.85rem', border: '1.5px solid #ddd',
                       borderRadius: '8px', fontSize: '0.9rem', resize: 'vertical',
                       fontFamily: 'inherit', outline: 'none', boxSizing: 'border-box' }} />

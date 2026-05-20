@@ -167,11 +167,12 @@ class CampaignSerializer(serializers.ModelSerializer):
         return obj.vouchers.count()
 
 class ClaimSerializer(serializers.ModelSerializer):
-    user_name    = serializers.ReadOnlyField(source='user.get_full_name')
+    user_name    = serializers.SerializerMethodField()
     user_phone   = serializers.ReadOnlyField(source='user.phone_number')
     voucher_name = serializers.ReadOnlyField(source='voucher.name')
     voucher_code = serializers.ReadOnlyField(source='voucher.code')
     store_name   = serializers.ReadOnlyField(source='store.name')
+    expiry_date  = serializers.ReadOnlyField(source='voucher.campaign.end_date')
 
     # amount is optional on creation — defaults to 0. Staff can update it later.
     amount = serializers.DecimalField(
@@ -182,6 +183,14 @@ class ClaimSerializer(serializers.ModelSerializer):
     class Meta:
         model = Claim
         fields = '__all__'
+
+    def get_user_name(self, obj):
+        if not obj.user:
+            return 'Anonymous User'
+        full_name = obj.user.get_full_name()
+        if full_name.strip():
+            return full_name
+        return obj.user.email  # Fallback to email if name is empty
 
 
 class TransactionSerializer(serializers.ModelSerializer):

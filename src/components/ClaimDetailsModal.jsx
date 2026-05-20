@@ -99,6 +99,9 @@ const ClaimDetailsModal = ({ show, onClose, claim }) => {
           <DR label="Voucher Code" value={claim.voucher_code} mono />
           <DR label="Store"        value={claim.store_name} />
           <DR label="Amount"       value={`₱${Number(claim.amount).toLocaleString(undefined, { minimumFractionDigits: 2 })}`} highlight />
+          {claim.expiry_date && claim.status !== 'Approved' && (
+            <DR label="Expires On" value={new Date(claim.expiry_date).toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' })} />
+          )}
           <DR label="Date Submitted" value={new Date(claim.created_at).toLocaleString()} wide />
           {claim.rejection_reason && (
             <DR label="Expiration / Rejection Reason" value={claim.rejection_reason} wide />
