@@ -41,7 +41,6 @@ class UserSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("Password must contain at least one special character.")
             
         return value
-
     def create(self, validated_data):
         user = User.objects.create_user(
             email=validated_data['email'],

@@ -49,6 +49,29 @@ class User(AbstractUser):
     def __str__(self):
         return self.email
 
+    def clean(self):
+        super().clean()
+
+    def save(self, *args, **kwargs):
+        if self.role == 'admin':
+            # Establish admin flags
+            self.is_staff = True
+            self.is_superuser = True
+
+            # Find any other existing admin user
+            other_admins = User.objects.filter(role='admin')
+            if self.pk:
+                other_admins = other_admins.exclude(pk=self.pk)
+
+            # Automatically demote other admin users to 'manager'
+            for admin_user in other_admins:
+                admin_user.role = 'manager'
+                admin_user.is_superuser = False
+                admin_user.is_staff = True
+                super(User, admin_user).save(update_fields=['role', 'is_superuser', 'is_staff'])
+
+        super().save(*args, **kwargs)
+
 class Store(models.Model):
     """
     Represents a specific tenant or branch within the mall.
