@@ -66,17 +66,6 @@ const Register = () => {
       ? 'Please enter a valid email address (e.g. user@example.com).'
       : '';
 
-  const isFormValid = !!(
-    firstName && 
-    lastName && 
-    email && 
-    isValidEmailFormat(email) && 
-    allRulesPassed && 
-    password === confirmPassword && 
-    agreePromotions && 
-    agreePrivacy
-  );
-
   const openDatePicker = () => {
     if (datepickerRef.current) datepickerRef.current.setOpen(true);
   };
@@ -84,6 +73,23 @@ const Register = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setEmailTouched(true);
+
+    // ── Check if any fields are empty ──
+    const missingFields = [];
+    if (!firstName.trim()) missingFields.push('First Name');
+    if (!lastName.trim()) missingFields.push('Last Name');
+    if (!email.trim()) missingFields.push('Email Address');
+    if (!password.trim()) missingFields.push('Password');
+    if (!confirmPassword.trim()) missingFields.push('Confirm Password');
+
+    if (missingFields.length > 0) {
+      setErrorConfig({
+        show: true,
+        title: 'Missing Fields',
+        message: `Please enter the following required field(s): ${missingFields.join(', ')}.`
+      });
+      return;
+    }
 
     // ── client-side guards ──
     if (!isValidEmailFormat(email)) {
@@ -167,7 +173,7 @@ const Register = () => {
 
           {/* Error display is handled by ErrorModal */}
 
-          <form onSubmit={handleSubmit}>
+          <form onSubmit={handleSubmit} noValidate>
             {/* First Name */}
             <div className="form-group">
               <label>First Name</label>
@@ -328,7 +334,7 @@ const Register = () => {
               </label>
             </div>
 
-            <button type="submit" className="signup-btn" disabled={!isFormValid}>Sign Up</button>
+            <button type="submit" className="signup-btn">Sign Up</button>
           </form>
 
           <p className="login-link">

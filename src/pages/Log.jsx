@@ -39,6 +39,30 @@ export default function Log({ onLogin }) {
    */
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!email.trim() && !password.trim()) {
+      setErrorConfig({
+        show: true,
+        title: 'Missing Information',
+        message: 'Please enter your email and password.'
+      });
+      return;
+    }
+    if (!email.trim()) {
+      setErrorConfig({
+        show: true,
+        title: 'Email Required',
+        message: 'Please enter your email address.'
+      });
+      return;
+    }
+    if (!password.trim()) {
+      setErrorConfig({
+        show: true,
+        title: 'Password Required',
+        message: 'Please enter your password.'
+      });
+      return;
+    }
     try {
       const user = await onLogin(email, password, rememberMe);
       if (user) {
@@ -83,7 +107,7 @@ export default function Log({ onLogin }) {
 
           {/* Error handled by ErrorModal */}
 
-          <form onSubmit={handleSubmit}>
+          <form onSubmit={handleSubmit} noValidate>
             {/* Email / Username */}
             <div className="form-group">
               <label htmlFor="email">Email Address *</label>
@@ -144,7 +168,7 @@ export default function Log({ onLogin }) {
               <Link to="/forgot-password">Forgot Password</Link>
             </div>
 
-            <button type="submit" className="login-btn" disabled={!email || !password}>Login</button>
+            <button type="submit" className="login-btn">Login</button>
           </form>
 
           <div className="signup-link">
