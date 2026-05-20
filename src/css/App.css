@@ -6,20 +6,13 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
 }
 
 .App {
-  text-align: center;
-}
-
-/* Responsive styles */
-@media (max-width: 768px) {
-  /* Add tablet-specific styles here */
-}
-
-@media (max-width: 480px) {
-  /* Add mobile-specific styles here */
-  .App {
-    padding: 10px;
-  }
+  /* Do NOT use text-align: center — it mis-aligns all page content */
+  /* Do NOT add padding here — it breaks position: fixed on header/sidebar */
+  min-height: 100vh;
+  position: relative;
+  background-color: #f8fafc; /* Match dashboard theme globally */
 }

@@ -3,11 +3,43 @@ import axios from 'axios';
 import TransactionDetailsModal from '../../components/Transactiondetailsmodal';
 import TransactionModal from '../../components/Transactionmodal';
 import { exportCSV, exportExcel, buildTransactionRows } from '../../utils/exportUtils';
+import Pagination from '../../components/Pagination';
+import ActionConfirmModal from '../../components/ActionConfirmModal';
+import SuccessModal from '../../components/SuccessModal';
+import ErrorModal from '../../components/ErrorModal';
 import '../../css/Transactions.css';
 
+// BUG-01 FIX: Use environment variable instead of hardcoded localhost URL
+const BASE = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
+
+// ISSUE-12 FIX: Format dates in Philippine Standard Time (UTC+8)
+const fmtDatePH = (dateString) => {
+  if (!dateString) return '';
+  return new Intl.DateTimeFormat('en-PH', {
+    timeZone: 'Asia/Manila',
+    year: 'numeric', month: '2-digit', day: '2-digit',
+  }).format(new Date(dateString));
+};
+
+const fmtTimePH = (dateString) => {
+  if (!dateString) return '';
+  return new Intl.DateTimeFormat('en-PH', {
+    timeZone: 'Asia/Manila',
+    hour: '2-digit', minute: '2-digit', hour12: true,
+  }).format(new Date(dateString));
+};
+const PAGE_SIZE = 10;
+
 const Transactions = () => {
-  const user = JSON.parse(localStorage.getItem('user') || '{}');
-  const isViewOnly = user.role === 'manager';
+  const user = JSON.parse(localStorage.getItem('user') || sessionStorage.getItem('user') || '{}');
+  const isAdmin = user.role === 'admin';
+  const isStaff = user.role === 'staff';
+  const isManager = user.role === 'manager';
+  const isCustomer = user.role === 'customer';
+
+  // Admin and Staff have full control. Managers are view-only.
+  const canManage = isAdmin || isStaff;
+  const isViewOnly = isManager; 
 
   const [transactions, setTransactions]         = useState([]);
   const [loading, setLoading]                   = useState(true);
@@ -27,6 +59,29 @@ const Transactions = () => {
 
   // Row actions
   const [activeActions, setActiveActions] = useState(null);
+  const [currentPage, setCurrentPage]     = useState(1);
+
+  const [confirmConfig, setConfirmConfig] = useState({
+    show: false,
+    title: '',
+    message: '',
+    confirmText: '',
+    variant: 'primary',
+    onConfirm: () => {}
+  });
+
+  const [successConfig, setSuccessConfig] = useState({
+    show: false,
+    title: '',
+    message: ''
+  });
+
+  const [errorConfig, setErrorConfig] = useState({
+    show: false,
+    title: '',
+    message: ''
+  });
+
 
   // Reject-reason inline modal state
   const [rejectTarget,       setRejectTarget]       = useState(null);  // txn being rejected
@@ -58,7 +113,7 @@ const Transactions = () => {
   const fetchTransactions = async () => {
     try {
       setLoading(true);
-      const response = await axios.get('http://127.0.0.1:8000/api/transactions/');
+      const response = await axios.get(`${BASE}/api/transactions/`);
       setTransactions(response.data);
     } catch (error) {
       console.error('Error fetching transactions:', error);
@@ -72,7 +127,7 @@ const Transactions = () => {
       const { receipt_image, ...apiPayload } = formData;
       if (transactionToEdit) {
         const response = await axios.patch(
-          `http://127.0.0.1:8000/api/transactions/${transactionToEdit.id}/`,
+          `${BASE}/api/transactions/${transactionToEdit.id}/`,
           apiPayload
         );
         setTransactions(transactions.map(t =>
@@ -81,15 +136,76 @@ const Transactions = () => {
             : t
         ));
       } else {
-        const response = await axios.post('http://127.0.0.1:8000/api/transactions/', apiPayload);
-        setTransactions([...transactions, { ...response.data, receipt_image }]);
+        const response = await axios.post(`${BASE}/api/transactions/`, apiPayload);
+        setTransactions([{ ...response.data, receipt_image }, ...transactions]);
       }
       setShowFormModal(false);
       setTransactionToEdit(null);
+      setSuccessConfig({
+        show: true,
+        title: transactionToEdit ? 'Updated!' : 'Created!',
+        message: `Transaction record has been ${transactionToEdit ? 'updated' : 'recorded'} successfully.`
+      });
     } catch (error) {
       console.error('Error saving transaction:', error);
-      alert('Error saving transaction.');
+      const errData = error.response?.data;
+      const msg =
+        (errData?.receipt_no && errData.receipt_no[0]) ||
+        (errData?.user_name  && errData.user_name[0])  ||
+        errData?.detail ||
+        'Error saving transaction. Please check the form and try again.';
+      setErrorConfig({
+        show: true,
+        title: 'Save Failed',
+        message: msg
+      });
     }
+  };
+
+  const requestSaveConfirm = (formData) => {
+    setConfirmConfig({
+      show: true,
+      title: transactionToEdit ? 'Confirm Edit' : 'Confirm Add',
+      message: `Are you sure you want to ${transactionToEdit ? 'update' : 'create'} this transaction record?`,
+      confirmText: transactionToEdit ? 'Save Changes' : 'Create Transaction',
+      variant: 'success',
+      onConfirm: () => handleSaveTransaction(formData)
+    });
+  };
+
+  const handleDeleteTransaction = async (txnId) => {
+    setStatusLoading(txnId);
+    setActiveActions(null);
+    try {
+      await axios.delete(`${BASE}/api/transactions/${txnId}/`);
+      setTransactions(prev => prev.filter(t => t.id !== txnId));
+      setSuccessConfig({
+        show: true,
+        title: 'Deleted!',
+        message: 'The transaction record has been removed.'
+      });
+    } catch (err) {
+      console.error('Error deleting transaction:', err);
+      setErrorConfig({
+        show: true,
+        title: 'Action Failed',
+        message: 'The transaction record could not be deleted. Please check your network connection.'
+      });
+    } finally {
+      setStatusLoading(null);
+    }
+  };
+
+  const requestDeleteConfirm = (txn) => {
+    setActiveActions(null);
+    setConfirmConfig({
+      show: true,
+      title: 'Delete Transaction',
+      message: `Are you sure you want to delete transaction ${txn.transaction_id}? This action cannot be undone.`,
+      confirmText: 'Delete',
+      variant: 'danger',
+      onConfirm: () => handleDeleteTransaction(txn.id)
+    });
   };
 
   // ── Status update helpers ──────────────────────────────────────────
@@ -98,16 +214,37 @@ const Transactions = () => {
     setActiveActions(null);
     try {
       const response = await axios.patch(
-        `http://127.0.0.1:8000/api/transactions/${txn.id}/update_status/`,
+        `${BASE}/api/transactions/${txn.id}/update_status/`,
         { status: 'Approved' }
       );
       setTransactions(prev => prev.map(t => t.id === txn.id ? response.data : t));
+      setSuccessConfig({
+        show: true,
+        title: 'Approved!',
+        message: `Transaction ${txn.transaction_id} has been approved.`
+      });
     } catch (err) {
       console.error('Error marking approved:', err);
-      alert(err.response?.data?.detail || 'Failed to update status.');
+      setErrorConfig({
+        show: true,
+        title: 'Update Failed',
+        message: err.response?.data?.detail || 'Failed to update transaction status.'
+      });
     } finally {
       setStatusLoading(null);
     }
+  };
+
+  const requestApproveConfirm = (txn) => {
+    setActiveActions(null);
+    setConfirmConfig({
+      show: true,
+      title: 'Approve Transaction',
+      message: `Are you sure you want to approve transaction ${txn.transaction_id}?`,
+      confirmText: 'Approve',
+      variant: 'success',
+      onConfirm: () => markApproved(txn)
+    });
   };
 
   const openRejectModal = (txn) => {
@@ -119,20 +256,33 @@ const Transactions = () => {
 
   const confirmReject = async () => {
     if (!rejectReason.trim()) {
-      alert('Please provide a rejection reason.');
+      setErrorConfig({
+        show: true,
+        title: 'Requirement Missing',
+        message: 'Please provide a rejection reason before rejecting this transaction.'
+      });
       return;
     }
     setStatusLoading(rejectTarget.id);
     setShowRejectModal(false);
     try {
       const response = await axios.patch(
-        `http://127.0.0.1:8000/api/transactions/${rejectTarget.id}/update_status/`,
+        `${BASE}/api/transactions/${rejectTarget.id}/update_status/`,
         { status: 'Rejected', rejection_reason: rejectReason }
       );
       setTransactions(prev => prev.map(t => t.id === rejectTarget.id ? response.data : t));
+      setSuccessConfig({
+        show: true,
+        title: 'Rejected!',
+        message: `Transaction ${rejectTarget.transaction_id} has been rejected.`
+      });
     } catch (err) {
       console.error('Error rejecting transaction:', err);
-      alert(err.response?.data?.rejection_reason || err.response?.data?.detail || 'Failed to reject.');
+      setErrorConfig({
+        show: true,
+        title: 'Action Failed',
+        message: err.response?.data?.rejection_reason || err.response?.data?.detail || 'The transaction could not be rejected. Please try again.'
+      });
     } finally {
       setStatusLoading(null);
       setRejectTarget(null);
@@ -158,7 +308,7 @@ const Transactions = () => {
     setShowFormModal(true);
   };
 
-  // ── Filtering ──────────────────────────────────────────────────────
+  // ISSUE-14 FIX: Remove side-effect (setCurrentPage) from useMemo — use useEffect instead
   const filteredTransactions = useMemo(() => {
     const now = new Date();
     return transactions.filter((t) => {
@@ -188,6 +338,14 @@ const Transactions = () => {
     });
   }, [transactions, searchQuery, timeFilter, amountFilter]);
 
+  // Reset to page 1 whenever any filter changes (extracted from useMemo — fixes anti-pattern)
+  useEffect(() => { setCurrentPage(1); }, [searchQuery, timeFilter, amountFilter]);
+
+
+  // Pagination slice
+  const totalPages           = Math.ceil(filteredTransactions.length / PAGE_SIZE);
+  const pagedTransactions    = filteredTransactions.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
+
   const formatAmount = (amount) => {
     if (!amount && amount !== 0) return '—';
     return `₱${Number(amount).toLocaleString('en-PH', { minimumFractionDigits: 2 })}`;
@@ -201,25 +359,33 @@ const Transactions = () => {
     rejected: transactions.filter(t => t.status === 'Rejected').length,
   }), [transactions]);
 
+  const getInitials = (name) => {
+    if (!name) return '?';
+    const names = name.split(' ');
+    if (names.length >= 2) return (names[0][0] + names[1][0]).toUpperCase();
+    return name[0].toUpperCase();
+  };
+
   const formatTimestamp = (dateString) => {
     if (!dateString) return '';
-    const d = new Date(dateString);
+    // ISSUE-12 FIX: Use PH timezone instead of raw ISO string (UTC)
     return (
       <>
-        {d.toISOString().split('T')[0]}<br />
-        {d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+        {fmtDatePH(dateString)}<br />
+        {fmtTimePH(dateString)}
       </>
     );
   };
 
   const formatDate = (dateString) => {
     if (!dateString) return '';
-    return new Date(dateString).toISOString().split('T')[0];
+    // ISSUE-12 FIX: Display in PH timezone
+    return fmtDatePH(dateString);
   };
 
   const getStatusClass = (status) => {
     switch (status) {
-      case 'Approved': return 'redeemed';  // reuse green style
+      case 'Approved': return 'approved-filled'; 
       case 'Pending':  return 'pending';
       case 'Rejected': return 'rejected';
       case 'Expired':  return 'expired';
@@ -250,7 +416,7 @@ const Transactions = () => {
 
         {/* ── Header ── */}
         <div className="transactions-header">
-          <h1>Transaction History</h1>
+          <h1>{isCustomer ? 'My Transactions' : 'Transaction History'}</h1>
           <div className="txn-header-actions">
 
             {/* Export dropdown */}
@@ -269,8 +435,27 @@ const Transactions = () => {
                   <button
                     className="txn-export-item"
                     onClick={() => {
-                      exportCSV(buildTransactionRows(filteredTransactions), `transactions-${new Date().toISOString().slice(0,10)}.csv`);
-                      setIsExportOpen(false);
+                      try {
+                        const rows = buildTransactionRows(filteredTransactions);
+                        if (!rows.length) {
+                          setErrorConfig({
+                            show: true,
+                            title: 'No Data to Export',
+                            message: 'The current filtered list is empty. Please adjust your search or filters before exporting.'
+                          });
+                          setIsExportOpen(false);
+                          return;
+                        }
+                        exportCSV(rows, `transactions-${new Date().toISOString().slice(0,10)}.csv`);
+                        setIsExportOpen(false);
+                      } catch (err) {
+                        console.error('CSV Export Error:', err);
+                        setErrorConfig({
+                          show: true,
+                          title: 'Export Failed',
+                          message: 'An error occurred while generating the CSV file.'
+                        });
+                      }
                     }}
                   >
                     <i className="fa-solid fa-file-csv" style={{ color: '#22c55e' }}></i>
@@ -279,8 +464,27 @@ const Transactions = () => {
                   <button
                     className="txn-export-item"
                     onClick={() => {
-                      exportExcel(buildTransactionRows(filteredTransactions), 'Transactions', `transactions-${new Date().toISOString().slice(0,10)}.xlsx`);
-                      setIsExportOpen(false);
+                      try {
+                        const rows = buildTransactionRows(filteredTransactions);
+                        if (!rows.length) {
+                          setErrorConfig({
+                            show: true,
+                            title: 'No Data to Export',
+                            message: 'The current filtered list is empty. Please adjust your search or filters before exporting.'
+                          });
+                          setIsExportOpen(false);
+                          return;
+                        }
+                        exportExcel(rows, 'Transactions', `transactions-${new Date().toISOString().slice(0,10)}.xlsx`);
+                        setIsExportOpen(false);
+                      } catch (err) {
+                        console.error('Excel Export Error:', err);
+                        setErrorConfig({
+                          show: true,
+                          title: 'Export Failed',
+                          message: 'An error occurred while generating the Excel file.'
+                        });
+                      }
                     }}
                   >
                     <i className="fa-solid fa-file-excel" style={{ color: '#16a34a' }}></i>
@@ -290,7 +494,8 @@ const Transactions = () => {
               )}
             </div>
 
-            {!isViewOnly && (
+            {/* All roles including customers can initiate a new transaction */}
+            {(canManage || isManager || isCustomer) && (
               <button className="new-transaction-btn" onClick={openNewModal}>
                 <i className="fa-solid fa-plus"></i> New Transaction
               </button>
@@ -390,7 +595,8 @@ const Transactions = () => {
                 <i className="fa-solid fa-spinner fa-spin fa-2xl" style={{ color: '#bdbdbd' }}></i>
               </div>
             ) : (
-              <table className="transactions-table">
+              <>
+                <table className="transactions-table">
                 <thead>
                   <tr>
                     <th>Transaction ID</th>
@@ -403,8 +609,8 @@ const Transactions = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredTransactions.length > 0 ? (
-                    filteredTransactions.map((txn) => (
+                  {pagedTransactions.length > 0 ? (
+                    pagedTransactions.map((txn) => (
                       <tr key={txn.id}>
 
                         {/* Transaction ID */}
@@ -418,16 +624,15 @@ const Transactions = () => {
                         </td>
 
                         {/* Customer */}
-                        <td className="txn-customer-name">
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                            {txn.receipt_image && (
-                              <i
-                                className="fa-solid fa-receipt"
-                                title="Receipt image attached"
-                                style={{ color: '#c50000', fontSize: '0.75rem' }}
-                              />
-                            )}
-                            {txn.user_name || 'Anonymous'}
+                        <td className="txn-customer-cell">
+                          <div className="user-info">
+                            <div className="user-avatar" style={{ backgroundColor: '#555' }}>
+                              {getInitials(txn.user_name)}
+                            </div>
+                            <div className="user-details">
+                              <span className="user-name">{txn.user_name || 'Anonymous'}</span>
+                              <span className="user-email">{txn.voucher_code ? `Code: ${txn.voucher_code}` : 'Customer'}</span>
+                            </div>
                           </div>
                         </td>
 
@@ -469,7 +674,7 @@ const Transactions = () => {
                               className="txn-action-dot-btn"
                               onClick={(e) => openActionMenu(e, txn.id)}
                             >
-                              <i className="fa-solid fa-ellipsis"></i>
+                              <i className="fa-solid fa-ellipsis-vertical"></i>
                             </button>
                           )}
                         </td>
@@ -484,6 +689,15 @@ const Transactions = () => {
                   )}
                 </tbody>
               </table>
+
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={setCurrentPage}
+                totalItems={filteredTransactions.length}
+                pageSize={PAGE_SIZE}
+              />
+            </>
             )}
           </div>
         </div>
@@ -509,29 +723,43 @@ const Transactions = () => {
               <i className="fa-regular fa-eye"></i> View Details
             </button>
 
-            {/* Edit — non-view-only */}
-            {!isViewOnly && (
+            {/* Edit — non-view-only and not customer */}
+            {canManage && (
               <button className="txn-action-item" onClick={() => openEditModal(txn)}>
                 <i className="fa-regular fa-pen-to-square"></i> Edit Transaction
               </button>
             )}
 
             {/* Status actions — Pending only */}
-            {!isViewOnly && txn.status === 'Pending' && (
+            {canManage && txn.status === 'Pending' && (
               <>
                 <div className="txn-action-divider"></div>
                 <button
-                  className="txn-action-item txn-action-redeem"
-                  onClick={() => markApproved(txn)}
-                >
-                  <i className="fa-solid fa-circle-check"></i> Mark as Approved
-                </button>
+                   className="txn-action-item txn-action-redeem"
+                   onClick={() => requestApproveConfirm(txn)}
+                 >
+                   <i className="fa-solid fa-circle-check"></i> Mark as Approved
+                 </button>
                 <button
                   className="txn-action-item txn-action-reject"
                   onClick={() => openRejectModal(txn)}
                 >
                   <i className="fa-solid fa-circle-xmark"></i> Mark as Rejected
                 </button>
+              </>
+            )}
+
+            {/* Delete — Admin/Staff only */}
+            {canManage && (
+              <>
+                <div className="txn-action-divider"></div>
+                <button 
+                   className="txn-action-item txn-action-reject" 
+                   onClick={() => requestDeleteConfirm(txn)}
+                   style={{ color: '#c40000' }}
+                 >
+                   <i className="fa-regular fa-trash-can"></i> Delete Transaction
+                 </button>
               </>
             )}
           </div>
@@ -606,8 +834,25 @@ const Transactions = () => {
       <TransactionModal
         show={showFormModal}
         onClose={() => { setShowFormModal(false); setTransactionToEdit(null); }}
-        onSave={handleSaveTransaction}
+        onSave={requestSaveConfirm}
         transactionToEdit={transactionToEdit}
+      />
+
+      <ActionConfirmModal 
+        {...confirmConfig}
+        onClose={() => setConfirmConfig(p => ({ ...p, show: false }))}
+      />
+
+      <SuccessModal 
+        {...successConfig}
+        onClose={() => {
+          setSuccessConfig(p => ({ ...p, show: false }));
+          if (successConfig.onClose) successConfig.onClose();
+        }}
+      />
+      <ErrorModal 
+        {...errorConfig}
+        onClose={() => setErrorConfig(p => ({ ...p, show: false }))}
       />
     </div>
   );

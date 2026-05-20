@@ -1,0 +1,368 @@
+/* ─────────────────────────────────────────────
+   Shops & Stores Page
+   ───────────────────────────────────────────── */
+
+.shops-page {
+  padding: 2rem;
+  background-color: #f8fafc;
+  min-height: 100vh;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+.shops-container {
+  max-width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+/* ── Header ── */
+.shops-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.shops-header h1 {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
+}
+
+.add-shop-btn {
+  background-color: #c50000;
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: background-color 0.2s;
+  box-shadow: 0 4px 12px rgba(197, 0, 0, 0.2);
+}
+
+.add-shop-btn:hover {
+  background-color: #a00000;
+}
+
+/* ── Stat Cards ── */
+.shops-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1.5rem;
+}
+
+.shop-stat-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 1rem;
+  padding: 1.5rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.shop-stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.08);
+}
+
+.shop-stat-card .stat-title {
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #64748b;
+  margin-bottom: 0.5rem;
+}
+
+.shop-stat-card .stat-value {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+/* ── Table Section ── */
+.shop-list-section {
+  background-color: white;
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+  padding: 24px;
+  min-height: 400px;
+  padding-bottom: 80px;
+}
+
+.shop-table-controls {
+  margin-bottom: 24px;
+}
+
+.shop-search-wrapper {
+  position: relative;
+  max-width: 100%;
+}
+
+.shop-search-wrapper i {
+  position: absolute;
+  left: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #bdbdbd;
+}
+
+.shop-search-wrapper input {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 12px 12px 12px 48px;
+  border: 1px solid #eeeeee;
+  border-radius: 12px;
+  background-color: #f5f5f5;
+  font-size: 14px;
+  transition: all 0.2s;
+  outline: none;
+}
+
+.shop-search-wrapper input:focus {
+  background-color: white;
+  border-color: #bdbdbd;
+}
+
+/* ── Table ── */
+.shops-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.shops-table th {
+  padding: 16px;
+  color: #757575;
+  font-size: 13px;
+  font-weight: 600;
+  border-bottom: 1px solid #eeeeee;
+  background-color: transparent;
+  text-transform: none;
+  letter-spacing: normal;
+  text-align: center;
+}
+
+.shops-table th:nth-child(1),
+.shops-table th:nth-child(2),
+.shops-table th:nth-child(3) {
+  text-align: left;
+}
+
+.shops-table td {
+  padding: 16px;
+  border-bottom: 1px solid #eeeeee;
+  vertical-align: middle;
+  color: #888;
+}
+
+/* Column Alignment */
+.shops-table th:nth-child(1),
+.shops-table td:nth-child(1),
+.shops-table th:nth-child(2),
+.shops-table td:nth-child(2),
+.shops-table th:nth-child(3),
+.shops-table td:nth-child(3) {
+  text-align: left;
+}
+
+.shops-table th:nth-child(4),
+.shops-table td:nth-child(4),
+.shops-table th:nth-child(5),
+.shops-table td:nth-child(5),
+.shops-table th:nth-child(6),
+.shops-table td:nth-child(6) {
+  text-align: center;
+}
+
+/* ── Store Info Cell (Avatar Style) ── */
+.store-info {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  max-width: 100%;
+}
+
+.store-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px; /* Slightly squircle for stores */
+  background-color: #f1f5f9;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #c50000;
+  font-weight: 700;
+  font-size: 18px;
+  flex-shrink: 0;
+  border: 1px solid #e2e8f0;
+}
+
+.store-details {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  text-align: left;
+}
+
+.store-name {
+  font-weight: 700;
+  color: #1a1a1a;
+  font-size: 15px;
+  line-height: 1.2;
+}
+
+.store-location {
+  font-size: 13px;
+  color: #888;
+  margin-top: 2px;
+}
+
+/* ── Vouchers Badge ── */
+.vouchers-badge {
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 700;
+  display: inline-block;
+  background-color: #e0f2fe;
+  color: #0369a1;
+  border: 1px solid #bae6fd;
+  text-transform: uppercase;
+}
+
+/* ── Actions ── */
+.shop-actions-cell {
+  position: relative;
+  text-align: center;
+}
+
+.shop-action-dot-btn {
+  background: none;
+  border: none;
+  color: #999;
+  cursor: pointer;
+  padding: 8px;
+  font-size: 18px;
+  transition: color 0.2s;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.shop-action-dot-btn:hover {
+  color: #333;
+}
+
+.shop-action-dropdown {
+  position: absolute;
+  right: 0;
+  top: 40px;
+  background: white;
+  border: 1px solid #eee;
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  z-index: 100;
+  min-width: 140px;
+  overflow: hidden;
+  animation: dropdownFadeIn 0.2s ease;
+}
+
+@keyframes dropdownFadeIn {
+  from { opacity: 0; transform: translateY(-10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.shop-action-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 12px 15px;
+  text-align: left;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-size: 14px;
+  color: #444;
+  transition: background-color 0.2s;
+}
+
+.shop-action-item:hover {
+  background-color: #f5f5f5;
+}
+
+.shop-action-item.delete {
+  color: #c50000;
+}
+
+.shop-action-divider {
+  height: 1px;
+  background: #eee;
+}
+
+/* -- Mobile Responsive -- */
+@media (max-width: 768px) {
+  .shops-page {
+    padding: 1.25rem;
+  }
+
+  .shops-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+
+  .shops-header h1 {
+    font-size: 1.5rem;
+  }
+
+  .add-shop-btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .shops-stats {
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+  }
+
+  .shop-list-section {
+    padding: 16px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .shops-table {
+    min-width: 650px;
+  }
+}
+
+@media (max-width: 480px) {
+  .shops-page {
+    padding: 1rem;
+  }
+
+  .shops-header h1 {
+    font-size: 1.25rem;
+  }
+
+  .shops-stats {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .shop-stat-card .stat-value {
+    font-size: 1.5rem;
+  }
+}
+
+@media (max-width: 360px) {
+  .shops-stats {
+    grid-template-columns: 1fr;
+  }
+}

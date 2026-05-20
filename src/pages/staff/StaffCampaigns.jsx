@@ -1,13 +1,21 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import axios from 'axios';
 import CampaignDetailsModal from '../../components/CampaignDetailsModal';
+import Pagination from '../../components/Pagination';
+import StaffVouchers from './StaffVouchers';
 import '../../css/Campaigns.css';
+import '../../css/CustomerVouchers.css';
+
+// BUG-01 FIX: Use environment variable instead of hardcoded localhost URL
+const BASE = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
+const PAGE_SIZE = 10;
 
 /**
  * StaffCampaigns Component
  * Handles the UI and data logic for the StaffCampaigns module.
  */
 const StaffCampaigns = () => {
+  const [pageTab, setPageTab] = useState('campaigns'); // 'campaigns' | 'vouchers'
   const [campaigns, setCampaigns] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -19,6 +27,8 @@ const StaffCampaigns = () => {
   });
   const [isStatusDropdownOpen, setIsStatusDropdownOpen] = useState(false);
   const [selectedCampaignForDetails, setSelectedCampaignForDetails] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+
   
   const statusFilterRef = useRef(null);
   
@@ -39,7 +49,7 @@ const StaffCampaigns = () => {
   const fetchCampaigns = async () => {
     try {
       setLoading(true);
-      const response = await axios.get('http://127.0.0.1:8000/api/campaigns/');
+      const response = await axios.get(`${BASE}/api/campaigns/`);
       setCampaigns(response.data);
     } catch (error) {
       console.error('Error fetching campaigns:', error);
@@ -69,6 +79,12 @@ const StaffCampaigns = () => {
     });
   }, [campaigns, searchQuery, statusFilters]);
 
+  useEffect(() => { setCurrentPage(1); }, [searchQuery, statusFilters]);
+
+  const totalPages     = Math.ceil(filteredCampaigns.length / PAGE_SIZE);
+  const pagedCampaigns = filteredCampaigns.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
+
+
   const stats = useMemo(() => {
     return {
       active: campaigns.filter(c => c.status === 'Active').length,
@@ -80,12 +96,36 @@ const StaffCampaigns = () => {
 
   const formatDateLabel = (dateString) => {
     if (!dateString) return '';
-    return new Date(dateString).toISOString().split('T')[0];
+    const date = new Date(dateString);
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
   };
 
   return (
     <div className="campaigns-page">
       <div className="campaigns-container">
+
+        {/* ── Page-level tab bar ── */}
+        <div className="cv-tabs" style={{ marginBottom: '1.5rem' }}>
+          <button
+            className={`cv-tab ${pageTab === 'campaigns' ? 'active' : ''}`}
+            onClick={() => setPageTab('campaigns')}
+          >
+            <i className="fa-solid fa-tag"></i> Campaigns
+          </button>
+          <button
+            className={`cv-tab ${pageTab === 'vouchers' ? 'active' : ''}`}
+            onClick={() => setPageTab('vouchers')}
+          >
+            <i className="fa-solid fa-ticket-simple"></i> Vouchers
+          </button>
+        </div>
+
+        {/* ── Vouchers tab ── */}
+        {pageTab === 'vouchers' && <StaffVouchers />}
+
+        {/* ── Campaigns tab ── */}
+        {pageTab === 'campaigns' && (
+          <>
         <div className="campaigns-header">
           <h1>Campaigns</h1>
         </div>
@@ -163,7 +203,8 @@ const StaffCampaigns = () => {
                 <div className="loader"></div>
               </div>
             ) : (
-              <table className="campaigns-table">
+              <>
+                <table className="campaigns-table">
                 <thead>
                   <tr>
                     <th>Campaign</th>
@@ -172,12 +213,14 @@ const StaffCampaigns = () => {
                     <th>Conversions</th>
                     <th>Timeline</th>
                     <th>Budget</th>
+                    <th>Spending Target</th>
                     <th>Status</th>
-                    <th></th>
+                    <th>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredCampaigns.map((campaign) => (
+                  {pagedCampaigns.map((campaign) => (
+
                     <tr key={campaign.id}>
                       <td className="campaign-name-cell">{campaign.name}</td>
                       <td className="reach-cell">
@@ -191,7 +234,14 @@ const StaffCampaigns = () => {
                         {formatDateLabel(campaign.start_date)} to<br />
                         {formatDateLabel(campaign.end_date)}
                       </td>
-                      <td className="budget-cell">₱{Number(campaign.budget).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+                      <td className="budget-cell">
+                        ₱{Number(campaign.budget).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}
+                      </td>
+                      <td className="budget-cell">
+                        {campaign.spending_target > 0
+                          ? `₱${Number(campaign.spending_target).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`
+                          : <span style={{ color: '#cbd5e1', fontSize: '0.8rem' }}>— not set</span>}
+                      </td>
                       <td>
                         <span className={`status-badge-new ${campaign.status.toLowerCase()}`}>
                           {campaign.status}
@@ -209,12 +259,22 @@ const StaffCampaigns = () => {
                   ))}
                 </tbody>
               </table>
+
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={setCurrentPage}
+                totalItems={filteredCampaigns.length}
+                pageSize={PAGE_SIZE}
+              />
+              </>
             )}
           </div>
         </div>
+        </> )}
       </div>
 
-      <CampaignDetailsModal 
+      <CampaignDetailsModal
         show={!!selectedCampaignForDetails}
         onClose={() => setSelectedCampaignForDetails(null)}
         campaign={selectedCampaignForDetails}

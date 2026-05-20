@@ -9,9 +9,9 @@ body {
 .register-container {
   display: flex;
   justify-content: center;
-  align-items: center;
-  min-height: calc(100vh - 50px);
-  padding: 100px 20px 20px 20px;
+  align-items: flex-start;
+  min-height: 100vh;
+  padding: 80px 20px 40px 20px;
 }
 
 .register-card {
@@ -22,6 +22,33 @@ body {
   width: 100%;
   max-width: 400px;
   margin: 0 auto;
+}
+
+.system-title {
+  background-color: #ffffff;
+  border-radius: 10px;
+  padding: 14px 16px 10px;
+  margin-bottom: 24px;
+  text-align: center;
+  line-height: 1.3;
+}
+
+.system-title-main {
+  margin: 0;
+  color: #ff0000;
+  font-weight: 800;
+  font-size: 20px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.system-title-sub {
+  margin: 4px 0 0;
+  color: rgba(255, 0, 0, 0.85);
+  font-weight: 600;
+  font-size: 15px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
 .register-card h2 {
@@ -85,6 +112,34 @@ body {
   z-index: 1;
 }
 
+/* ── Password input wrapper with eye toggle ── */
+.pw-input-wrap {
+  position: relative;
+}
+
+.pw-input-wrap input {
+  width: 100%;
+  box-sizing: border-box;
+  padding-right: 42px;
+}
+
+.pw-eye-icon {
+  position: absolute;
+  top: 50%;
+  right: 13px;
+  transform: translateY(-50%);
+  color: #888;
+  cursor: pointer;
+  font-size: 15px;
+  line-height: 1;
+  user-select: none;
+}
+
+.pw-eye-icon:hover {
+  color: #C40000;
+}
+
+/* Legacy toggle kept for backward compat */
 .password-toggle-icon {
   position: absolute;
   top: 72%;
@@ -138,7 +193,7 @@ body {
 .react-datepicker {
   font-family: 'Merriweather Sans', sans-serif !important;
   border: none !important;
-  box-shadow: 0 10px 25px rgba(0,0,0,0.15) !important;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15) !important;
   border-radius: 8px !important;
   overflow: hidden;
 }
@@ -166,13 +221,112 @@ body {
 }
 
 .react-datepicker__current-month {
-  display: none !important; /* Managed by custom header */
+  display: none !important;
+  /* Managed by custom header */
 }
 
 .react-datepicker__triangle {
   display: none !important;
 }
 
+/* ── Field error / success inline messages ── */
+.field-error-msg,
+.field-success-msg {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  margin-top: 5px;
+  font-weight: 500;
+}
+
+.field-error-msg {
+  color: #c0392b;
+}
+
+.field-success-msg {
+  color: #27ae60;
+}
+
+.field-error-icon,
+.field-success-icon {
+  flex-shrink: 0;
+  font-size: 11px;
+}
+
+/* Border highlight on error */
+.field-error input {
+  border: 1px solid #c0392b !important;
+  background-color: #fff5f5 !important;
+}
+
+/* ── Password strength bar ── */
+.pw-strength-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.pw-strength-bar {
+  flex: 1;
+  height: 5px;
+  background: #e2e8f0;
+  border-radius: 99px;
+  overflow: hidden;
+}
+
+.pw-strength-fill {
+  height: 100%;
+  border-radius: 99px;
+  transition: width 0.3s ease, background-color 0.3s ease;
+}
+
+.pw-strength-fill.weak   { background: #e53e3e; }
+.pw-strength-fill.fair   { background: #dd6b20; }
+.pw-strength-fill.good   { background: #d69e2e; }
+.pw-strength-fill.strong { background: #38a169; }
+
+.pw-strength-label {
+  font-size: 11px;
+  font-weight: 700;
+  min-width: 42px;
+  text-align: right;
+}
+
+.pw-strength-label.weak   { color: #e53e3e; }
+.pw-strength-label.fair   { color: #dd6b20; }
+.pw-strength-label.good   { color: #d69e2e; }
+.pw-strength-label.strong { color: #38a169; }
+
+/* ── Password requirements checklist ── */
+.pw-requirements {
+  list-style: none;
+  padding: 0;
+  margin: 10px 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.pw-requirements li {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  transition: color 0.2s;
+}
+
+.pw-requirements li.req-pass { color: #27ae60; }
+.pw-requirements li.req-fail { color: #94a3b8; }
+
+.req-icon {
+  flex-shrink: 0;
+  font-size: 10px;
+}
+
+/* ── Form checkboxes ── */
 .form-check {
   margin-bottom: 1rem;
   display: flex;
@@ -249,6 +403,11 @@ body {
 
 /* Tablet styles */
 @media (max-width: 768px) {
+  .register-container {
+    padding: 80px 20px 40px 20px;
+    align-items: flex-start;
+  }
+
   .register-card {
     padding: 30px 25px;
   }
@@ -261,17 +420,20 @@ body {
 /* Mobile styles */
 @media (max-width: 480px) {
   .register-container {
-    padding: 60px 15px 15px 15px;
+    align-items: flex-start;
+    padding: 80px 16px 28px 16px;
+    min-height: 100vh;
   }
 
   .register-card {
-    padding: 25px 20px;
-    border-radius: 12px;
+    padding: 28px 20px;
+    border-radius: 14px;
+    width: 100%;
   }
 
   .register-card h2 {
     font-size: 20px;
-    margin-bottom: 25px;
+    margin-bottom: 22px;
   }
 
   .form-group label {
@@ -280,7 +442,7 @@ body {
 
   .form-group input {
     padding: 11px;
-    font-size: 13px;
+    font-size: 15px;
   }
 
   .form-group i {
@@ -292,16 +454,26 @@ body {
   }
 
   .form-check {
-    font-size: 11px;
+    font-size: 12px;
   }
 
   .signup-btn {
-    padding: 11px;
+    padding: 13px;
     font-size: 15px;
   }
 
   .login-link {
     font-size: 13px;
     margin-top: 22px;
+  }
+}
+
+@media (max-width: 360px) {
+  .register-container {
+    padding: 75px 12px 24px 12px;
+  }
+
+  .register-card {
+    padding: 24px 16px;
   }
 }

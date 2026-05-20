@@ -14,7 +14,7 @@ def check():
     count = User.objects.count()
     print(f"Total users: {count}")
     for user in User.objects.all():
-        print(f"- {user.username} ({user.role}): {user.first_name} {user.last_name}")
+        print(f"- {user.email} ({user.role}): {user.first_name} {user.last_name}")
 
 if __name__ == '__main__':
     check()

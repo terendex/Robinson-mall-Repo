@@ -3,17 +3,30 @@ import axios from 'axios';
 import CampaignModal from '../../components/CampaignModal';
 import CampaignDetailsModal from '../../components/CampaignDetailsModal';
 import NotificationContext from '../../context/NotificationContext';
+import Pagination from '../../components/Pagination';
+import ActionConfirmModal from '../../components/ActionConfirmModal';
+import SuccessModal from '../../components/SuccessModal';
+import ErrorModal from '../../components/ErrorModal';
+import Vouchers from './Vouchers';
 import '../../css/Campaigns.css';
 import '../../css/Transactions.css';
+import '../../css/CustomerVouchers.css';
+
+// BUG-01 FIX: Use environment variable instead of hardcoded localhost URL
+const BASE = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
 
 /**
  * Campaigns Component
  * Handles the UI and data logic for the Campaigns module.
  */
+const PAGE_SIZE = 10;
+
 const Campaigns = () => {
+  const [pageTab, setPageTab] = useState('campaigns'); // 'campaigns' | 'vouchers'
   const [campaigns, setCampaigns] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
   
   // Status filter state
   const [statusFilters, setStatusFilters] = useState({
@@ -31,6 +44,27 @@ const Campaigns = () => {
   const statusFilterRef = useRef(null);
   const actionsRef = useRef(null);
   const { addNotification } = useContext(NotificationContext);
+
+  const [confirmConfig, setConfirmConfig] = useState({
+    show: false,
+    title: '',
+    message: '',
+    confirmText: '',
+    variant: 'primary',
+    onConfirm: () => {}
+  });
+
+  const [successConfig, setSuccessConfig] = useState({
+    show: false,
+    title: '',
+    message: ''
+  });
+
+  const [errorConfig, setErrorConfig] = useState({
+    show: false,
+    title: '',
+    message: ''
+  });
   
   useEffect(() => {
     fetchCampaigns();
@@ -52,7 +86,7 @@ const Campaigns = () => {
   const fetchCampaigns = async () => {
     try {
       setLoading(true);
-      const response = await axios.get('http://127.0.0.1:8000/api/campaigns/');
+      const response = await axios.get(`${BASE}/api/campaigns/`);
       setCampaigns(response.data);
     } catch (error) {
       console.error('Error fetching campaigns:', error);
@@ -74,7 +108,7 @@ const Campaigns = () => {
 
   const updateCampaignStatus = async (campaign, newStatus) => {
     try {
-      const response = await axios.patch(`http://127.0.0.1:8000/api/campaigns/${campaign.id}/`, {
+      const response = await axios.patch(`${BASE}/api/campaigns/${campaign.id}/`, {
         status: newStatus
       });
       setCampaigns(campaigns.map(c => c.id === campaign.id ? response.data : c));
@@ -105,25 +139,80 @@ const Campaigns = () => {
           if (formData.voucher_discount !== '') patchData.discount_percentage = parseInt(formData.voucher_discount, 10);
           
           if (Object.keys(patchData).length > 0) {
-            await axios.patch(`http://127.0.0.1:8000/api/vouchers/${formData.voucher}/`, patchData);
+            await axios.patch(`${BASE}/api/vouchers/${formData.voucher}/`, patchData);
           }
         }
         
-        const response = await axios.patch(`http://127.0.0.1:8000/api/campaigns/${campaignToEdit.id}/`, formData);
+        const response = await axios.patch(`${BASE}/api/campaigns/${campaignToEdit.id}/`, formData);
         
-        const refreshedResponse = await axios.get(`http://127.0.0.1:8000/api/campaigns/${campaignToEdit.id}/`);
-        setCampaigns(campaigns.map(c => c.id === campaignToEdit.id ? refreshedResponse.data : c));
-        addNotification({ title: refreshedResponse.data.name, message: 'has been updated.', icon: 'fa-tag' });
+        // Use the response data directly instead of an extra GET
+        setCampaigns(prev => prev.map(c => c.id === campaignToEdit.id ? response.data : c));
+        addNotification({ title: response.data.name, message: 'has been updated.', icon: 'fa-tag' });
       } else {
-        const response = await axios.post('http://127.0.0.1:8000/api/campaigns/', formData);
-        setCampaigns([...campaigns, response.data]);
+        const response = await axios.post(`${BASE}/api/campaigns/`, formData);
+        setCampaigns([response.data, ...campaigns]);
         addNotification({ title: response.data.name, message: 'has been created.', icon: 'fa-plus' });
       }
       setShowModal(false);
+      setSuccessConfig({
+        show: true,
+        title: campaignToEdit ? 'Campaign Updated!' : 'Campaign Created!',
+        message: `Campaign "${formData.name}" has been ${campaignToEdit ? 'updated' : 'launched'} successfully.`
+      });
     } catch (error) {
       console.error('Error saving campaign:', error);
-      alert('Error saving campaign.');
+      const errData = error.response?.data;
+      const msg = errData
+        ? Object.entries(errData).map(([key, val]) => `${key}: ${val}`).join('\n')
+        : 'Error saving campaign. Please try again.';
+      setErrorConfig({
+        show: true,
+        title: 'Save Failed',
+        message: msg
+      });
     }
+  };
+
+  const requestSaveConfirm = (formData) => {
+    setConfirmConfig({
+      show: true,
+      title: campaignToEdit ? 'Confirm Edit' : 'Confirm Add',
+      message: `Are you sure you want to ${campaignToEdit ? 'update' : 'create'} this campaign?`,
+      confirmText: campaignToEdit ? 'Save Changes' : 'Create Campaign',
+      variant: 'success',
+      onConfirm: () => handleSaveCampaign(formData)
+    });
+  };
+
+  const handleDeleteCampaign = async (campaign) => {
+    try {
+      await axios.delete(`${BASE}/api/campaigns/${campaign.id}/`);
+      setCampaigns(prev => prev.filter(c => c.id !== campaign.id));
+      setSuccessConfig({
+        show: true,
+        title: 'Deleted!',
+        message: `Campaign "${campaign.name}" has been removed successfully.`
+      });
+    } catch (error) {
+      console.error('Error deleting campaign:', error);
+      setErrorConfig({
+        show: true,
+        title: 'Action Failed',
+        message: 'Failed to delete the campaign. It may still be linked to active vouchers.'
+      });
+    }
+  };
+
+  const requestDeleteConfirm = (campaign) => {
+    setActiveActions(null);
+    setConfirmConfig({
+      show: true,
+      title: 'Delete Campaign',
+      message: `Are you sure you want to delete "${campaign.name}"? All associated data will be permanently removed.`,
+      confirmText: 'Delete',
+      variant: 'danger',
+      onConfirm: () => handleDeleteCampaign(campaign)
+    });
   };
 
   const handleFilterToggle = (status) => {
@@ -131,6 +220,7 @@ const Campaigns = () => {
       ...prev,
       [status]: !prev[status]
     }));
+    setCurrentPage(1);
   };
 
   const filteredCampaigns = useMemo(() => {
@@ -147,23 +237,56 @@ const Campaigns = () => {
     });
   }, [campaigns, searchQuery, statusFilters]);
 
+  // Reset page when search changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery]);
+
+  // Pagination
+  const totalPages     = Math.ceil(filteredCampaigns.length / PAGE_SIZE);
+  const pagedCampaigns = filteredCampaigns.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
+
   const stats = useMemo(() => {
     return {
       active:      campaigns.filter(c => c.status === 'Active').length,
-      reach:       campaigns.reduce((sum, c) => sum + (c.reach        || 0), 0).toLocaleString(),
+      reach:       campaigns.reduce((sum, c) => sum + (Number(c.reach) || 0), 0).toLocaleString(),
       scheduled:   campaigns.filter(c => c.status === 'Scheduled').length,
-      conversions: campaigns.reduce((sum, c) => sum + (c.conversions  || 0), 0).toLocaleString(),
+      conversions: campaigns.reduce((sum, c) => sum + (Number(c.conversions) || 0), 0).toLocaleString(),
     };
   }, [campaigns]);
 
   const formatDateLabel = (dateString) => {
     if (!dateString) return '';
-    return new Date(dateString).toISOString().split('T')[0];
+    const date = new Date(dateString);
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
   };
 
   return (
     <div className="campaigns-page">
       <div className="campaigns-container">
+
+        {/* ── Page-level tab bar ── */}
+        <div className="cv-tabs" style={{ marginBottom: '1.5rem' }}>
+          <button
+            className={`cv-tab ${pageTab === 'campaigns' ? 'active' : ''}`}
+            onClick={() => setPageTab('campaigns')}
+          >
+            <i className="fa-solid fa-tag"></i> Campaigns
+          </button>
+          <button
+            className={`cv-tab ${pageTab === 'vouchers' ? 'active' : ''}`}
+            onClick={() => setPageTab('vouchers')}
+          >
+            <i className="fa-solid fa-ticket-simple"></i> Vouchers
+          </button>
+        </div>
+
+        {/* ── Vouchers tab ── */}
+        {pageTab === 'vouchers' && <Vouchers />}
+
+        {/* ── Campaigns tab ── */}
+        {pageTab === 'campaigns' && (
+          <>
         <div className="campaigns-header">
           <h1>Campaigns</h1>
           <button className="create-campaign-btn" onClick={handleAddCampaign}>
@@ -244,80 +367,130 @@ const Campaigns = () => {
                 <div className="loader"></div>
               </div>
             ) : (
-              <table className="campaigns-table">
-                <thead>
-                  <tr>
-                    <th>Campaign</th>
-                    <th>Vouchers</th>
-                    <th>Reach</th>
-                    <th>Conversions</th>
-                    <th>Timeline</th>
-                    <th>Budget</th>
-                    <th>Status</th>
-                    <th></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredCampaigns.map((campaign) => (
-                    <tr key={campaign.id}>
-                      <td className="campaign-name-cell">
-                        {campaign.name}
-                      </td>
-                      <td className="reach-cell">
-                        <span className="voucher-count-badge">
-                          {campaign.voucher_count ?? (campaign.vouchers?.length ?? 0)}
-                        </span>
-                      </td>
-                      <td className="reach-cell">{Number(campaign.reach).toLocaleString()}</td>
-                      <td className="conversions-cell">{Number(campaign.conversions).toLocaleString()}</td>
-                      <td className="timeline-cell">
-                        {formatDateLabel(campaign.start_date)} to<br />
-                        {formatDateLabel(campaign.end_date)}
-                      </td>
-                      <td className="budget-cell">₱{Number(campaign.budget).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
-                      <td>
-                        <span className={`status-badge-new ${campaign.status.toLowerCase()}`}>
-                          {campaign.status}
-                        </span>
-                      </td>
-                      <td className="actions-cell" ref={activeActions === campaign.id ? actionsRef : null}>
-                        <button 
-                          className="table-action-dot"
-                          onClick={() => setActiveActions(activeActions === campaign.id ? null : campaign.id)}
-                        >
-                          <i className="fa-solid fa-ellipsis"></i>
-                        </button>
-                        {activeActions === campaign.id && (
-                          <div className="campaign-action-dropdown show">
-                            <button onClick={() => { setSelectedCampaignForDetails(campaign); setActiveActions(null); }}>
-                              <i className="fa-regular fa-eye"></i> View Campaign Details
-                            </button>
-                            <button onClick={() => { handleEditCampaign(campaign); setActiveActions(null); }}>
-                              <i className="fa-regular fa-pen-to-square"></i> Edit Campaign Details
-                            </button>
-                          </div>
-                        )}
-                      </td>
+              <>
+                <table className="campaigns-table">
+                  <thead>
+                    <tr>
+                      <th>Campaign</th>
+                      <th>Vouchers</th>
+                      <th>Reach</th>
+                      <th>Conversions</th>
+                      <th>Timeline</th>
+                      <th>Budget</th>
+                      <th>Spending Target</th>
+                      <th>Status</th>
+                      <th>Actions</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {pagedCampaigns.length > 0 ? pagedCampaigns.map((campaign) => (
+                      <tr key={campaign.id}>
+                        <td className="campaign-name-cell">
+                          {campaign.name}
+                        </td>
+                        <td className="reach-cell">
+                          <span className="voucher-count-badge">
+                            {campaign.voucher_count ?? (campaign.vouchers?.length ?? 0)}
+                          </span>
+                        </td>
+                        <td className="reach-cell">{Number(campaign.reach).toLocaleString()}</td>
+                        <td className="conversions-cell">{Number(campaign.conversions).toLocaleString()}</td>
+                        <td className="timeline-cell">
+                          {formatDateLabel(campaign.start_date)} to<br />
+                          {formatDateLabel(campaign.end_date)}
+                        </td>
+                        <td className="budget-cell">
+                          ₱{Number(campaign.budget).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}
+                        </td>
+                        <td className="budget-cell">
+                          {campaign.spending_target > 0
+                            ? `₱${Number(campaign.spending_target).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`
+                            : <span style={{ color: '#cbd5e1', fontSize: '0.8rem' }}>— not set</span>}
+                        </td>
+                        <td>
+                          <span className={`status-badge-new ${campaign.status.toLowerCase()}`}>
+                            {campaign.status}
+                          </span>
+                        </td>
+                        <td className="actions-cell" ref={activeActions === campaign.id ? actionsRef : null}>
+                          <button 
+                            className="table-action-dot"
+                            onClick={() => setActiveActions(activeActions === campaign.id ? null : campaign.id)}
+                          >
+                            <i className="fa-solid fa-ellipsis"></i>
+                          </button>
+                          {activeActions === campaign.id && (
+                            <div className="campaign-action-dropdown show">
+                              <button onClick={() => { setSelectedCampaignForDetails(campaign); setActiveActions(null); }}>
+                                <i className="fa-regular fa-eye"></i> View Campaign Details
+                              </button>
+                              <button onClick={() => { handleEditCampaign(campaign); setActiveActions(null); }}>
+                                <i className="fa-regular fa-pen-to-square"></i> Edit Campaign Details
+                              </button>
+                              <div className="txn-action-divider"></div>
+                              <button 
+                                className="txn-action-item txn-action-reject" 
+                                onClick={() => requestDeleteConfirm(campaign)}
+                                style={{ color: '#c40000' }}
+                              >
+                                <i className="fa-solid fa-trash"></i> Delete Campaign
+                              </button>
+                            </div>
+                          )}
+                        </td>
+                      </tr>
+                    )) : (
+                      <tr>
+                        <td colSpan="8" style={{ textAlign: 'center', padding: '40px', color: '#9e9e9e' }}>
+                          No campaigns found matching your criteria.
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+
+                <Pagination
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  onPageChange={setCurrentPage}
+                  totalItems={filteredCampaigns.length}
+                  pageSize={PAGE_SIZE}
+                />
+              </>
             )}
           </div>
         </div>
+        </> )}
       </div>
 
-      <CampaignModal 
+      <CampaignModal
         show={showModal}
         onClose={() => setShowModal(false)}
-        onSave={handleSaveCampaign}
+        onSave={requestSaveConfirm}
         campaignToEdit={campaignToEdit}
       />
 
-      <CampaignDetailsModal 
+      <ActionConfirmModal 
+        {...confirmConfig}
+        onClose={() => setConfirmConfig(p => ({ ...p, show: false }))}
+      />
+
+      <SuccessModal 
+        {...successConfig}
+        onClose={() => {
+          setSuccessConfig(p => ({ ...p, show: false }));
+          if (successConfig.onClose) successConfig.onClose();
+        }}
+      />
+
+      <CampaignDetailsModal
         show={!!selectedCampaignForDetails}
         onClose={() => setSelectedCampaignForDetails(null)}
         campaign={selectedCampaignForDetails}
+      />
+      <ErrorModal 
+        {...errorConfig}
+        onClose={() => setErrorConfig(p => ({ ...p, show: false }))}
       />
     </div>
   );

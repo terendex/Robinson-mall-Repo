@@ -15,7 +15,18 @@ SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-fallback-for-dev-only
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get('DEBUG', 'True').lower() == 'true'
 
-ALLOWED_HOSTS = ['localhost', '127.0.0.1']
+# HF-06 FIX: Refuse to start in production with an insecure SECRET_KEY.
+# The fallback key is publicly known — using it in production allows anyone
+# to forge JWT tokens (JWT signing key derives from SECRET_KEY, settings.py:175).
+_INSECURE_KEY = 'django-insecure-fallback-for-dev-only'
+if not DEBUG and SECRET_KEY == _INSECURE_KEY:
+    raise RuntimeError(
+        "SECURITY ERROR: SECRET_KEY is set to the insecure development fallback "
+        "but DEBUG=False. Set the SECRET_KEY environment variable to a strong "
+        "random value before deploying to production."
+    )
+
+ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1,testserver').split(',')
 FRONTEND_URL = os.environ.get('FRONTEND_URL', 'http://localhost:5173')
 
 
@@ -106,9 +117,9 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'Asia/Manila'
 
-USE_I1N = True
+USE_I18N = True
 
 USE_TZ = True
 
@@ -118,10 +129,10 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000",
-    "http://localhost:5173",
-]
+# Suppress W042 warnings — explicitly set the default primary key type
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+CORS_ALLOWED_ORIGINS = os.environ.get('CORS_ALLOWED_ORIGINS', 'http://localhost:3000,http://localhost:5173').split(',')
 CORS_ALLOW_CREDENTIALS = True
 
 # Custom User Model
@@ -141,6 +152,9 @@ EMAIL_USE_TLS = True
 EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER')
 EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD')  # Gmail App Password
 DEFAULT_FROM_EMAIL = os.environ.get('EMAIL_HOST_USER')
+
+# Password Reset Timeout (5 minutes)
+PASSWORD_RESET_TIMEOUT = 300
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
@@ -165,7 +179,7 @@ SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
     'ROTATE_REFRESH_TOKENS': False,
-    'BLACKLIST_AFTER_ROTATION': True,
+    'BLACKLIST_AFTER_ROTATION': False,  # token_blacklist app not installed; keep False
     'UPDATE_LAST_LOGIN': False,
 
     'ALGORITHM': 'HS256',

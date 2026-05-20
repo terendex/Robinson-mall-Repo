@@ -5,7 +5,11 @@ import {
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
 } from 'recharts';
 import { exportCSV, exportExcel, buildReportRows } from '../../utils/exportUtils';
+import ErrorModal from '../../components/ErrorModal';
 import '../../css/Reports.css';
+
+// BUG-01 FIX: Use environment variable instead of hardcoded localhost URL
+const BASE = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
 
 // ── Colour palette ─────────────────────────────────────────────────────────
 const BRAND_RED   = '#c50000';
@@ -70,7 +74,11 @@ const Reports = () => {
   const [claims, setClaims]         = useState([]);
   const [campaigns, setCampaigns]   = useState([]);
   const [loading, setLoading]       = useState(true);
-  const [error, setError]           = useState(null);
+  const [errorConfig, setErrorConfig] = useState({
+    show: false,
+    title: '',
+    message: ''
+  });
 
   // Period filter
   const [period, setPeriod]                   = useState('This Month');
@@ -87,16 +95,20 @@ const Reports = () => {
       try {
         setLoading(true);
         const [statsRes, claimsRes, campaignsRes] = await Promise.all([
-          axios.get('http://127.0.0.1:8000/api/dashboard-stats/'),
-          axios.get('http://127.0.0.1:8000/api/claims/'),
-          axios.get('http://127.0.0.1:8000/api/campaigns/'),
+          axios.get(`${BASE}/api/dashboard-stats/`),
+          axios.get(`${BASE}/api/claims/`),
+          axios.get(`${BASE}/api/campaigns/`),
         ]);
         setDashStats(statsRes.data);
         setClaims(claimsRes.data);
         setCampaigns(campaignsRes.data);
       } catch (err) {
         console.error('Error fetching report data:', err);
-        setError('Failed to load report data. Make sure the backend is running.');
+        setErrorConfig({
+          show: true,
+          title: 'Analytics Sync Failed',
+          message: 'Failed to load report data. Please ensure the Robinson Mall backend is reachable.'
+        });
       } finally {
         setLoading(false);
       }
@@ -222,13 +234,51 @@ const Reports = () => {
   const slug = `report-${period.replace(/\s/g, '-').toLowerCase()}-${new Date().toISOString().slice(0, 10)}`;
 
   const handleExportCSV = () => {
-    exportCSV(buildReportRows(filteredClaims, period), `${slug}.csv`);
-    setIsExportOpen(false);
+    try {
+      const rows = buildReportRows(filteredClaims, period);
+      if (!rows.length) {
+        setErrorConfig({
+          show: true,
+          title: 'No Data to Export',
+          message: `There are no claims recorded for the selected period: ${period}. Try selecting a different timeframe.`
+        });
+        setIsExportOpen(false);
+        return;
+      }
+      exportCSV(rows, `${slug}.csv`);
+      setIsExportOpen(false);
+    } catch (err) {
+      console.error('CSV Export Error:', err);
+      setErrorConfig({
+        show: true,
+        title: 'Export Failed',
+        message: 'An error occurred while generating your CSV file. Please try again.'
+      });
+    }
   };
 
   const handleExportExcel = () => {
-    exportExcel(buildReportRows(filteredClaims, period), 'Claims Report', `${slug}.xlsx`);
-    setIsExportOpen(false);
+    try {
+      const rows = buildReportRows(filteredClaims, period);
+      if (!rows.length) {
+        setErrorConfig({
+          show: true,
+          title: 'No Data to Export',
+          message: `There are no claims recorded for the selected period: ${period}. Try selecting a different timeframe.`
+        });
+        setIsExportOpen(false);
+        return;
+      }
+      exportExcel(rows, 'Claims Report', `${slug}.xlsx`);
+      setIsExportOpen(false);
+    } catch (err) {
+      console.error('Excel Export Error:', err);
+      setErrorConfig({
+        show: true,
+        title: 'Export Failed',
+        message: 'An error occurred while generating your Excel file. Please try again.'
+      });
+    }
   };
 
   // ── Render states ──────────────────────────────────────────────────────────
@@ -242,16 +292,7 @@ const Reports = () => {
     );
   }
 
-  if (error) {
-    return (
-      <div className="rpt-page">
-        <div className="rpt-error">
-          <i className="fa-solid fa-triangle-exclamation" />
-          <p>{error}</p>
-        </div>
-      </div>
-    );
-  }
+
 
   return (
     <div className="rpt-page">
@@ -537,6 +578,10 @@ const Reports = () => {
         </div>
 
       </div>
+      <ErrorModal 
+        {...errorConfig}
+        onClose={() => setErrorConfig(p => ({ ...p, show: false }))}
+      />
     </div>
   );
 };

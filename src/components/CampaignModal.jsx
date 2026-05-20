@@ -9,13 +9,15 @@ import '../css/Modal.css';
  * - Shows list of attached vouchers in edit mode
  */
 const CampaignModal = ({ show, onClose, onSave, campaignToEdit }) => {
-  const today = new Date().toISOString().split('T')[0];  // 'YYYY-MM-DD'
+  const d = new Date();
+  const today = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; // 'YYYY-MM-DD'
 
   const [formData, setFormData] = useState({
-    name:       '',
-    budget:     '',
-    start_date: '',
-    end_date:   '',
+    name:            '',
+    budget:          '',
+    spending_target: '',
+    start_date:      '',
+    end_date:        '',
   });
 
   const [dateError, setDateError] = useState('');
@@ -24,29 +26,48 @@ const CampaignModal = ({ show, onClose, onSave, campaignToEdit }) => {
   useEffect(() => {
     if (campaignToEdit) {
       setFormData({
-        name:       campaignToEdit.name       || '',
-        budget:     campaignToEdit.budget     || '',
-        start_date: campaignToEdit.start_date || '',
-        end_date:   campaignToEdit.end_date   || '',
-        status:     campaignToEdit.status     || 'Active',
-        // reach & conversions are display-only, not in editable payload
-        reach:       campaignToEdit.reach       ?? 0,
-        conversions: campaignToEdit.conversions ?? 0,
+        name:            campaignToEdit.name            || '',
+        budget:          campaignToEdit.budget          || '',
+        spending_target: campaignToEdit.spending_target || '',
+        start_date:      campaignToEdit.start_date      || '',
+        end_date:        campaignToEdit.end_date        || '',
+        status:          campaignToEdit.status          || 'Active',
+        reach:           campaignToEdit.reach           ?? 0,
+        conversions:     campaignToEdit.conversions     ?? 0,
       });
       setAttachedVouchers(campaignToEdit.vouchers || []);
     } else {
       setFormData({
-        name:       '',
-        budget:     '',
-        start_date: '',
-        end_date:   '',
+        name:            '',
+        budget:          '',
+        spending_target: '',
+        start_date:      '',
+        end_date:        '',
       });
       setAttachedVouchers([]);
     }
     setDateError('');
   }, [campaignToEdit, show]);
 
-  if (!show) return null;
+  // Derive the status that the backend will assign based on chosen start_date
+  const previewStatus = formData.start_date
+    ? (formData.start_date <= today ? 'Active' : 'Scheduled')
+    : 'Active';
+
+  const isDirty = React.useMemo(() => {
+    if (!campaignToEdit) {
+      // For NEW campaign: check if all required fields are populated
+      return !!(formData.name.trim() && formData.budget && formData.start_date && formData.end_date);
+    }
+    // For EDIT: compare current state vs initial campaignToEdit values
+    return (
+      formData.name !== (campaignToEdit.name || '') ||
+      formData.budget != (campaignToEdit.budget || '') ||
+      formData.spending_target != (campaignToEdit.spending_target || '') ||
+      formData.start_date !== (campaignToEdit.start_date || '') ||
+      formData.end_date !== (campaignToEdit.end_date || '')
+    );
+  }, [formData, campaignToEdit]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -67,10 +88,7 @@ const CampaignModal = ({ show, onClose, onSave, campaignToEdit }) => {
     onSave(payload);
   };
 
-  // Derive the status that the backend will assign based on chosen start_date
-  const previewStatus = formData.start_date
-    ? (formData.start_date <= today ? 'Active' : 'Scheduled')
-    : 'Active';
+  if (!show) return null;
 
   return (
     <div className="modal-overlay">
@@ -168,9 +186,27 @@ const CampaignModal = ({ show, onClose, onSave, campaignToEdit }) => {
               name="budget"
               value={formData.budget}
               onChange={handleChange}
-              placeholder="50000"
+              placeholder="e.g. 500000"
               min="0"
               required
+            />
+          </div>
+
+          {/* Spending Target */}
+          <div className="form-group">
+            <label>
+              Spending Target (₱)
+              <span style={{ fontSize: '0.72rem', color: '#2563eb', marginLeft: '0.4rem', fontWeight: 600 }}>
+                — customers must reach this to unlock the voucher
+              </span>
+            </label>
+            <input
+              type="number"
+              name="spending_target"
+              value={formData.spending_target}
+              onChange={handleChange}
+              placeholder="e.g. 5000 — customer spend threshold"
+              min="0"
             />
           </div>
 
@@ -246,16 +282,18 @@ const CampaignModal = ({ show, onClose, onSave, campaignToEdit }) => {
               gap: '0.5rem',
             }}>
               <i className={`fa-solid ${previewStatus === 'Active' ? 'fa-circle-check' : 'fa-calendar-days'}`}></i>
-              {previewStatus === 'Active'
-                ? <>Campaign will launch as <strong>Active</strong> on save (start date is today or not set).</>  
-                : <>Campaign will be <strong>Scheduled</strong> — it becomes Active on {formData.start_date}.</>
-              }
+              <span style={{ flex: 1, lineHeight: '1.4' }}>
+                {previewStatus === 'Active'
+                  ? <>Campaign will launch as <strong>Active</strong> on save (start date is today or not set).</>  
+                  : <>Campaign will be <strong>Scheduled</strong> — it becomes Active on {formData.start_date}.</>
+                }
+              </span>
             </div>
           )}
 
           <div className="modal-actions">
             <button type="button" onClick={onClose} className="cancel-inner-btn">Cancel</button>
-            <button type="submit" className="save-btn">
+            <button type="submit" className="save-btn" disabled={!isDirty}>
               {campaignToEdit ? 'Save Changes' : 'Create Campaign'}
             </button>
           </div>

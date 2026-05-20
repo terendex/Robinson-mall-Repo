@@ -1,7 +1,27 @@
-from django.contrib.auth.models import AbstractUser
+from django.contrib.auth.models import AbstractUser, BaseUserManager
 from django.db import models
-from django.db.models.signals import post_save
+from django.db.models.signals import post_save, post_delete
 from django.dispatch import receiver
+
+class CustomUserManager(BaseUserManager):
+    def create_user(self, email, password=None, **extra_fields):
+        if not email:
+            raise ValueError('The Email field must be set')
+        email = self.normalize_email(email)
+        user = self.model(email=email, **extra_fields)
+        if password:
+            user.set_password(password)
+        else:
+            user.set_unusable_password()
+        user.save(using=self._db)
+        return user
+
+    def create_superuser(self, email, password=None, **extra_fields):
+        extra_fields.setdefault('is_staff', True)
+        extra_fields.setdefault('is_superuser', True)
+        extra_fields.setdefault('role', 'admin')
+
+        return self.create_user(email, password, **extra_fields)
 
 class User(AbstractUser):
     """
@@ -14,13 +34,43 @@ class User(AbstractUser):
         ('staff', 'Staff'),
         ('customer', 'Customer'),
     )
+    username = None
+    email = models.EmailField(unique=True, blank=False)
     role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='customer')
     phone_number = models.CharField(max_length=15, blank=True, null=True, default='')
     birthday = models.DateField(blank=True, null=True)
     password_reset_token = models.CharField(max_length=100, blank=True, null=True)
 
+    USERNAME_FIELD = 'email'
+    REQUIRED_FIELDS = ['first_name', 'last_name']
+    
+    objects = CustomUserManager()
+
     def __str__(self):
-        return self.username
+        return self.email
+
+    def clean(self):
+        super().clean()
+
+    def save(self, *args, **kwargs):
+        if self.role == 'admin':
+            # Establish admin flags
+            self.is_staff = True
+            self.is_superuser = True
+
+            # Find any other existing admin user
+            other_admins = User.objects.filter(role='admin')
+            if self.pk:
+                other_admins = other_admins.exclude(pk=self.pk)
+
+            # Automatically demote other admin users to 'manager'
+            for admin_user in other_admins:
+                admin_user.role = 'manager'
+                admin_user.is_superuser = False
+                admin_user.is_staff = True
+                super(User, admin_user).save(update_fields=['role', 'is_superuser', 'is_staff'])
+
+        super().save(*args, **kwargs)
 
 class Store(models.Model):
     """
@@ -46,7 +96,8 @@ class Campaign(models.Model):
     )
     name = models.CharField(max_length=100)
     status = models.CharField(max_length=50, choices=STATUS_CHOICES, default='Active')
-    budget = models.DecimalField(max_digits=10, decimal_places=2)
+    budget = models.DecimalField(max_digits=15, decimal_places=2)
+    spending_target = models.DecimalField(max_digits=15, decimal_places=2, default=0, null=True, blank=True)
     start_date = models.DateField()
     end_date = models.DateField()
     reach = models.IntegerField(default=0)
@@ -71,6 +122,10 @@ class Voucher(models.Model):
         ('Entertainment', 'Entertainment'),
         ('Beauty', 'Beauty'),
         ('Electronics', 'Electronics'),
+        ('Sports & Fitness', 'Sports & Fitness'),
+        ('Home & Living', 'Home & Living'),
+        ('Travel', 'Travel'),
+        ('Health & Wellness', 'Health & Wellness'),
     )
 
     DISCOUNT_CHOICES = (5, 10, 15, 20, 25, 30, 50)
@@ -84,9 +139,13 @@ class Voucher(models.Model):
     is_active = models.BooleanField(default=True)
 
     # Campaign FK — required (campaign must precede voucher)
+    # HF-05 FIX: Changed SET_NULL to PROTECT. Deleting a Campaign with active
+    # vouchers would have set campaign=NULL, silently disabling budget enforcement
+    # for all pending claims against those vouchers. PROTECT forces the caller to
+    # reassign or delete vouchers first, preserving data integrity.
     campaign = models.ForeignKey(
         Campaign,
-        on_delete=models.SET_NULL,
+        on_delete=models.PROTECT,
         related_name='vouchers',
         null=True,
         blank=True,
@@ -118,15 +177,38 @@ class Claim(models.Model):
     )
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='claims', null=True, blank=True)
     voucher = models.ForeignKey(Voucher, on_delete=models.CASCADE, related_name='claims', null=True, blank=True)
-    store = models.ForeignKey(Store, on_delete=models.CASCADE, related_name='claims', null=True, blank=True)
+    store = models.ForeignKey(Store, on_delete=models.SET_NULL, related_name='claims', null=True, blank=True)
     receipt_no = models.CharField(max_length=100, default='', blank=True, null=True)
     amount = models.DecimalField(max_digits=10, decimal_places=2, default=0, blank=True, null=True)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='Pending', blank=True, null=True)
+    # Human-readable unique claim reference shown to the customer and scanned by staff
+    # Format: {INITIALS}-{FIRSTNAME}+{8-char UUID hex uppercase}  e.g. JV-JOSHUA+A1B2C3D4
+    claim_ref = models.CharField(max_length=50, unique=True, blank=True, db_index=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    def save(self, *args, **kwargs):
+        """Auto-generate claim_ref on first save if not already set."""
+        if not self.claim_ref:
+            import uuid
+            user = self.user
+            if user:
+                initials = ((user.first_name or '')[:1] + (user.last_name or '')[:1]).upper() or (user.email or 'XX')[:2].upper()
+                name_part = ((user.first_name or '') or (user.email or ''))[:6].upper()
+            else:
+                initials = 'XX'
+                name_part = 'GUEST'
+            for _ in range(5):
+                candidate = f"{initials}-{name_part}+{uuid.uuid4().hex[:8].upper()}"
+                if not Claim.objects.filter(claim_ref=candidate).exists():
+                    self.claim_ref = candidate
+                    break
+            else:
+                self.claim_ref = f"CLM+{uuid.uuid4().hex[:12].upper()}"
+        super().save(*args, **kwargs)
+
     def __str__(self):
-        return f"Claim {self.receipt_no} - {self.status}"
+        return f"Claim {self.claim_ref or self.id} - {self.status}"
 
 class Transaction(models.Model):
     """
@@ -146,6 +228,15 @@ class Transaction(models.Model):
 
     # Auto-generated unique transaction reference (TXN-XXXXXX)
     transaction_id = models.CharField(max_length=20, unique=True, blank=True)
+
+    # Link to the customer who owns this transaction (nullable for legacy records)
+    user = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        related_name='transactions',
+        null=True,
+        blank=True,
+    )
 
     # De-normalised receipt fields (stored as plain text, not FKs)
     receipt_no   = models.CharField(max_length=100, blank=True, default='')
@@ -174,10 +265,20 @@ class Transaction(models.Model):
     updated_at   = models.DateTimeField(auto_now=True)
 
     def save(self, *args, **kwargs):
-        """Auto-generate a short transaction_id on first save. Sync store_name from FK."""
+        """Auto-generate a unique transaction_id on first save. Sync store_name from FK."""
         if not self.transaction_id:
             import uuid
-            self.transaction_id = 'TXN-' + uuid.uuid4().hex[:8].upper()
+            # MF-02 FIX: Retry up to 5 times on collision before falling back to
+            # a longer 12-char ID. Using only 8 hex chars (~4B combinations) means
+            # collisions become statistically likely at scale and would previously
+            # raise an unhandled IntegrityError (500) to the client.
+            for _ in range(5):
+                candidate = 'TXN-' + uuid.uuid4().hex[:8].upper()
+                if not Transaction.objects.filter(transaction_id=candidate).exists():
+                    self.transaction_id = candidate
+                    break
+            else:
+                self.transaction_id = 'TXN-' + uuid.uuid4().hex[:12].upper()
         # Keep de-normalised store_name in sync with the FK
         if self.store_id and not self.store_name:
             self.store_name = self.store.name
@@ -190,8 +291,10 @@ class Transaction(models.Model):
 class Notification(models.Model):
     """
     System notifications for alerts (Global if user is null, or targeted).
+    Can be targeted to a specific user OR a specific role.
     """
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='notifications', null=True, blank=True)
+    target_role = models.CharField(max_length=20, choices=User.ROLE_CHOICES, null=True, blank=True)
     NOTIFICATION_TYPES = (
         ('info', 'Info'),
         ('success', 'Success'),
@@ -207,57 +310,155 @@ class Notification(models.Model):
     def __str__(self):
         return self.title
 
-@receiver(post_save, sender=Claim)
-def create_claim_notification(sender, instance, created, **kwargs):
-    """Automatically create notifications for users and admins when a claim is filed."""
-    if created:
-        # Notify Admins/Managers
+# ── Global Audit Notification Helper ──────────────────────────────────
+def notify_management(title, message, n_type='info'):
+    """Broadcasts a notification to all Admin, Manager, and Staff accounts."""
+    recipients = User.objects.filter(role__in=['admin', 'manager', 'staff'])
+    for user in recipients:
         Notification.objects.create(
-            title="New Claim submitted",
-            message=f"Customer '{instance.user.first_name} {instance.user.last_name}' submitted a ₱{instance.amount} claim. Requires manual review.",
-            notification_type='info'
-        )
-        # Notify the Customer who claimed it
-        Notification.objects.create(
-            user=instance.user,
-            title="Claim Received",
-            message=f"Your claim for {instance.voucher.name} has been received and is currently pending review.",
-            notification_type='success'
+            user=user,
+            title=title,
+            message=message,
+            notification_type=n_type
         )
 
-@receiver(post_save, sender=User)
-def create_user_notification(sender, instance, created, **kwargs):
-    """Alert admins when a new customer registers."""
-    if created and instance.role == 'customer':
-        Notification.objects.create(
-            title="Customer Approval Pending",
-            message=f"A new customer '{instance.first_name} {instance.last_name}' requires profile verification before activation.",
-            notification_type='info'
-        )
+# ── Store Signals ───────────────────────────────────────────────────
+@receiver(post_save, sender=Store)
+def store_saved(sender, instance, created, **kwargs):
+    action = "added" if created else "updated"
+    notify_management(
+        title=f"Store {action.capitalize()}",
+        message=f"Store '{instance.name}' has been {action} in the system."
+    )
 
+@receiver(post_delete, sender=Store)
+def store_deleted(sender, instance, **kwargs):
+    notify_management(
+        title="Store Deleted",
+        message=f"Store '{instance.name}' has been removed from the system.",
+        n_type='warning'
+    )
+
+# ── Voucher Signals ────────────────────────────────────────────────
+@receiver(post_save, sender=Voucher)
+def voucher_saved(sender, instance, created, **kwargs):
+    action = "created" if created else "updated"
+    notify_management(
+        title=f"Voucher {action.capitalize()}",
+        message=f"Voucher '{instance.name}' ({instance.code}) has been {action}."
+    )
+
+@receiver(post_delete, sender=Voucher)
+def voucher_deleted(sender, instance, **kwargs):
+    notify_management(
+        title="Voucher Removed",
+        message=f"Voucher '{instance.name}' has been permanently deleted.",
+        n_type='warning'
+    )
+
+# ── Campaign Signals ───────────────────────────────────────────────
 @receiver(post_save, sender=Campaign)
-def create_campaign_notification(sender, instance, created, **kwargs):
-    """Global notification whenever a new campaign is successfully launched."""
+def campaign_saved(sender, instance, created, **kwargs):
     if created:
-        Notification.objects.create(
-            title="New Campaign",
-            message=f"Campaign '{instance.name}' has been created and is now {instance.status}.",
-            notification_type='success'
+        # Custom message for new launches (existing logic preserved but standardized)
+        notify_management(
+            title="New Campaign Launched",
+            message=f"Campaign '{instance.name}' is now {instance.status}.",
+            n_type='success'
         )
+    else:
+        notify_management(
+            title="Campaign Updated",
+            message=f"Campaign details for '{instance.name}' have been modified."
+        )
+
+@receiver(post_delete, sender=Campaign)
+def campaign_deleted(sender, instance, **kwargs):
+    notify_management(
+        title="Campaign Deleted",
+        message=f"Campaign '{instance.name}' has been removed.",
+        n_type='warning'
+    )
+
+# ── User Signals ───────────────────────────────────────────────────
+@receiver(post_save, sender=User)
+def user_saved(sender, instance, created, **kwargs):
+    if created:
+        if instance.role == 'customer':
+            # Existing specific logic for customers
+            notify_management(
+                title="New Customer Joined",
+                message=f"Customer {instance.get_full_name() or instance.email} has registered.",
+                n_type='success'
+            )
+        else:
+            notify_management(
+                title="Management Account Created",
+                message=f"A new {instance.role} account ({instance.email}) has been added.",
+                n_type='info'
+            )
+    else:
+        # BUG-LOGIC FIX: Skip "Account Updated" notification on every profile save
+        # to prevent spamming the database with alerts.
+        pass
+
+@receiver(post_delete, sender=User)
+def user_deleted(sender, instance, **kwargs):
+    notify_management(
+        title="Account Removed",
+        message=f"The account for {instance.email} has been deleted.",
+        n_type='warning'
+    )
+
+# ── Claim & Transaction Signals ────────────────────────────────────
+@receiver(post_save, sender=Claim)
+def claim_saved(sender, instance, created, **kwargs):
+    # C-04 FIX: Guard against null voucher/user before accessing attributes.
+    # Both FKs are nullable on the Claim model — touching .name or .email on
+    # a None reference raises AttributeError and kills the entire save.
+    voucher_name = instance.voucher.name if instance.voucher else 'Unknown Voucher'
+    user_display = (
+        instance.user.get_full_name() or instance.user.email
+    ) if instance.user else 'Anonymous'
+
+    if created:
+        notify_management(
+            title="New Claim Submitted",
+            message=f"New claim for {voucher_name} by {user_display}.",
+            n_type='warning'
+        )
+        # Only notify the specific customer if user is not null
+        if instance.user:
+            Notification.objects.create(
+                user=instance.user,
+                title="Claim Received",
+                message=f"Your claim for {voucher_name} is now pending review.",
+                notification_type='info'
+            )
+    else:
+        # Only notify customer if status is processed and user is not null
+        if instance.status in ['Approved', 'Rejected'] and instance.user:
+            Notification.objects.create(
+                user=instance.user,
+                title=f"Claim {instance.status}",
+                message=f"Your claim for {voucher_name} has been {instance.status.lower()}.",
+                notification_type='success' if instance.status == 'Approved' else 'error'
+            )
 
 @receiver(post_save, sender=Transaction)
-def update_campaign_conversions(sender, instance, created, **kwargs):
-    """
-    When a transaction is marked Approved, increment the conversions counter
-    on the associated campaign (looked up via the transaction's voucher_code).
-    Uses update_fields to avoid recursive signal triggers.
-    """
-    if not created and instance.status == 'Approved' and instance.voucher_code:
+def transaction_saved(sender, instance, created, **kwargs):
+    # Recalculate conversions (existing logic)
+    if instance.voucher_code:
         try:
             voucher = Voucher.objects.get(code=instance.voucher_code)
             if voucher.campaign_id:
-                Campaign.objects.filter(pk=voucher.campaign_id).update(
-                    conversions=models.F('conversions') + 1
-                )
-        except Voucher.DoesNotExist:
-            pass
+                campaign_codes = list(Voucher.objects.filter(campaign_id=voucher.campaign_id).values_list('code', flat=True))
+                actual_conversions = Transaction.objects.filter(voucher_code__in=campaign_codes, status='Approved').count()
+                Campaign.objects.filter(pk=voucher.campaign_id).update(conversions=actual_conversions)
+        except Voucher.DoesNotExist: pass
+
+    if not created:
+        notify_management(
+            title="Transaction Status Updated",
+            message=f"Transaction {instance.transaction_id} was marked as {instance.status}."
+        )

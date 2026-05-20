@@ -1,7 +1,13 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import axios from 'axios';
 import ClaimDetailsModal from '../../components/ClaimDetailsModal';
+import Pagination from '../../components/Pagination';
 import '../../css/Claims.css';
+
+// BUG-01 FIX: Use environment variable instead of hardcoded localhost URL
+const BASE = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
+
+const PAGE_SIZE = 10;
 
 /**
  * StaffClaims Component
@@ -23,6 +29,8 @@ const StaffClaims = () => {
   const [isAmountDropdownOpen, setIsAmountDropdownOpen] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [selectedClaim, setSelectedClaim] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+
   
   const statusFilterRef = useRef(null);
   const amountFilterRef = useRef(null);
@@ -47,7 +55,7 @@ const StaffClaims = () => {
   const fetchClaims = async () => {
     try {
       setLoading(true);
-      const response = await axios.get('http://127.0.0.1:8000/api/claims/');
+      const response = await axios.get(`${BASE}/api/claims/`);
       setClaims(response.data);
     } catch (error) {
       console.error('Error fetching claims:', error);
@@ -92,23 +100,27 @@ const StaffClaims = () => {
     });
   }, [claims, searchQuery, statusFilters, amountFilter]);
 
+  useEffect(() => { setCurrentPage(1); }, [searchQuery, statusFilters, amountFilter]);
+
+  const totalPages  = Math.ceil(filteredClaims.length / PAGE_SIZE);
+  const pagedClaims = filteredClaims.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
+
+
   const stats = useMemo(() => {
     return {
       total: claims.length,
-      approved: claims.filter(c => c.status === 'Approved').length,
-      pending: claims.filter(c => c.status === 'Pending').length
+      claimed:    claims.filter(c => c.status === 'Approved').length,
+      notClaimed: claims.filter(c => c.status === 'Pending').length,
     };
   }, [claims]);
 
+  // ISSUE-12 FIX: Display in PH timezone instead of raw UTC ISO string
   const formatDateTime = (dateString) => {
     if (!dateString) return '';
-    const date = new Date(dateString);
-    return (
-      <>
-        {date.toISOString().split('T')[0]}<br />
-        {date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-      </>
-    );
+    const d = new Date(dateString);
+    const datePH = new Intl.DateTimeFormat('en-PH', { timeZone: 'Asia/Manila', year: 'numeric', month: '2-digit', day: '2-digit' }).format(d);
+    const timePH = new Intl.DateTimeFormat('en-PH', { timeZone: 'Asia/Manila', hour: '2-digit', minute: '2-digit', hour12: true }).format(d);
+    return (<>{datePH}<br />{timePH}</>);
   };
 
   return (
@@ -124,12 +136,12 @@ const StaffClaims = () => {
             <div className="stat-value">{stats.total}</div>
           </div>
           <div className="claim-stat-card">
-            <div className="stat-title">APPROVED CLAIMS</div>
-            <div className="stat-value">{stats.approved}</div>
+            <div className="stat-title">CLAIMED</div>
+            <div className="stat-value">{stats.claimed}</div>
           </div>
           <div className="claim-stat-card">
-            <div className="stat-title">PENDING REVIEW</div>
-            <div className="stat-value">{stats.pending}</div>
+            <div className="stat-title">NOT CLAIMED</div>
+            <div className="stat-value">{stats.notClaimed}</div>
           </div>
         </div>
 
@@ -177,13 +189,13 @@ const StaffClaims = () => {
               </button>
               {isStatusDropdownOpen && (
                 <div className="filter-dropdown-menu">
-                  {['Approved', 'Rejected', 'Pending'].map(status => (
-                    <label key={status} className="filter-option">
-                      <input 
-                        type="checkbox" 
-                        checked={statusFilters[status]} 
-                        onChange={() => handleFilterToggle(status)} 
-                      /> {status}
+                  {[{ val: 'Approved', lbl: 'Claimed' }, { val: 'Pending', lbl: 'Not Claimed' }, { val: 'Rejected', lbl: 'Expired' }].map(({ val, lbl }) => (
+                    <label key={val} className="filter-option">
+                      <input
+                        type="checkbox"
+                        checked={statusFilters[val]}
+                        onChange={() => handleFilterToggle(val)}
+                      /> {lbl}
                     </label>
                   ))}
                 </div>
@@ -197,65 +209,77 @@ const StaffClaims = () => {
                 <i className="fa-solid fa-spinner fa-spin fa-2xl" color="#bdbdbd"></i>
               </div>
             ) : (
-              <table className="claims-table">
-                <thead>
-                  <tr>
-                    <th>Customer</th>
-                    <th>Voucher</th>
-                    <th>Store</th>
-                    <th>Receipt No.</th>
-                    <th>Amount</th>
-                    <th>Date/Time</th>
-                    <th>Status</th>
-                    <th></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredClaims.map((claim) => (
-                    <tr key={claim.id}>
-                      <td>
-                        <div className="customer-cell">
-                          <span className="customer-name">{claim.user_name || 'Anonymous User'}</span>
-                          <span className="customer-phone">
-                            <i className="fa-solid fa-phone"></i> {claim.user_phone || 'N/A'}
-                          </span>
-                        </div>
-                      </td>
-                      <td>
-                        <div className="voucher-cell">
-                          <span className="voucher-title">{claim.voucher_name}</span>
-                          <span className="voucher-code">{claim.voucher_code}</span>
-                        </div>
-                      </td>
-                      <td>
-                        <span className="store-name">{claim.store_name}</span>
-                      </td>
-                      <td>
-                        <span className="receipt-no">{claim.receipt_no}</span>
-                      </td>
-                      <td className="amount-cell">
-                        ₱{Number(claim.amount).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}
-                      </td>
-                      <td className="date-cell">
-                        {formatDateTime(claim.created_at)}
-                      </td>
-                      <td>
-                        <span className={`status-badge ${claim.status === 'Approved' ? 'approved-filled' : claim.status.toLowerCase()}`}>
-                          {claim.status}
-                        </span>
-                      </td>
-                      <td className="actions-cell">
-                        <button 
-                          className="view-details-btn-new"
-                          onClick={() => handleViewDetails(claim)}
-                        >
-                          <i className="fa-regular fa-eye"></i> View Details
-                        </button>
-                      </td>
+              <>
+                <table className="claims-table">
+                  <thead>
+                    <tr>
+                      <th>Claim No.</th>
+                      <th>Customer</th>
+                      <th>Voucher</th>
+                      <th>Store</th>
+                      <th>Amount</th>
+                      <th>Date/Time</th>
+                      <th>Status</th>
+                      <th>Actions</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {pagedClaims.map((claim) => (
+
+                      <tr key={claim.id}>
+                        <td>
+                          <span className="receipt-no">{claim.receipt_no || `CLM-${String(claim.id).padStart(4, '0')}`}</span>
+                        </td>
+                        <td>
+                          <div className="customer-cell">
+                            <span className="customer-name">{claim.user_name || 'Anonymous User'}</span>
+                            <span className="customer-phone">
+                              <i className="fa-solid fa-phone"></i> {claim.user_phone || 'N/A'}
+                            </span>
+                          </div>
+                        </td>
+                        <td>
+                          <div className="voucher-cell">
+                            <span className="voucher-title">{claim.voucher_name}</span>
+                            <span className="voucher-code">{claim.voucher_code}</span>
+                          </div>
+                        </td>
+                        <td>
+                          <span className="store-name">{claim.store_name}</span>
+                        </td>
+                        <td className="amount-cell">
+                          ₱{Number(claim.amount).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}
+                        </td>
+                        <td className="date-cell">
+                          {formatDateTime(claim.created_at)}
+                        </td>
+                         <td>
+                           <span className={`status-badge ${claim.status === 'Approved' ? 'approved-filled' : claim.status.toLowerCase()}`}>
+                             {({ Pending: 'Not Claimed', Approved: 'Claimed', Rejected: 'Expired' })[claim.status] || claim.status}
+                           </span>
+                         </td>
+                        <td className="actions-cell" style={{ textAlign: 'center' }}>
+                          <button 
+                            className="view-details-btn-new"
+                            onClick={() => handleViewDetails(claim)}
+                            style={{ margin: '0 auto' }}
+                          >
+                            <i className="fa-regular fa-eye"></i> View Details
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+
+                <Pagination
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  onPageChange={setCurrentPage}
+                  totalItems={filteredClaims.length}
+                  pageSize={PAGE_SIZE}
+                />
+              </>
             )}
           </div>
         </div>

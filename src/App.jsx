@@ -27,6 +27,7 @@ import ManagerSettings from './pages/manager/ManagerSettings';
 import ManagerNotifications from './pages/manager/ManagerNotifications';
 
 import StaffLayout from './pages/staff/StaffLayout';
+import StaffDashboard from './pages/staff/StaffDashboard';
 import StaffVouchers from './pages/staff/StaffVouchers';
 import StaffCampaigns from './pages/staff/StaffCampaigns';
 import StaffClaims from './pages/staff/StaffClaims';
@@ -45,6 +46,7 @@ import ForgotPassword from './pages/ForgotPassword';
 import PasswordReset from './pages/PasswordReset';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import Notifications from './pages/admin/Notifications';
+import NotFound from './pages/NotFound';
 import "./css/App.css"
 
 /**
@@ -54,7 +56,7 @@ import "./css/App.css"
  */
 axios.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('accessToken');
+    const token = localStorage.getItem('accessToken') || sessionStorage.getItem('accessToken');
     if (token && !config.url.includes('/login/') && !config.url.includes('/register/')) {
       config.headers['Authorization'] = `Bearer ${token}`;
     }
@@ -74,10 +76,12 @@ axios.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
     
-    // If error is 401 and we haven't retried yet
     if (error.response?.status === 401 && !originalRequest._retry && !originalRequest.url.includes('/token/refresh/')) {
       originalRequest._retry = true;
-      const refreshToken = localStorage.getItem('refreshToken');
+      
+      const isPersistent = localStorage.getItem('refreshToken') !== null;
+      const storage = isPersistent ? localStorage : sessionStorage;
+      const refreshToken = storage.getItem('refreshToken');
 
       if (refreshToken) {
         try {
@@ -86,21 +90,19 @@ axios.interceptors.response.use(
           });
           
           const { access } = response.data;
-          localStorage.setItem('accessToken', access);
+          storage.setItem('accessToken', access);
           
-          // Update the original request's header and retry
           originalRequest.headers['Authorization'] = `Bearer ${access}`;
           return axios(originalRequest);
         } catch (refreshError) {
-          // Refresh failed, clear everything and force re-login
           console.error("Session expired. Please log in again.");
-          localStorage.removeItem('user');
-          localStorage.removeItem('accessToken');
-          localStorage.removeItem('refreshToken');
+          ['user', 'accessToken', 'refreshToken'].forEach(k => {
+            localStorage.removeItem(k);
+            sessionStorage.removeItem(k);
+          });
           window.location.href = '/login';
         }
       } else {
-        // No refresh token available
         window.location.href = '/login';
       }
     }
@@ -114,14 +116,17 @@ axios.interceptors.response.use(
  */
 function App() {
   const [user, setUser] = useState(() => {
-    const savedUser = localStorage.getItem('user');
+    // Check persistent storage first, then session storage
+    const savedUser = localStorage.getItem('user') || sessionStorage.getItem('user');
     return savedUser ? JSON.parse(savedUser) : null;
   });
 
   /**
-   * Authenticates the user with the backend, stores their JWT payload, and sets their global active state.
+   * Authenticates the user and stores their JWT payload.
+   * If rememberMe is true, uses localStorage (persists after browser close).
+   * If rememberMe is false, uses sessionStorage (clears on window close).
    */
-  const handleLogin = async (identifier, password) => {
+  const handleLogin = async (identifier, password, rememberMe) => {
     try {
       const response = await axios.post(`${import.meta.env.VITE_API_URL}/api/users/login/`, {
         identifier: identifier,
@@ -130,9 +135,11 @@ function App() {
       const userData = response.data;
       if (userData) {
         setUser(userData);
-        localStorage.setItem('user', JSON.stringify(userData));
-        localStorage.setItem('accessToken', userData.access);
-        localStorage.setItem('refreshToken', userData.refresh);
+        const storage = rememberMe ? localStorage : sessionStorage;
+        
+        storage.setItem('user', JSON.stringify(userData));
+        storage.setItem('accessToken', userData.access);
+        storage.setItem('refreshToken', userData.refresh);
         return userData;
       }
     } catch (error) {
@@ -142,13 +149,14 @@ function App() {
   };
 
   /**
-   * Purges the user state and destroys token cache, effectively ending the active session.
+   * Purges user state and destroys tokens from ALL storage types.
    */
   const handleLogout = () => {
     setUser(null);
-    localStorage.removeItem('user');
-    localStorage.removeItem('accessToken');
-    localStorage.removeItem('refreshToken');
+    ['user', 'accessToken', 'refreshToken'].forEach(key => {
+      localStorage.removeItem(key);
+      sessionStorage.removeItem(key);
+    });
   };
 
   return (
@@ -167,7 +175,7 @@ function App() {
           {/* Admin Routes */}
           <Route path="/admin" element={user && user.role === 'admin' ? <AdminLayout user={user} onLogout={handleLogout} /> : <Navigate to="/login" />}>
             <Route path="dashboard" element={<AdminDashboard />} />
-            <Route path="vouchers" element={<Vouchers />} />
+            <Route path="vouchers" element={<Navigate to="/admin/campaigns" replace />} />
             <Route path="campaigns" element={<Campaigns />} />
             <Route path="claims" element={<Claims />} />
             <Route path="transactions" element={<Transactions />} />
@@ -182,7 +190,7 @@ function App() {
           {/* Manager Routes */}
           <Route path="/manager" element={user && user.role === 'manager' ? <ManagerLayout user={user} onLogout={handleLogout} /> : <Navigate to="/login" />}>
             <Route path="dashboard" element={<ManagerDashboard />} />
-            <Route path="vouchers" element={<ManagerVouchers />} />
+            <Route path="vouchers" element={<Navigate to="/manager/campaigns" replace />} />
             <Route path="campaigns" element={<ManagerCampaigns />} />
             <Route path="claims" element={<ManagerClaims />} />
             <Route path="transactions" element={<ManagerTransactions />} />
@@ -194,18 +202,19 @@ function App() {
           </Route>
           {/* Staff Routes */}
           <Route path="/staff" element={user && user.role === 'staff' ? <StaffLayout user={user} onLogout={handleLogout} /> : <Navigate to="/login" />}>
-            <Route path="vouchers" element={<StaffVouchers />} />
+            <Route path="dashboard" element={<StaffDashboard />} />
+            <Route path="vouchers" element={<Navigate to="/staff/campaigns" replace />} />
             <Route path="campaigns" element={<StaffCampaigns />} />
             <Route path="claims" element={<StaffClaims />} />
             <Route path="transactions" element={<StaffTransactions />} />
             <Route path="settings" element={<StaffSettings />} />
             <Route path="notifications" element={<StaffNotifications />} />
-            <Route index element={<Navigate to="vouchers" />} />
+            <Route index element={<Navigate to="dashboard" />} />
           </Route>
           {/* Customer Routes */}
           <Route path="/customer" element={user && user.role === 'customer' ? <CustomerLayout user={user} onLogout={handleLogout} /> : <Navigate to="/login" />}>
             <Route path="dashboard" element={<CustomerDashboard user={user} />} />
-            <Route path="vouchers" element={<CustomerVouchers user={user} />} />
+            <Route path="vouchers" element={<Navigate to="/customer/campaigns" replace />} />
             <Route path="campaigns" element={<CustomerCampaigns user={user} />} />
             <Route path="claims" element={<CustomerClaims user={user} />} />
             <Route path="transactions" element={<CustomerTransactions />} />
@@ -213,6 +222,9 @@ function App() {
             <Route path="notifications" element={<CustomerNotifications user={user} />} />
             <Route index element={<Navigate to="dashboard" />} />
           </Route>
+
+          {/* Catch-all 404 Route */}
+          <Route path="*" element={<NotFound user={user} />} />
         </Routes>
       </div>
     </Router>

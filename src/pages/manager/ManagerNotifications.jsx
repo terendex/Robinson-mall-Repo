@@ -11,8 +11,18 @@ const ManagerNotifications = () => {
   const [activeTab, setActiveTab] = useState('all');
 
   const filteredNotifications = useMemo(() => {
-    if (activeTab === 'all') return notifications;
-    return notifications.filter(n => n.notification_type === activeTab);
+    const managerKeywords = ['voucher', 'campaign', 'claim', 'transaction', 'customer', 'approval', 'registration', 'store', 'shop'];
+    
+    // First apply use-case/role filtering
+    const roleFiltered = notifications.filter(n => {
+      const msg = (n.message || '').toLowerCase();
+      const title = (n.title || '').toLowerCase();
+      return managerKeywords.some(k => msg.includes(k) || title.includes(k));
+    });
+
+    // Then apply tab filtering
+    if (activeTab === 'all') return roleFiltered;
+    return roleFiltered.filter(n => n.notification_type === activeTab);
   }, [notifications, activeTab]);
 
   const formatFullTime = (timestamp) => {

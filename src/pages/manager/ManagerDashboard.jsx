@@ -2,6 +2,10 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import '../../css/AdminDashboard.css';
 import '../../css/Transactions.css';
+import ErrorModal from '../../components/ErrorModal';
+
+// BUG-01 FIX: Use environment variable instead of hardcoded localhost URL
+const BASE = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
 
 /**
  * ManagerDashboard Component
@@ -11,17 +15,25 @@ import '../../css/Transactions.css';
 const ManagerDashboard = () => {
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [errorConfig, setErrorConfig] = useState({
+    show: false,
+    title: '',
+    message: ''
+  });
 
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const response = await axios.get('http://127.0.0.1:8000/api/dashboard-stats/');
+        const response = await axios.get(`${BASE}/api/dashboard-stats/`);
         setStats(response.data);
         setLoading(false);
       } catch (err) {
         console.error('Error fetching dashboard stats:', err);
-        setError('Failed to load dashboard data.');
+        setErrorConfig({
+          show: true,
+          title: 'Sync Failed',
+          message: 'Failed to load manager dashboard data. Please verify the backend service is running.'
+        });
         setLoading(false);
       }
     };
@@ -38,13 +50,7 @@ const ManagerDashboard = () => {
     );
   }
 
-  if (error) {
-    return (
-      <div className="dashboard-container">
-        <div className="dash-error">{error}</div>
-      </div>
-    );
-  }
+
 
   const formatTime = (isoString) => {
     if (!isoString) return '';
@@ -217,6 +223,10 @@ const ManagerDashboard = () => {
           </div>
         </div>
       </div>
+      <ErrorModal 
+        {...errorConfig}
+        onClose={() => setErrorConfig(p => ({ ...p, show: false }))}
+      />
     </div>
   );
 };

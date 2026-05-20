@@ -34,7 +34,7 @@ const ResetPasswordModal = ({ show, user, onClose, onSave }) => {
         </div>
         <form onSubmit={handleSubmit} className="modal-form">
           <div className="user-context">
-            <p>Resetting password for <strong>{user.first_name || user.username}</strong></p>
+            <p>Resetting password for <strong>{user.first_name || user.email}</strong></p>
           </div>
           <div className="form-group">
             <label>New Password</label>
@@ -66,7 +66,13 @@ const ResetPasswordModal = ({ show, user, onClose, onSave }) => {
           {error && <p className="error-message" style={{ color: '#c50000', fontSize: '13px', marginTop: '-10px', marginBottom: '10px' }}>{error}</p>}
           <div className="modal-actions">
             <button type="button" className="cancel-inner-btn" onClick={onClose}>Cancel</button>
-            <button type="submit" className="save-btn">Update Password</button>
+            <button 
+              type="submit" 
+              className="save-btn"
+              disabled={!password || !confirmPassword || password !== confirmPassword || password.length < 8}
+            >
+              Update Password
+            </button>
           </div>
         </form>
       </div>

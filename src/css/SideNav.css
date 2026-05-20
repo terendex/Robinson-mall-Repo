@@ -1,6 +1,6 @@
 .sidenav {
-  height: calc(100vh - 60px); /* Adjust for header height */
-  width: 290px; /* Revert to 290 */
+  height: calc(100vh - 60px);
+  width: 290px;
   position: fixed;
   z-index: 102;
   top: 60px;
@@ -11,19 +11,15 @@
   flex-direction: column;
   transition: transform 0.3s ease;
   transform: translateX(-100%); /* Closed by default */
+  /* iOS Safari sticky fix */
+  -webkit-transform: translateX(-100%);
+  -webkit-overflow-scrolling: touch;
+  will-change: transform;
 }
 
 .sidenav.open {
-  transform: translateX(0); /* Opened state */
-}
-
-@media (max-width: 768px) {
-  .sidenav {
-    top: 60px; /* Keep header visible on mobile too */
-    height: calc(100vh - 60px);
-    z-index: 1001; /* Above overlay (1000) but below header (1005) */
-    width: 260px;
-  }
+  transform: translateX(0);
+  -webkit-transform: translateX(0);
 }
 
 .sidenav .logo .logo-side {
@@ -37,6 +33,7 @@
   margin: 0;
   flex-grow: 1;
   overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .sidenav .nav-links li {
@@ -50,12 +47,12 @@
   text-decoration: none;
   font-size: 18px;
   color: #f1f1f1;
-  transition: background-color 0.3s; /* Removed padding-left transition to prevent sliding icons */
+  transition: background-color 0.3s;
 }
 
 .sidenav .nav-links li a:hover,
 .sidenav .nav-links li a.active {
-  background-color: rgba(255, 255, 255, 0.15); /* Match mockup transparency */
+  background-color: rgba(255, 255, 255, 0.15);
 }
 
 .sidenav .nav-links li a.active {
@@ -65,7 +62,7 @@
 .sidenav .nav-links li a i {
   margin-right: 18px;
   width: 24px;
-  font-size: 20px; /* Larger icons as in mockup */
+  font-size: 20px;
   text-align: center;
   font-weight: 900;
 }
@@ -90,7 +87,7 @@
 
 .sidenav .admin-user .admin-info .admin-name {
   font-size: 17px;
-  font-weight: 700; /* Bold from mockup */
+  font-weight: 700;
   color: white;
 }
 
@@ -99,34 +96,89 @@
   opacity: 0.85;
 }
 
-/* ===== Overlay (hidden on desktop) ===== */
+/* ===== Overlay — only shown on mobile (≤767px) ===== */
 .sidenav-overlay {
   display: none;
 }
 
-@media (max-width: 768px) {
+/* ====================================================
+   TABLET (iPad) — 768px to 1024px
+   Sidebar slides in/out normally via .open class,
+   but is narrower (230px) to save horizontal space.
+   The JS initialises it OPEN on tablets by default.
+   ==================================================== */
+@media (min-width: 768px) and (max-width: 1024px) {
+  .sidenav {
+    width: 230px; /* Narrower than desktop 290px to save space */
+    /* Do NOT override transform here — let .sidenav.open control it */
+  }
+
+  .sidenav .nav-links li a {
+    padding: 13px 20px;
+    font-size: 15px;
+  }
+
+  .sidenav .nav-links li a i {
+    font-size: 17px;
+    margin-right: 12px;
+  }
+
+  .sidenav .admin-user {
+    padding: 18px 16px;
+  }
+
+  .sidenav .admin-user .admin-icon {
+    font-size: 28px;
+  }
+
+  .sidenav .admin-user .admin-info .admin-name {
+    font-size: 14px;
+  }
+
+  .sidenav .admin-user .admin-info .admin-email {
+    font-size: 11px;
+  }
+
+  /* On tablets the overlay is never shown */
+  .sidenav-overlay {
+    display: none !important;
+  }
+}
+
+/* ====================================================
+   PHONE — ≤767px
+   Sidebar slides in as a full-height drawer overlay
+   ==================================================== */
+@media (max-width: 767px) {
   .sidenav {
     width: 260px;
+    top: 60px;
+    height: calc(100vh - 60px);
+    z-index: 1001; /* Above overlay (1000), below header (1005) */
   }
-  
+
   .sidenav .nav-links li a {
     padding: 12px 25px;
     font-size: 16px;
   }
 
   .sidenav .admin-user {
-    padding: 20px 20px;
+    padding: 20px;
   }
 
   .sidenav .admin-user .admin-icon {
     margin-right: 5px;
   }
 
+  /* Dim overlay behind the drawer */
   .sidenav-overlay {
     display: block;
     position: fixed;
     inset: 0;
     z-index: 1000; /* Below header (1005) */
     background-color: rgba(0, 0, 0, 0.5);
+    -webkit-tap-highlight-color: transparent;
   }
 }
+
+

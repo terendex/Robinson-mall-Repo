@@ -1,7 +1,12 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { createWorker } from 'tesseract.js';
 import axios from 'axios';
+import SuccessModal from './SuccessModal';
 import '../css/Transactionmodal.css';
+
+// BUG-01 FIX: Use environment variable instead of hardcoded localhost URL
+const BASE = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
+
 
 // ─────────────────────────────────────────────────────
 // Receipt text parser — tuned for Robinsons receipts
@@ -151,6 +156,9 @@ const Combobox = ({ value, onChange, options, placeholder, getLabel, getValue, d
 // Main Component
 // ─────────────────────────────────────────────────────
 const TransactionModal = ({ show, onClose, onSave, transactionToEdit }) => {
+  const user = JSON.parse(localStorage.getItem('user') || sessionStorage.getItem('user') || '{}');
+  const isCustomer = user.role === 'customer';
+
   const [formData, setFormData] = useState({
     receipt_no: '',
     user_name:  '',
@@ -159,6 +167,12 @@ const TransactionModal = ({ show, onClose, onSave, transactionToEdit }) => {
     amount:     '',
     created_at: '',
     status:     'Pending',
+  });
+
+  const [successConfig, setSuccessConfig] = useState({
+    show: false,
+    title: '',
+    message: ''
   });
 
   const [ocrState,    setOcrState]    = useState('idle');
@@ -187,26 +201,47 @@ const TransactionModal = ({ show, onClose, onSave, transactionToEdit }) => {
     setCameraError('');
   }, []);
 
+  // M-11 FIX: Track fetch errors so staff see a UI warning instead of a silent console log
+  const [fetchError, setFetchError] = useState('');
+
   // Fetch stores + customers on open
   useEffect(() => {
     if (!show) return;
-    axios.get('http://127.0.0.1:8000/api/stores/')
-      .then(res => setStores(res.data))
-      .catch(err => console.error('Failed to load stores:', err));
-    axios.get('http://127.0.0.1:8000/api/users/?role=customer')
-      .then(res => setUsers(res.data))
-      .catch(err => console.error('Failed to load users:', err));
+    setFetchError('');
+
+    const fetches = [axios.get(`${BASE}/api/stores/`)];
+    // Customers cannot query the users list (403) and don't need it
+    // (their name is pre-filled from their own session)
+    if (!isCustomer) {
+      fetches.push(axios.get(`${BASE}/api/users/?role=customer`));
+    }
+
+    Promise.all(fetches)
+      .then(([storesRes, usersRes]) => {
+        setStores(storesRes.data);
+        if (usersRes) setUsers(usersRes.data);
+      })
+      .catch(err => {
+        console.error('Failed to load form data:', err);
+        const code = err?.response?.status;
+        setFetchError(
+          code === 401 || code === 403
+            ? 'Your session has expired. Please save your work and log in again.'
+            : 'Could not load stores. Check your connection and try again.'
+        );
+      });
   }, [show]);
 
   useEffect(() => {
     if (transactionToEdit) {
       const toDatetimeLocal = (str) => {
         if (!str) return '';
-        return new Date(str).toISOString().slice(0, 16);
+        const d = new Date(str);
+        return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
       };
       setFormData({
         receipt_no: transactionToEdit.receipt_no  || '',
-        user_name:  transactionToEdit.user_name   || '',
+        user_name:  transactionToEdit.user_name   || (isCustomer ? `${user.first_name} ${user.last_name}`.trim() || user.email : ''),
         store:      transactionToEdit.store        || '',
         store_name: transactionToEdit.store_display_name || transactionToEdit.store_name || '',
         amount:     transactionToEdit.amount       || '',
@@ -216,7 +251,7 @@ const TransactionModal = ({ show, onClose, onSave, transactionToEdit }) => {
     } else {
       setFormData({
         receipt_no: '',
-        user_name:  '',
+        user_name:  isCustomer ? `${user.first_name} ${user.last_name}`.trim() || user.email : '',
         store:      '',
         store_name: '',
         amount:     '',
@@ -231,6 +266,28 @@ const TransactionModal = ({ show, onClose, onSave, transactionToEdit }) => {
     stopCamera();
   }, [transactionToEdit, show]);
 
+  const isDirty = React.useMemo(() => {
+    if (!transactionToEdit) {
+      // For NEW: check if required field (receipt_no) is populated
+      return !!formData.receipt_no.trim();
+    }
+    // For EDIT: compare current state vs initial transactionToEdit values
+    const toDatetimeLocal = (str) => {
+      if (!str) return '';
+      const d = new Date(str);
+      return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+    };
+    return (
+      formData.receipt_no !== (transactionToEdit.receipt_no || '') ||
+      formData.user_name !== (transactionToEdit.user_name || '') ||
+      formData.store !== (transactionToEdit.store || '') ||
+      formData.store_name !== (transactionToEdit.store_display_name || transactionToEdit.store_name || '') ||
+      formData.amount != (transactionToEdit.amount || '') ||
+      formData.created_at !== toDatetimeLocal(transactionToEdit.created_at) ||
+      !!ocrPreview
+    );
+  }, [formData, transactionToEdit, ocrPreview]);
+
   if (!show) return null;
 
   const handleChange = (e) => {
@@ -240,8 +297,10 @@ const TransactionModal = ({ show, onClose, onSave, transactionToEdit }) => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    // created_at is read-only on the backend (auto_now_add), strip it from the payload
+    const { created_at, ...submitPayload } = formData;
     onSave({
-      ...formData,
+      ...submitPayload,
       receipt_image: ocrPreview || null,
     });
   };
@@ -368,9 +427,28 @@ const TransactionModal = ({ show, onClose, onSave, transactionToEdit }) => {
       <div className="modal-content txn-form-modal">
 
         <div className="modal-header">
-          <h2>{transactionToEdit ? 'Edit Transaction' : 'Record New Transaction'}</h2>
+          <h2>{transactionToEdit ? (isCustomer ? 'Transaction Details' : 'Edit Transaction') : (isCustomer ? 'Submit New Transaction' : 'Record New Transaction')}</h2>
           <button className="close-x" onClick={onClose}>&times;</button>
         </div>
+
+        {/* M-11 FIX: Show a visible warning when stores/users failed to load */}
+        {fetchError && (
+          <div style={{
+            margin: '0 0 12px',
+            padding: '10px 14px',
+            background: '#fff3cd',
+            border: '1px solid #ffc107',
+            borderRadius: '6px',
+            fontSize: '0.82rem',
+            color: '#856404',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+          }}>
+            <i className="fa-solid fa-triangle-exclamation" />
+            {fetchError}
+          </div>
+        )}
 
         <input
           type="file"
@@ -461,7 +539,11 @@ const TransactionModal = ({ show, onClose, onSave, transactionToEdit }) => {
                     console.group('🧠 Tesseract Raw OCR Output');
                     console.log(ocrRawText);
                     console.groupEnd();
-                    alert('Raw OCR text printed to browser console (F12 → Console).');
+                    setSuccessConfig({
+                      show: true,
+                      title: 'Debug Output',
+                      message: 'Raw OCR text has been printed to the browser console (F12).'
+                    });
                   }}
                 >
                   <i className="fa-solid fa-bug"></i> Debug
@@ -498,28 +580,30 @@ const TransactionModal = ({ show, onClose, onSave, transactionToEdit }) => {
             />
           </div>
 
-          {/* Customer name combobox */}
-          <div className="form-group">
-            <label>
-              Customer Name
-              {filledFields.includes('user_name') && <span className="ocr-filled-tag">OCR</span>}
-            </label>
-            <Combobox
-              value={formData.user_name}
-              onChange={({ text, item }) =>
-                setFormData(prev => ({
-                  ...prev,
-                  user_name: item
-                    ? `${item.first_name} ${item.last_name}`.trim() || item.username
-                    : text,
-                }))
-              }
-              options={users}
-              placeholder="Type or search customer name…"
-              getLabel={u => `${u.first_name} ${u.last_name}`.trim() || u.username}
-              getValue={u => u.id}
-            />
-          </div>
+          {/* Customer name combobox — only for staff/admin */}
+          {!isCustomer && (
+            <div className="form-group">
+              <label>
+                Customer Name
+                {filledFields.includes('user_name') && <span className="ocr-filled-tag">OCR</span>}
+              </label>
+              <Combobox
+                value={formData.user_name}
+                onChange={({ text, item }) =>
+                  setFormData(prev => ({
+                    ...prev,
+                    user_name: item
+                      ? `${item.first_name} ${item.last_name}`.trim() || item.email
+                      : text,
+                  }))
+                }
+                options={users}
+                placeholder="Type or search customer name…"
+                getLabel={u => `${u.first_name} ${u.last_name}`.trim() || u.email}
+                getValue={u => u.id}
+              />
+            </div>
+          )}
 
           <div className="form-row">
             {/* Store combobox — type OR pick from dropdown */}
@@ -565,7 +649,7 @@ const TransactionModal = ({ show, onClose, onSave, transactionToEdit }) => {
           {/* Timestamp */}
           <div className="form-group">
             <label>
-              Timestamp
+              Receipt Date
               {filledFields.includes('created_at') && <span className="ocr-filled-tag">OCR</span>}
             </label>
             <input
@@ -573,6 +657,7 @@ const TransactionModal = ({ show, onClose, onSave, transactionToEdit }) => {
               name="created_at"
               value={formData.created_at}
               onChange={handleChange}
+              title="Informational only — date is set automatically by the server"
             />
           </div>
 
@@ -593,12 +678,16 @@ const TransactionModal = ({ show, onClose, onSave, transactionToEdit }) => {
 
           <div className="modal-actions">
             <button type="button" className="cancel-inner-btn" onClick={onClose}>Cancel</button>
-            <button type="submit" className="save-btn">
-              {transactionToEdit ? 'Save Changes' : 'Record Transaction'}
+            <button type="submit" className="save-btn" disabled={!isDirty}>
+              {transactionToEdit ? 'Save Changes' : (isCustomer ? 'Submit for Review' : 'Record Transaction')}
             </button>
           </div>
         </form>
       </div>
+      <SuccessModal 
+        {...successConfig}
+        onClose={() => setSuccessConfig(p => ({ ...p, show: false }))}
+      />
     </div>
   );
 };

@@ -9,7 +9,7 @@ from api.models import User
 # Grab any user to test credential generation
 user = User.objects.first()
 if not user:
-    user = User.objects.create(username='testuser', email='test@example.com')
+    user = User.objects.create(email='test@example.com')
     user.set_password('password123')
     user.save()
 
@@ -20,7 +20,7 @@ resp1 = client.get('/api/users/')
 print('Unauthenticated Response Status:', resp1.status_code)
 
 print('\nTesting with login...')
-resp2 = client.post('/api/users/login/', {'identifier': user.username, 'password': 'password123' if user.username == 'testuser' else 'RobinsonMall@2026'})
+resp2 = client.post('/api/users/login/', {'identifier': user.email, 'password': 'password123' if user.email == 'test@example.com' else 'RobinsonMall@2026'})
 print('Login Status:', resp2.status_code)
 
 if resp2.status_code == 200:

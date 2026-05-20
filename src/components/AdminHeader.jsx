@@ -4,6 +4,7 @@ import '../css/AdminHeader.css';
 import robinsonsLogo from '../assets/Robinson_logo.png';
 import redROB from '../assets/redROB.png';
 import NotificationContext from '../context/NotificationContext';
+import ActionConfirmModal from './ActionConfirmModal';
 
 /**
  * AdminHeader Component
@@ -20,24 +21,43 @@ const AdminHeader = ({ toggleSidebar, user, isSidebarOpen, onLogout }) => {
   const notificationDropdownRef = useRef(null);
   const profileDropdownRef = useRef(null);
   const { notifications, removeNotification } = useContext(NotificationContext);
+  const [confirmConfig, setConfirmConfig] = useState({
+    show: false,
+    title: '',
+    message: '',
+    confirmText: '',
+    variant: 'primary',
+    onConfirm: () => {}
+  });
 
   const role = user?.role || 'admin';
   const pathPrefix = `/${role}`;
 
   const availablePages = [
     ...(role !== 'staff' ? [{ name: 'Dashboard', path: `${pathPrefix}/dashboard`, icon: 'fa-table-cells-large' }] : []),
-    { name: role === 'customer' ? 'My Vouchers' : 'Vouchers', path: `${pathPrefix}/vouchers`, icon: 'fa-ticket-simple' },
     { name: role === 'customer' ? 'Active Campaigns' : 'Campaigns', path: `${pathPrefix}/campaigns`, icon: 'fa-tag' },
+    { name: role === 'customer' ? 'My Vouchers' : 'Vouchers', path: `${pathPrefix}/vouchers`, icon: 'fa-ticket-simple' },
+    ...(role === 'admin' || role === 'manager' ? [{ name: 'Shops', path: `${pathPrefix}/shops`, icon: 'fa-store' }] : []),
     { name: role === 'customer' ? 'My Claims' : 'Claims', path: `${pathPrefix}/claims`, icon: 'fa-gift' },
-    { name: 'Transactions', path: `${pathPrefix}/transactions`, icon: 'fa-clock-rotate-left' },
     ...(role === 'admin' ? [{ name: 'Users', path: `${pathPrefix}/users`, icon: 'fa-user-group' }] : []),
+    { name: 'Transactions', path: `${pathPrefix}/transactions`, icon: 'fa-clock-rotate-left' },
     ...(role !== 'staff' && role !== 'customer' ? [{ name: 'Reports', path: `${pathPrefix}/reports`, icon: 'fa-chart-simple' }] : []),
     { name: 'Settings', path: `${pathPrefix}/settings`, icon: 'fa-gear' },
   ];
 
   const filteredNotifications = useMemo(() => {
-    if (role !== 'staff') return notifications;
-    const keywords = ['voucher', 'campaign', 'claim', 'transaction'];
+    // Admin sees everything
+    if (role === 'admin') return notifications;
+    
+    // Customers only see their targeted notifications (already filtered by backend, but safe to keep broad here)
+    if (role === 'customer') return notifications;
+
+    // Staff and Managers filter based on their use cases to reduce noise
+    const staffKeywords = ['voucher', 'campaign', 'claim', 'transaction'];
+    const managerKeywords = [...staffKeywords, 'customer', 'approval', 'registration', 'store', 'shop'];
+    
+    const keywords = role === 'manager' ? managerKeywords : staffKeywords;
+    
     return notifications.filter(n => {
       const msg = (n.message || '').toLowerCase();
       const title = (n.title || '').toLowerCase();
@@ -93,10 +113,20 @@ const AdminHeader = ({ toggleSidebar, user, isSidebarOpen, onLogout }) => {
   };
 
   const handleLogout = () => {
-    if (onLogout) {
-      onLogout();
-    }
-    navigate('/login');
+    setIsProfileDropdownOpen(false);
+    setConfirmConfig({
+      show: true,
+      title: 'Log Out',
+      message: 'Are you sure you want to sign out of your account?',
+      confirmText: 'Log Out',
+      variant: 'danger',
+      onConfirm: () => {
+        if (onLogout) {
+          onLogout();
+        }
+        navigate('/login');
+      }
+    });
   };
 
   return (
@@ -162,7 +192,10 @@ const AdminHeader = ({ toggleSidebar, user, isSidebarOpen, onLogout }) => {
                 <div className="notification-list">
                   {filteredNotifications.length > 0 ? (
                     filteredNotifications.map((notification) => (
-                      <div key={notification.id} className="notification-item" onClick={() => navigate(`${pathPrefix}/notifications`)}>
+                      <div key={notification.id} className="notification-item" onClick={() => {
+                        setIsNotificationDropdownOpen(false);
+                        navigate(`${pathPrefix}/notifications`);
+                      }}>
                         <div className="notification-item-main">
                           <div className="notification-item-title-row">
                             <span className="notification-item-title">{notification.title || 'Notification'}</span>
@@ -180,7 +213,10 @@ const AdminHeader = ({ toggleSidebar, user, isSidebarOpen, onLogout }) => {
                     </div>
                   )}
                 </div>
-                <div className="notification-dropdown-footer" onClick={() => navigate(`${pathPrefix}/notifications`)}>
+                <div className="notification-dropdown-footer" onClick={() => {
+                  setIsNotificationDropdownOpen(false);
+                  navigate(`${pathPrefix}/notifications`);
+                }}>
                   <span>View all notifications</span>
                 </div>
               </div>
@@ -209,6 +245,10 @@ const AdminHeader = ({ toggleSidebar, user, isSidebarOpen, onLogout }) => {
           </div>
         </div>
       </div>
+      <ActionConfirmModal 
+        {...confirmConfig}
+        onClose={() => setConfirmConfig(p => ({ ...p, show: false }))}
+      />
     </header>
   );
 };

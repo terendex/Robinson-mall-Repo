@@ -1,5 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import '../css/Modal.css';
+import ErrorModal from './ErrorModal';
+import { FaCheck, FaTimes, FaEye, FaEyeSlash } from 'react-icons/fa';
+
+const PASSWORD_RULES = [
+  { key: 'length',  label: 'At least 8 characters',                     test: pw => pw.length >= 8 },
+  { key: 'upper',   label: 'At least one uppercase letter (A–Z)',        test: pw => /[A-Z]/.test(pw) },
+  { key: 'lower',   label: 'At least one lowercase letter (a–z)',        test: pw => /[a-z]/.test(pw) },
+  { key: 'number',  label: 'At least one number (0–9)',                  test: pw => /[0-9]/.test(pw) },
+  { key: 'special', label: 'At least one special character (!@#$%^&*…)', test: pw => /[!@#$%^&*()\-_=+[\]{};':"\\|,.<>/?`~]/.test(pw) },
+];
 
 /**
  * UserModal Component
@@ -7,7 +17,6 @@ import '../css/Modal.css';
  */
 const UserModal = ({ show, onClose, onSave, userToEdit }) => {
   const [formData, setFormData] = useState({
-    username: '',
     email: '',
     role: 'customer',
     password: '',
@@ -16,10 +25,18 @@ const UserModal = ({ show, onClose, onSave, userToEdit }) => {
     last_name: '',
   });
 
+  const [errorConfig, setErrorConfig] = useState({
+    show: false,
+    title: '',
+    message: ''
+  });
+
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
   useEffect(() => {
     if (userToEdit) {
       setFormData({
-        username: userToEdit.username || '',
         email: userToEdit.email || '',
         role: userToEdit.role || 'customer',
         first_name: userToEdit.first_name || '',
@@ -29,7 +46,6 @@ const UserModal = ({ show, onClose, onSave, userToEdit }) => {
       });
     } else {
       setFormData({
-        username: '',
         email: '',
         role: 'customer',
         first_name: '',
@@ -39,6 +55,22 @@ const UserModal = ({ show, onClose, onSave, userToEdit }) => {
       });
     }
   }, [userToEdit, show]);
+
+  const isDirty = React.useMemo(() => {
+    if (!userToEdit) {
+      // For NEW user: email, password are required
+      return !!(formData.email.trim() && formData.password);
+    }
+    return (
+      formData.email !== (userToEdit.email || '') ||
+      formData.role !== (userToEdit.role || 'customer') ||
+      formData.first_name !== (userToEdit.first_name || '') ||
+      formData.last_name !== (userToEdit.last_name || '')
+    );
+  }, [formData, userToEdit]);
+
+  const newPw = formData.password || '';
+  const ruleResults = PASSWORD_RULES.map(r => ({ ...r, passed: r.test(newPw) }));
 
   if (!show) return null;
 
@@ -50,14 +82,45 @@ const UserModal = ({ show, onClose, onSave, userToEdit }) => {
   const handleSubmit = (e) => {
     e.preventDefault();
     
-    if (formData.role === 'admin' && formData.password !== formData.confirmPassword) {
-      alert('Admin passwords do not match. Please retype to confirm.');
+    if (!userToEdit && formData.role === 'admin' && formData.password !== formData.confirmPassword) {
+      setErrorConfig({
+        show: true,
+        title: 'Password Mismatch',
+        message: 'Admin passwords do not match. Please retype to confirm.'
+      });
       return;
     }
 
     if (!userToEdit && !formData.password) {
-      alert('Password is required for new users.');
+      setErrorConfig({
+        show: true,
+        title: 'Requirement Missing',
+        message: 'A password is required when creating a new user account.'
+      });
       return;
+    }
+
+    if (formData.password) {
+      if (formData.password.length < 8) {
+        setErrorConfig({ show: true, title: 'Weak Password', message: 'Password must be at least 8 characters long.' });
+        return;
+      }
+      if (!/[A-Z]/.test(formData.password)) {
+        setErrorConfig({ show: true, title: 'Weak Password', message: 'Password must contain at least one uppercase letter.' });
+        return;
+      }
+      if (!/[a-z]/.test(formData.password)) {
+        setErrorConfig({ show: true, title: 'Weak Password', message: 'Password must contain at least one lowercase letter.' });
+        return;
+      }
+      if (!/[0-9]/.test(formData.password)) {
+        setErrorConfig({ show: true, title: 'Weak Password', message: 'Password must contain at least one number.' });
+        return;
+      }
+      if (!/[!@#$%^&*()\-_=+[\]{};':"\\|,.<>/?`~]/.test(formData.password)) {
+        setErrorConfig({ show: true, title: 'Weak Password', message: 'Password must contain at least one special character.' });
+        return;
+      }
     }
 
     onSave(formData);
@@ -103,17 +166,6 @@ const UserModal = ({ show, onClose, onSave, userToEdit }) => {
             </div>
           </div>
           <div className="form-group">
-            <label>Username</label>
-            <input
-              type="text"
-              name="username"
-              value={formData.username}
-              onChange={handleChange}
-              placeholder="Enter username"
-              required
-            />
-          </div>
-          <div className="form-group">
             <label>Email Address</label>
             <input
               type="email"
@@ -134,30 +186,52 @@ const UserModal = ({ show, onClose, onSave, userToEdit }) => {
             </select>
           </div>
           
-          {(formData.role === 'admin' || !userToEdit) && (
+          {!userToEdit && (
             <div className="form-row">
               <div className="form-group">
                 <label>{formData.role === 'admin' ? 'Admin Password' : 'Password'}</label>
-                <input
-                  type="password"
-                  name="password"
-                  value={formData.password}
-                  onChange={handleChange}
-                  placeholder="Enter password"
-                  required={!userToEdit || formData.role === 'admin'}
-                />
+                <div className="modal-input-wrap">
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    name="password"
+                    value={formData.password}
+                    onChange={handleChange}
+                    placeholder="Enter password"
+                    required
+                    style={{ paddingRight: '45px' }}
+                  />
+                  <span className="modal-pw-eye" onClick={() => setShowPassword(v => !v)}>
+                    {showPassword ? <FaEyeSlash /> : <FaEye />}
+                  </span>
+                </div>
+                {true && (
+                  <ul className="pw-requirements">
+                    {ruleResults.map(r => (
+                      <li key={r.key} className={r.passed ? 'req-pass' : 'req-fail'}>
+                        {r.passed ? <FaCheck className="req-icon" /> : <FaTimes className="req-icon" />}
+                        {r.label}
+                      </li>
+                    ))}
+                  </ul>
+                )}
               </div>
               {formData.role === 'admin' && (
                 <div className="form-group">
                   <label>Confirm Admin Password</label>
-                  <input
-                    type="password"
-                    name="confirmPassword"
-                    value={formData.confirmPassword}
-                    onChange={handleChange}
-                    placeholder="Retype admin password"
-                    required
-                  />
+                  <div className="modal-input-wrap">
+                    <input
+                      type={showConfirmPassword ? 'text' : 'password'}
+                      name="confirmPassword"
+                      value={formData.confirmPassword}
+                      onChange={handleChange}
+                      placeholder="Retype admin password"
+                      required
+                      style={{ paddingRight: '45px' }}
+                    />
+                    <span className="modal-pw-eye" onClick={() => setShowConfirmPassword(v => !v)}>
+                      {showConfirmPassword ? <FaEyeSlash /> : <FaEye />}
+                    </span>
+                  </div>
                 </div>
               )}
             </div>
@@ -165,11 +239,15 @@ const UserModal = ({ show, onClose, onSave, userToEdit }) => {
 
           <div className="modal-actions">
             <button type="button" onClick={onClose} className="cancel-inner-btn">Cancel</button>
-            <button type="submit" className="save-btn">
+            <button type="submit" className="save-btn" disabled={!isDirty}>
               {formData.role === 'admin' ? 'Confirm Admin Change' : (userToEdit ? 'Save Changes' : 'Add User')}
             </button>
           </div>
         </form>
+        <ErrorModal 
+          {...errorConfig}
+          onClose={() => setErrorConfig(p => ({ ...p, show: false }))}
+        />
       </div>
     </div>
   );

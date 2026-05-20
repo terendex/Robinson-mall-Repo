@@ -10,7 +10,7 @@ import '../../css/AdminLayout.css';
  * Handles the UI and data logic for the ManagerLayout module.
  */
 const ManagerLayout = ({ user, onLogout }) => {
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(() => window.innerWidth >= 768);
 
   const toggleSidebar = () => setIsSidebarOpen((prev) => !prev);
   const closeSidebar = () => setIsSidebarOpen(false);

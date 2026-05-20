@@ -10,14 +10,39 @@ class UserSerializer(serializers.ModelSerializer):
     """Serializer for User ensuring secure password hashing on creation and update."""
     class Meta:
         model = User
-        fields = ('id', 'username', 'email', 'role', 'password', 'first_name', 'last_name', 'phone_number', 'birthday', 'is_active')
+        fields = ('id', 'email', 'role', 'password', 'first_name', 'last_name', 'phone_number', 'birthday', 'is_active')
         extra_kwargs = {
             'password': {'write_only': True},
         }
 
+    def validate_email(self, value):
+        # Exclude the current instance when checking for duplicate emails (fixes edit flow)
+        qs = User.objects.filter(email__iexact=value)
+        if self.instance:
+            qs = qs.exclude(pk=self.instance.pk)
+        if qs.exists():
+            raise serializers.ValidationError("A user with this email already exists.")
+        return value.lower()
+
+    def validate_password(self, value):
+        from django.contrib.auth.password_validation import validate_password
+        import re
+        validate_password(value)
+        
+        if len(value) < 8:
+            raise serializers.ValidationError("Password must be at least 8 characters long.")
+        if not re.search(r'[A-Z]', value):
+            raise serializers.ValidationError("Password must contain at least one uppercase letter.")
+        if not re.search(r'[a-z]', value):
+            raise serializers.ValidationError("Password must contain at least one lowercase letter.")
+        if not re.search(r'[0-9]', value):
+            raise serializers.ValidationError("Password must contain at least one number.")
+        if not re.search(r'[!@#$%^&*(),.?":{}|<>]', value):
+            raise serializers.ValidationError("Password must contain at least one special character.")
+            
+        return value
     def create(self, validated_data):
         user = User.objects.create_user(
-            username=validated_data['username'],
             email=validated_data['email'],
             password=validated_data['password'],
             role=validated_data.get('role', 'customer'),
@@ -74,18 +99,36 @@ class CampaignSerializer(serializers.ModelSerializer):
     reach         = serializers.SerializerMethodField()  # count of Claims for campaign vouchers
     conversions   = serializers.SerializerMethodField()  # count of Approved transactions
 
-    budget = serializers.DecimalField(max_digits=10, decimal_places=2, min_value=0)
+    budget          = serializers.DecimalField(max_digits=10, decimal_places=2, min_value=0)
+    spending_target  = serializers.DecimalField(max_digits=10, decimal_places=2, min_value=0, allow_null=True, required=False)
+
+    voucher_type     = serializers.SerializerMethodField()
+    voucher_discount = serializers.SerializerMethodField()
+    voucher_id       = serializers.SerializerMethodField()
 
     class Meta:
         model = Campaign
         fields = (
-            'id', 'name', 'status', 'budget',
+            'id', 'name', 'status', 'budget', 'spending_target',
             'start_date', 'end_date',
             'reach', 'conversions',
             'vouchers', 'voucher_count',
+            'voucher_type', 'voucher_discount', 'voucher_id',
             'created_at', 'updated_at',
         )
         read_only_fields = ('reach', 'conversions', 'created_at', 'updated_at')
+
+    def get_voucher_type(self, obj):
+        first = obj.vouchers.first()
+        return first.voucher_type if first else 'N/A'
+
+    def get_voucher_discount(self, obj):
+        first = obj.vouchers.first()
+        return first.discount_percentage if first else 0
+
+    def get_voucher_id(self, obj):
+        first = obj.vouchers.first()
+        return first.id if first else None
 
     def get_reach(self, obj):
         """Reach = total Claims made against any voucher in this campaign."""
@@ -112,6 +155,8 @@ class CampaignSerializer(serializers.ModelSerializer):
                 'voucher_type': v.voucher_type,
                 'discount_percentage': v.discount_percentage,
                 'is_active': v.is_active,
+                'store_id': v.store_id,
+                'store_name': v.store.name if v.store else 'All Stores',
             }
             for v in obj.vouchers.all()
         ]
@@ -126,7 +171,11 @@ class ClaimSerializer(serializers.ModelSerializer):
     voucher_code = serializers.ReadOnlyField(source='voucher.code')
     store_name   = serializers.ReadOnlyField(source='store.name')
 
-    amount = serializers.DecimalField(max_digits=10, decimal_places=2, min_value=0)
+    # amount is optional on creation — defaults to 0. Staff can update it later.
+    amount = serializers.DecimalField(
+        max_digits=10, decimal_places=2, min_value=0,
+        required=False, allow_null=True, default=0,
+    )
 
     class Meta:
         model = Claim
@@ -151,7 +200,7 @@ class TransactionSerializer(serializers.ModelSerializer):
         model = Transaction
         fields = (
             'id', 'transaction_id', 'transaction_id_short',
-            'receipt_no', 'user_name',
+            'user', 'receipt_no', 'user_name',
             'store', 'store_name', 'store_display_name',
             'voucher_name', 'voucher_code',
             'amount', 'expiry_date',
@@ -191,5 +240,22 @@ class TransactionSerializer(serializers.ModelSerializer):
                     raise serializers.ValidationError(
                         {'rejection_reason': 'A rejection reason is required when rejecting a transaction.'}
                     )
+
+        # HF-02 FIX: Scope the SI uniqueness check to Approved transactions only,
+        # matching the guard used in ClaimViewSet.redeem(). Checking all statuses
+        # previously allowed a Pending transaction and an approved claim redemption
+        # to share the same receipt_no if timed correctly, enabling double-use.
+        receipt_no = data.get('receipt_no')
+        if not instance and receipt_no:
+            if Transaction.objects.filter(receipt_no=receipt_no, status='Approved').exists():
+                raise serializers.ValidationError({'receipt_no': 'A transaction with this SI number has already been approved.'})
+
+        # Ensure SI and Transaction ID cannot be the same value
+        # Note: transaction_id is auto-generated in model.save(), but if provided in data (unlikely per Meta)
+        # or if we compare against generated pattern, we should check.
+        # But most likely the user wants to prevent entering an SI that looks like a TXN ID or vice versa.
+        txn_id = data.get('transaction_id') or (instance.transaction_id if instance else None)
+        if receipt_no and txn_id and receipt_no == txn_id:
+             raise serializers.ValidationError({'receipt_no': 'SI number and Transaction ID cannot be identical.'})
 
         return data

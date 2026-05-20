@@ -1,25 +1,39 @@
 import React, { useState, useEffect } from 'react';
+import { FaEye, FaEyeSlash, FaCheck, FaTimes } from 'react-icons/fa';
 import axios from 'axios';
+import ActionConfirmModal from './ActionConfirmModal';
+import SuccessModal from './SuccessModal';
 import '../css/Settings.css';
 
 /**
- * SettingsPage — shared across admin, manager, and staff layouts.
+ * Password rules — must mirror Register.jsx.
+ */
+const PASSWORD_RULES = [
+  { key: 'length',  label: 'At least 8 characters',                     test: pw => pw.length >= 8 },
+  { key: 'upper',   label: 'At least one uppercase letter (A–Z)',        test: pw => /[A-Z]/.test(pw) },
+  { key: 'lower',   label: 'At least one lowercase letter (a–z)',        test: pw => /[a-z]/.test(pw) },
+  { key: 'number',  label: 'At least one number (0–9)',                  test: pw => /[0-9]/.test(pw) },
+  { key: 'special', label: 'At least one special character (!@#$%^&*…)', test: pw => /[!@#$%^&*()\-_=+\[\]{};':"\\|,.<>/?`~]/.test(pw) },
+];
+
+/**
+ * SettingsPage — shared across admin, manager, staff, and customer layouts.
  * Tabs: General (profile info) | Security (password change) | Notifications (toggles)
  */
 const SettingsPage = () => {
   const [activeTab, setActiveTab] = useState('general');
-  const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
+  const storedUser = JSON.parse(localStorage.getItem('user') || sessionStorage.getItem('user') || '{}');
 
   // ── General tab state ──
   const [profile, setProfile] = useState({
-    first_name: storedUser.first_name || '',
-    last_name:  storedUser.last_name  || '',
-    email:      storedUser.email      || '',
-    username:   storedUser.username   || '',
+    first_name:   storedUser.first_name   || '',
+    last_name:    storedUser.last_name    || '',
+    email:        storedUser.email        || '',
     phone_number: '',
   });
-  const [profileStatus, setProfileStatus] = useState({ type: '', msg: '' });
-  const [profileSaving, setProfileSaving] = useState(false);
+  const [profileStatus, setProfileStatus]   = useState({ type: '', msg: '' });
+  const [profileSaving, setProfileSaving]   = useState(false);
+  const [initialProfile, setInitialProfile] = useState({});
 
   // ── Security tab state ──
   const [security, setSecurity] = useState({
@@ -27,31 +41,73 @@ const SettingsPage = () => {
     new_password:     '',
     confirm_password: '',
   });
+  // ... (keeping other states)
   const [securityStatus, setSecurityStatus] = useState({ type: '', msg: '' });
   const [securitySaving, setSecuritySaving] = useState(false);
-  const [showPasswords, setShowPasswords] = useState(false);
+  const [showCurrent, setShowCurrent]       = useState(false);
+  const [showNew, setShowNew]               = useState(false);
+  const [showConfirm, setShowConfirm]       = useState(false);
 
-  // ── Notifications tab state ──
-  const [notifPrefs, setNotifPrefs] = useState({
-    email_notifications: true,
-    push_notifications:  true,
-    sms_notifications:   false,
+
+  const [confirmConfig, setConfirmConfig] = useState({
+    show: false,
+    title: '',
+    message: '',
+    confirmText: '',
+    variant: 'primary',
+    onConfirm: () => {}
+  });
+
+  const [successConfig, setSuccessConfig] = useState({
+    show: false,
+    title: '',
+    message: ''
   });
 
   // Load full profile from API on mount
   useEffect(() => {
     axios.get(`${import.meta.env.VITE_API_URL}/api/users/me/`)
       .then(res => {
-        setProfile({
+        const data = {
           first_name:   res.data.first_name   || '',
           last_name:    res.data.last_name    || '',
           email:        res.data.email        || '',
-          username:     res.data.username     || '',
           phone_number: res.data.phone_number || '',
-        });
+        };
+        setProfile(data);
+        setInitialProfile(data);
       })
       .catch(err => console.error('Failed to load profile:', err));
   }, []);
+
+  // ── Password strength derived state ──
+  const newPw        = security.new_password;
+  const ruleResults  = PASSWORD_RULES.map(r => ({ ...r, passed: r.test(newPw) }));
+  const allRulesPassed  = ruleResults.every(r => r.passed);
+  const passedCount     = ruleResults.filter(r => r.passed).length;
+  const strengthPct     = (passedCount / PASSWORD_RULES.length) * 100;
+
+  const isProfileDirty = React.useMemo(() => {
+    return (
+      profile.first_name !== initialProfile.first_name ||
+      profile.last_name !== initialProfile.last_name ||
+      profile.email !== initialProfile.email ||
+      profile.phone_number !== initialProfile.phone_number
+    );
+  }, [profile, initialProfile]);
+
+  const isSecurityDirty = React.useMemo(() => {
+    return !!(security.current_password && security.new_password && security.confirm_password && allRulesPassed && security.new_password === security.confirm_password);
+  }, [security, allRulesPassed]);
+  const strengthLabel   =
+    passedCount === 0 ? '' :
+    passedCount === 1 ? 'Weak' :
+    passedCount === 2 ? 'Fair' :
+    passedCount === 3 ? 'Good' : 'Strong';
+  const strengthClass   =
+    passedCount <= 1 ? 'weak' :
+    passedCount === 2 ? 'fair' :
+    passedCount === 3 ? 'good' : 'strong';
 
   // ── Save profile ──
   const handleProfileSave = async (e) => {
@@ -65,10 +121,13 @@ const SettingsPage = () => {
         email:        profile.email,
         phone_number: profile.phone_number,
       });
-      // Update localStorage so other parts of the app reflect the change
       const updated = { ...storedUser, ...res.data };
       localStorage.setItem('user', JSON.stringify(updated));
-      setProfileStatus({ type: 'success', msg: 'Profile updated successfully.' });
+      setSuccessConfig({
+        show: true,
+        title: 'Profile Updated!',
+        message: 'Your profile information has been saved successfully.'
+      });
     } catch (err) {
       const detail = err.response?.data?.detail || 'Failed to save changes.';
       setProfileStatus({ type: 'error', msg: detail });
@@ -77,17 +136,38 @@ const SettingsPage = () => {
     }
   };
 
+  const requestProfileSaveConfirm = (e) => {
+    e.preventDefault();
+
+    if (profile.phone_number && !/^09\d{9}$/.test(profile.phone_number)) {
+      setProfileStatus({ type: 'error', msg: 'Phone number must be an 11-digit number starting with 09 (e.g., 09369643053).' });
+      return;
+    }
+
+    setConfirmConfig({
+      show: true,
+      title: 'Save Profile Changes',
+      message: 'Are you sure you want to update your profile information?',
+      confirmText: 'Save Changes',
+      variant: 'success',
+      onConfirm: () => handleProfileSave(e)
+    });
+  };
+
   // ── Save password ──
   const handlePasswordSave = async (e) => {
     e.preventDefault();
+
+    // Client-side strength validation
+    if (!allRulesPassed) {
+      setSecurityStatus({ type: 'error', msg: 'New password does not meet the required criteria. Check the requirements below.' });
+      return;
+    }
     if (security.new_password !== security.confirm_password) {
       setSecurityStatus({ type: 'error', msg: 'New passwords do not match.' });
       return;
     }
-    if (security.new_password.length < 8) {
-      setSecurityStatus({ type: 'error', msg: 'Password must be at least 8 characters.' });
-      return;
-    }
+
     setSecuritySaving(true);
     setSecurityStatus({ type: '', msg: '' });
     try {
@@ -96,13 +176,38 @@ const SettingsPage = () => {
         new_password: security.new_password,
       });
       setSecurity({ current_password: '', new_password: '', confirm_password: '' });
-      setSecurityStatus({ type: 'success', msg: 'Password updated successfully.' });
+      setSuccessConfig({
+        show: true,
+        title: 'Security Updated!',
+        message: 'Your password has been changed successfully.'
+      });
     } catch (err) {
       const detail = err.response?.data?.detail || 'Failed to update password.';
       setSecurityStatus({ type: 'error', msg: detail });
     } finally {
       setSecuritySaving(false);
     }
+  };
+
+  const requestPasswordSaveConfirm = (e) => {
+    e.preventDefault();
+    if (!allRulesPassed) {
+      setSecurityStatus({ type: 'error', msg: 'New password does not meet the required criteria.' });
+      return;
+    }
+    if (security.new_password !== security.confirm_password) {
+      setSecurityStatus({ type: 'error', msg: 'New passwords do not match.' });
+      return;
+    }
+
+    setConfirmConfig({
+      show: true,
+      title: 'Update Password',
+      message: 'Are you sure you want to change your password? You will need to use the new password for your next login.',
+      confirmText: 'Update Password',
+      variant: 'danger',
+      onConfirm: () => handlePasswordSave(e)
+    });
   };
 
   const roleLabel = {
@@ -115,7 +220,6 @@ const SettingsPage = () => {
   const tabs = [
     { id: 'general',       label: 'General',       icon: 'fa-user' },
     { id: 'security',      label: 'Security',      icon: 'fa-shield-halved' },
-    { id: 'notifications', label: 'Notifications', icon: 'fa-bell' },
   ];
 
   return (
@@ -123,7 +227,7 @@ const SettingsPage = () => {
       <div className="settings-container">
         <div className="settings-header">
           <h1>System Settings</h1>
-          <p>Manage your account information, security, and notification preferences.</p>
+          <p>Manage your account information and security preferences.</p>
         </div>
 
         <div className="settings-content">
@@ -149,7 +253,7 @@ const SettingsPage = () => {
               <div className="settings-section">
                 <h3>Profile Information</h3>
 
-                {/* Avatar area */}
+                {/* Avatar */}
                 <div className="profile-avatar-large">
                   <div className="settings-avatar-circle">
                     {profile.first_name
@@ -158,14 +262,12 @@ const SettingsPage = () => {
                     }
                   </div>
                   <div>
-                    <div className="settings-avatar-name">
-                      {profile.first_name} {profile.last_name}
-                    </div>
+                    <div className="settings-avatar-name">{profile.first_name} {profile.last_name}</div>
                     <div className="settings-avatar-role">{roleLabel}</div>
                   </div>
                 </div>
 
-                <form className="settings-form" onSubmit={handleProfileSave}>
+                <form className="settings-form" onSubmit={requestProfileSaveConfirm}>
                   <div className="form-row">
                     <div className="form-group">
                       <label>First Name</label>
@@ -193,28 +295,20 @@ const SettingsPage = () => {
                       type="email"
                       value={profile.email}
                       onChange={e => setProfile(p => ({ ...p, email: e.target.value }))}
-                      placeholder="email@robinsonsmalls.com"
+                      placeholder="email@example.com"
                     />
                   </div>
 
+
                   <div className="form-row">
-                    <div className="form-group">
-                      <label>Username</label>
-                      <input
-                        type="text"
-                        value={profile.username}
-                        readOnly
-                        className="settings-input-readonly"
-                        title="Username cannot be changed"
-                      />
-                    </div>
                     <div className="form-group">
                       <label>Phone Number</label>
                       <input
                         type="tel"
                         value={profile.phone_number}
-                        onChange={e => setProfile(p => ({ ...p, phone_number: e.target.value }))}
-                        placeholder="+63 917 000 0000"
+                        onChange={e => setProfile(p => ({ ...p, phone_number: e.target.value.replace(/\D/g, '') }))}
+                        placeholder="e.g. 09123456789"
+                        maxLength="11"
                       />
                     </div>
                   </div>
@@ -240,7 +334,7 @@ const SettingsPage = () => {
                     <button type="button" className="settings-cancel-btn" onClick={() => setProfileStatus({ type: '', msg: '' })}>
                       Cancel
                     </button>
-                    <button type="submit" className="settings-save-btn" disabled={profileSaving}>
+                    <button type="submit" className="settings-save-btn" disabled={profileSaving || !isProfileDirty}>
                       {profileSaving ? <><i className="fa-solid fa-spinner fa-spin"></i> Saving…</> : 'Save All Changes'}
                     </button>
                   </div>
@@ -252,54 +346,97 @@ const SettingsPage = () => {
             {activeTab === 'security' && (
               <div className="settings-section">
                 <h3>Change Password</h3>
-                <form className="settings-form" onSubmit={handlePasswordSave}>
+
+                {/* Policy summary banner */}
+                <div className="settings-policy-banner">
+                  <i className="fa-solid fa-shield-halved"></i>
+                  <div>
+                    <strong>Password Policy</strong>
+                    <p>Passwords must be at least 8 characters and include an uppercase letter, lowercase letter, and a special character.</p>
+                  </div>
+                </div>
+
+                <form className="settings-form" onSubmit={requestPasswordSaveConfirm}>
+                  {/* Current Password */}
                   <div className="form-group">
                     <label>Current Password</label>
                     <div className="settings-input-wrap">
                       <input
-                        type={showPasswords ? 'text' : 'password'}
+                        type={showCurrent ? 'text' : 'password'}
                         value={security.current_password}
                         onChange={e => setSecurity(s => ({ ...s, current_password: e.target.value }))}
                         placeholder="Enter current password"
                         required
                       />
+                      <span className="settings-pw-eye" onClick={() => setShowCurrent(v => !v)}>
+                        {showCurrent ? <FaEyeSlash /> : <FaEye />}
+                      </span>
                     </div>
                   </div>
 
+                  {/* New Password */}
                   <div className="form-group">
                     <label>New Password</label>
                     <div className="settings-input-wrap">
                       <input
-                        type={showPasswords ? 'text' : 'password'}
+                        type={showNew ? 'text' : 'password'}
                         value={security.new_password}
                         onChange={e => setSecurity(s => ({ ...s, new_password: e.target.value }))}
                         placeholder="Enter new password"
                         required
                       />
+                      <span className="settings-pw-eye" onClick={() => setShowNew(v => !v)}>
+                        {showNew ? <FaEyeSlash /> : <FaEye />}
+                      </span>
                     </div>
+
+                    {/* Strength bar */}
+                    {newPw.length > 0 && (
+                      <div className="pw-strength-wrap">
+                        <div className="pw-strength-bar">
+                          <div className={`pw-strength-fill ${strengthClass}`} style={{ width: `${strengthPct}%` }} />
+                        </div>
+                        <span className={`pw-strength-label ${strengthClass}`}>{strengthLabel}</span>
+                      </div>
+                    )}
+
+                    {/* Requirements checklist */}
+                    <ul className="pw-requirements">
+                      {ruleResults.map(r => (
+                        <li key={r.key} className={r.passed ? 'req-pass' : 'req-fail'}>
+                          {r.passed ? <FaCheck className="req-icon" /> : <FaTimes className="req-icon" />}
+                          {r.label}
+                        </li>
+                      ))}
+                    </ul>
                   </div>
 
+                  {/* Confirm New Password */}
                   <div className="form-group">
                     <label>Confirm New Password</label>
                     <div className="settings-input-wrap">
                       <input
-                        type={showPasswords ? 'text' : 'password'}
+                        type={showConfirm ? 'text' : 'password'}
                         value={security.confirm_password}
                         onChange={e => setSecurity(s => ({ ...s, confirm_password: e.target.value }))}
                         placeholder="Confirm new password"
                         required
                       />
+                      <span className="settings-pw-eye" onClick={() => setShowConfirm(v => !v)}>
+                        {showConfirm ? <FaEyeSlash /> : <FaEye />}
+                      </span>
                     </div>
+                    {security.confirm_password && security.new_password !== security.confirm_password && (
+                      <span className="settings-field-error">
+                        <FaTimes /> Passwords do not match.
+                      </span>
+                    )}
+                    {security.confirm_password && security.new_password === security.confirm_password && security.confirm_password.length > 0 && (
+                      <span className="settings-field-success">
+                        <FaCheck /> Passwords match.
+                      </span>
+                    )}
                   </div>
-
-                  <label className="settings-show-password">
-                    <input
-                      type="checkbox"
-                      checked={showPasswords}
-                      onChange={e => setShowPasswords(e.target.checked)}
-                    />
-                    Show passwords
-                  </label>
 
                   {securityStatus.msg && (
                     <div className={`settings-status-msg ${securityStatus.type}`}>
@@ -319,7 +456,7 @@ const SettingsPage = () => {
                     >
                       Cancel
                     </button>
-                    <button type="submit" className="settings-save-btn" disabled={securitySaving}>
+                    <button type="submit" className="settings-save-btn" disabled={securitySaving || !isSecurityDirty}>
                       {securitySaving ? <><i className="fa-solid fa-spinner fa-spin"></i> Updating…</> : 'Update Password'}
                     </button>
                   </div>
@@ -327,65 +464,23 @@ const SettingsPage = () => {
               </div>
             )}
 
-            {/* ── Notifications Tab ── */}
-            {activeTab === 'notifications' && (
-              <div className="settings-section">
-                <h3>Notification Preferences</h3>
-                <p style={{ color: '#64748b', marginBottom: '1.5rem', fontSize: '0.875rem' }}>
-                  Choose how you'd like to be notified about activity.
-                </p>
-
-                <div className="toggle-list">
-                  {[
-                    {
-                      key: 'email_notifications',
-                      label: 'Email Notifications',
-                      desc: 'Receive updates and alerts to your email address',
-                    },
-                    {
-                      key: 'push_notifications',
-                      label: 'Push Notifications',
-                      desc: 'Receive in-app and browser push notifications',
-                    },
-                    {
-                      key: 'sms_notifications',
-                      label: 'SMS Notifications',
-                      desc: 'Receive important alerts via text message',
-                    },
-                  ].map(item => (
-                    <div key={item.key} className="toggle-item">
-                      <div className="toggle-info">
-                        <span className="toggle-label">{item.label}</span>
-                        <span className="toggle-desc">{item.desc}</span>
-                      </div>
-                      <label className="switch">
-                        <input
-                          type="checkbox"
-                          checked={notifPrefs[item.key]}
-                          onChange={e => setNotifPrefs(p => ({ ...p, [item.key]: e.target.checked }))}
-                        />
-                        <span className="slider round"></span>
-                      </label>
-                    </div>
-                  ))}
-                </div>
-
-                <div className="settings-form-actions" style={{ marginTop: '2rem' }}>
-                  <button type="button" className="settings-cancel-btn">Cancel</button>
-                  <button
-                    type="button"
-                    className="settings-save-btn"
-                    onClick={() => alert('Notification preferences saved (UI only).')}
-                  >
-                    Save All Changes
-                  </button>
-                </div>
-              </div>
-            )}
 
           </div>
         </div>
       </div>
+
+      <ActionConfirmModal 
+        {...confirmConfig}
+        onClose={() => setConfirmConfig(p => ({ ...p, show: false }))}
+      />
+
+      <SuccessModal 
+        {...successConfig}
+        onClose={() => {
+          setSuccessConfig(p => ({ ...p, show: false }));
+          if (successConfig.onClose) successConfig.onClose();
+        }}
+      />
     </div>
   );
 };

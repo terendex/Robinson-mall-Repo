@@ -2,6 +2,9 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import '../../css/Customer.css';
 
+// BUG-01 FIX: Use environment variable instead of hardcoded localhost URL
+const BASE = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
+
 const typeConfig = {
   success: { icon: 'fa-circle-check',   color: '#15803d', bg: '#f0fdf4', border: '#22c55e' },
   warning: { icon: 'fa-triangle-exclamation', color: '#b45309', bg: '#fffbeb', border: '#fbbf24' },
@@ -21,7 +24,7 @@ const CustomerNotifications = ({ user }) => {
     const fetchNotifications = async () => {
       try {
         const response = await axios.get(
-          `http://127.0.0.1:8000/api/notifications/?user_id=${user.id}`
+          `${BASE}/api/notifications/?user_id=${user.id}`
         );
         setNotifications(response.data);
       } catch (error) {
@@ -32,6 +35,15 @@ const CustomerNotifications = ({ user }) => {
     };
     fetchNotifications();
   }, [user.id]);
+
+  const filteredNotifications = React.useMemo(() => {
+    const customerKeywords = ['claim', 'voucher', 'campaign', 'reward', 'win', 'congratulations'];
+    return notifications.filter(n => {
+      const msg = (n.message || '').toLowerCase();
+      const title = (n.title || '').toLowerCase();
+      return customerKeywords.some(k => msg.includes(k) || title.includes(k));
+    });
+  }, [notifications]);
 
   if (loading) return (
     <div className="loading">
@@ -46,7 +58,7 @@ const CustomerNotifications = ({ user }) => {
         <p>Stay updated on your claims and latest offers.</p>
       </div>
 
-      {notifications.length === 0 ? (
+      {filteredNotifications.length === 0 ? (
         <div className="empty-state">
           <i className="fa-solid fa-bell-slash"></i>
           <h3>All caught up!</h3>
@@ -54,7 +66,7 @@ const CustomerNotifications = ({ user }) => {
         </div>
       ) : (
         <div className="notifications-list">
-          {notifications.map((n) => {
+          {filteredNotifications.map((n) => {
             const cfg = typeConfig[n.notification_type] || typeConfig.info;
             return (
               <div
