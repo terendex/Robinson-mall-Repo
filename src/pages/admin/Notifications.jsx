@@ -7,7 +7,8 @@ import "../../css/Notifications.css";
  * Handles the UI and data logic for the Notifications module.
  */
 const Notifications = () => {
-  const { notifications, removeNotification } = useContext(NotificationContext);
+  const { notifications, removeNotification, markAsRead, markAllAsRead } = useContext(NotificationContext);
+  const unreadCount = notifications.filter(n => !n.is_read).length;
 
   const formatFullTime = (timestamp) => {
     const date = new Date(timestamp);
@@ -38,23 +39,38 @@ const Notifications = () => {
     <div className="notifications-page">
       <header className="notifications-header">
         <h1>Notifications</h1>
-        {notifications.length > 0 && (
-          <button className="clear-all-btn" onClick={clearAllNotifications}>
-            Clear All
-          </button>
-        )}
+        <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+          {unreadCount > 0 && (
+            <button className="mark-read-btn" onClick={markAllAsRead}>
+              <i className="fa-solid fa-check-double"></i> Mark all as read
+            </button>
+          )}
+          {notifications.length > 0 && (
+            <button className="clear-all-btn" onClick={clearAllNotifications}>
+              Clear All
+            </button>
+          )}
+        </div>
       </header>
 
       <div className="notifications-container">
         {notifications.length > 0 ? (
           notifications.map((notification) => (
-            <div key={notification.id} className="notification-full-item">
+            <div
+              key={notification.id}
+              className={`notification-full-item${!notification.is_read ? ' unread' : ''}`}
+              style={{ cursor: !notification.is_read ? 'pointer' : 'default' }}
+              onClick={() => { if (!notification.is_read) markAsRead(notification.id); }}
+            >
               <div className="notification-icon-wrapper">
                 <i className={`fa-solid ${getNotificationIcon(notification.notification_type)}`}></i>
               </div>
               <div className="notification-full-content">
                 <div className="notification-full-header">
-                  <span className="notification-full-title">{notification.title || 'Notification'}</span>
+                  <span className="notification-full-title">
+                    {notification.title || 'Notification'}
+                    {!notification.is_read && <span className="unread-badge">New</span>}
+                  </span>
                   <span className="notification-full-time">{formatFullTime(notification.created_at)}</span>
                 </div>
                 <p className="notification-full-message">{notification.message}</p>
@@ -62,7 +78,7 @@ const Notifications = () => {
               <div className="notification-full-actions">
                 <button 
                   className="notification-delete-btn" 
-                  onClick={() => removeNotification(notification.id)}
+                  onClick={(e) => { e.stopPropagation(); removeNotification(notification.id); }}
                   title="Remove"
                 >
                   <i className="fa-solid fa-trash-can"></i>

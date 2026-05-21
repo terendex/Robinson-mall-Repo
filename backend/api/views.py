@@ -789,7 +789,11 @@ class NotificationViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
 
     def get_permissions(self):
-        if self.action in ['create', 'update', 'partial_update', 'destroy']:
+        # Only creation and full-replace (PUT) require staff role.
+        # partial_update (PATCH) is allowed for all authenticated users so that
+        # customers can mark their own notifications as read (is_read field).
+        # Object-ownership is still enforced by get_object().
+        if self.action in ['create', 'update']:
             return [IsStaff()]
         return super().get_permissions()
 
@@ -822,6 +826,17 @@ class NotificationViewSet(viewsets.ModelViewSet):
                     "You do not have permission to modify another user's notification."
                 )
         return obj
+
+    @action(detail=True, methods=['patch'])
+    def mark_as_read(self, request, pk=None):
+        """
+        Mark a single notification as read.
+        Only the notification owner (or admin) may call this.
+        """
+        notification = self.get_object()  # enforces ownership via get_object()
+        notification.is_read = True
+        notification.save(update_fields=['is_read'])
+        return Response({'status': 'Notification marked as read.'})
 
     @action(detail=False, methods=['post'])
     def mark_all_as_read(self, request):

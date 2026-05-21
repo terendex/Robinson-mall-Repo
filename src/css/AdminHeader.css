@@ -306,6 +306,14 @@
   transition: background-color 0.2s;
 }
 
+.notification-item.unread {
+  background-color: rgba(197, 0, 0, 0.04);
+}
+
+.notification-item.unread:hover {
+  background-color: rgba(197, 0, 0, 0.08);
+}
+
 .notification-item:hover {
   background-color: #f9f9f9;
 }

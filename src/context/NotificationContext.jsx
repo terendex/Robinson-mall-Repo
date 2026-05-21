@@ -53,10 +53,23 @@ export const NotificationProvider = ({ children, user }) => {
     }
   }, []);
 
+  const markAsRead = useCallback(async (id) => {
+    try {
+      await axios.patch(`${BASE}/api/notifications/${id}/`, { is_read: true });
+      // Optimistically update local state immediately
+      setNotifications(prev =>
+        prev.map(n => (n.id === id ? { ...n, is_read: true } : n))
+      );
+    } catch (error) {
+      console.error('Error marking notification as read:', error);
+    }
+  }, []);
+
   const markAllAsRead = useCallback(async () => {
     try {
       await axios.post(`${BASE}/api/notifications/mark_all_as_read/`);
-      fetchNotifications();
+      // Optimistically update local state immediately — don't wait for next poll
+      setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
     } catch (error) {
       console.error('Error marking all as read:', error);
     }
@@ -68,6 +81,7 @@ export const NotificationProvider = ({ children, user }) => {
       addNotification, 
       removeNotification, 
       fetchNotifications,
+      markAsRead,
       markAllAsRead 
     }}>
       {children}

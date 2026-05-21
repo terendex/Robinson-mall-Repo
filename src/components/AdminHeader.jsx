@@ -180,8 +180,8 @@ const AdminHeader = ({ toggleSidebar, user, isSidebarOpen, onLogout }) => {
           <div className="header-icon-btn" ref={notificationDropdownRef}>
             <button className="notification-button" onClick={toggleNotificationDropdown}>
               <i className="fa-solid fa-bell"></i>
-              {filteredNotifications.length > 0 && (
-                <span className="notification-badge">{filteredNotifications.length}</span>
+              {filteredNotifications.filter(n => !n.is_read).length > 0 && (
+                <span className="notification-badge">{filteredNotifications.filter(n => !n.is_read).length}</span>
               )}
             </button>
             {isNotificationDropdownOpen && (
@@ -192,7 +192,7 @@ const AdminHeader = ({ toggleSidebar, user, isSidebarOpen, onLogout }) => {
                 <div className="notification-list">
                   {filteredNotifications.length > 0 ? (
                     filteredNotifications.map((notification) => (
-                      <div key={notification.id} className="notification-item" onClick={() => {
+                      <div key={notification.id} className={`notification-item${!notification.is_read ? ' unread' : ''}`} onClick={() => {
                         setIsNotificationDropdownOpen(false);
                         navigate(`${pathPrefix}/notifications`);
                       }}>

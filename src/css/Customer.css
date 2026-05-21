@@ -813,6 +813,10 @@
   transition: var(--transition-std);
 }
 
+.notification-card.unread {
+  background-color: rgba(204, 44, 44, 0.03) !important;
+}
+
 .notification-card:hover {
   box-shadow: var(--shadow-sm);
   transform: translateY(-2px);

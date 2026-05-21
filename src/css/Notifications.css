@@ -34,6 +34,30 @@
     background-color: #dc2626;
 }
 
+.mark-read-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 0.5rem 1rem;
+    background-color: #c50000;
+    color: white;
+    border: none;
+    border-radius: 0.5rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s, transform 0.1s;
+}
+
+.mark-read-btn:hover {
+    background-color: #a00000;
+    transform: translateY(-1px);
+}
+
+.mark-read-btn:active {
+    transform: translateY(0);
+}
+
 .notifications-container {
     background: white;
     border-radius: 1rem;
@@ -205,4 +229,34 @@
     .notification-full-message {
         font-size: 0.875rem;
     }
+}
+
+/* ── Premium Unread State Styles ── */
+.notification-full-item.unread {
+    background-color: rgba(197, 0, 0, 0.03) !important;
+    border-left: 4px solid #c50000;
+}
+
+.notification-card.unread {
+    background-color: rgba(197, 0, 0, 0.03) !important;
+    border-left: 4px solid #c50000;
+}
+
+.notification-card-manager.unread {
+    background-color: rgba(197, 0, 0, 0.03) !important;
+    border-left: 4px solid #c50000;
+}
+
+.unread-badge {
+    background-color: #c50000;
+    color: white;
+    font-size: 10px;
+    padding: 2px 7px;
+    border-radius: 4px;
+    margin-left: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    display: inline-block;
+    vertical-align: middle;
 }
