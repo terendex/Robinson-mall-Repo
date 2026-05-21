@@ -1,9 +1,10 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useContext } from 'react';
 import axios from 'axios';
 import Pagination from '../../components/Pagination';
 import ActionConfirmModal from '../../components/ActionConfirmModal';
 import SuccessModal from '../../components/SuccessModal';
 import ErrorModal from '../../components/ErrorModal';
+import NotificationContext from '../../context/NotificationContext';
 import '../../css/Shops.css';
 
 // BUG-01 FIX: Use environment variable instead of hardcoded localhost URL
@@ -17,6 +18,7 @@ const BASE = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
 const PAGE_SIZE = 10;
 
 const Shops = () => {
+  const { addNotification } = useContext(NotificationContext);
   const [stores, setStores]             = useState([]);
   const [loading, setLoading]           = useState(true);
   const [searchQuery, setSearchQuery]   = useState('');
@@ -113,6 +115,11 @@ const Shops = () => {
         setStores(prev => [data, ...prev]);
       }
       setShowModal(false);
+      addNotification({
+        title: storeToEdit ? 'Store Updated' : 'Store Added',
+        message: `Store "${form.name}" has been ${storeToEdit ? 'updated' : 'added'}.`,
+        type: 'success'
+      });
       setSuccessConfig({
         show: true,
         title: storeToEdit ? 'Updated!' : 'Created!',
@@ -144,6 +151,11 @@ const Shops = () => {
     try {
       await axios.delete(`${BASE}/api/stores/${store.id}/`);
       setStores(prev => prev.filter(s => s.id !== store.id));
+      addNotification({
+        title: 'Store Deleted',
+        message: `Store "${store.name}" has been removed.`,
+        type: 'warning'
+      });
       setSuccessConfig({
         show: true,
         title: 'Deleted!',

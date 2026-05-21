@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef, useContext } from 'react';
 import axios from 'axios';
 import VoucherModal from '../../components/VoucherModal';
 import Pagination from '../../components/Pagination';
@@ -6,6 +6,7 @@ import RedeemVoucherPanel from '../../components/RedeemVoucherPanel';
 import ActionConfirmModal from '../../components/ActionConfirmModal';
 import SuccessModal from '../../components/SuccessModal';
 import ErrorModal from '../../components/ErrorModal';
+import NotificationContext from '../../context/NotificationContext';
 import '../../css/Vouchers.css';
 
 // BUG-01 FIX: Use environment variable instead of hardcoded localhost URL
@@ -31,6 +32,7 @@ const TAB_BTN = (active, color, onClick, icon, label) => (
 );
 
 const Vouchers = () => {
+  const { addNotification } = useContext(NotificationContext);
   const [tab, setTab] = useState('vouchers'); // 'vouchers' | 'redeem'
   const [vouchers, setVouchers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -117,6 +119,11 @@ const Vouchers = () => {
     try {
       await axios.delete(`${BASE}/api/vouchers/${id}/`);
       setVouchers(vouchers.filter(v => v.id !== id));
+      addNotification({
+        title: 'Voucher Deleted',
+        message: `A voucher has been removed.`,
+        type: 'warning'
+      });
       setSuccessConfig({
         show: true,
         title: 'Deleted!',
@@ -154,6 +161,11 @@ const Vouchers = () => {
         setVouchers([response.data, ...vouchers]);
       }
       setShowModal(false);
+      addNotification({
+        title: voucherToEdit ? 'Voucher Updated' : 'Voucher Created',
+        message: `Voucher "${formData.name}" has been ${voucherToEdit ? 'updated' : 'created'}.`,
+        type: 'success'
+      });
       setSuccessConfig({
         show: true,
         title: voucherToEdit ? 'Updated!' : 'Created!',
@@ -187,6 +199,11 @@ const Vouchers = () => {
       });
       setVouchers(vouchers.map(v => v.id === voucher.id ? response.data : v));
       setActiveActions(null);
+      addNotification({
+        title: response.data.is_active ? 'Voucher Activated' : 'Voucher Disabled',
+        message: `Voucher "${voucher.name}" is now ${response.data.is_active ? 'active' : 'inactive'}.`,
+        type: 'info'
+      });
       setSuccessConfig({
         show: true,
         title: response.data.is_active ? 'Activated!' : 'Disabled!',

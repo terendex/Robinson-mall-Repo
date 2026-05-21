@@ -18,7 +18,7 @@ const SideNav = ({ user, isOpen, closeSidebar }) => {
       : user.email)
     : 'Admin User';
 
-  const displayEmail = user?.email || 'admin@example.com';
+  const displayEmail = user?.email || 'admin';
 
   const handleNavLinkClick = () => {
     // Close the sidebar drawer on phones (≤767px) after navigation

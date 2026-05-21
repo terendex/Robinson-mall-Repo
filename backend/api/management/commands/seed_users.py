@@ -8,7 +8,7 @@ class Command(BaseCommand):
         users_data = [
             # Generic Users
             {
-                "email": "admin@example.com",
+                "email": "admin",
                 "password": "adminpassword",
                 "role": "admin",
             },

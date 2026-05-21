@@ -2,7 +2,7 @@
 export const users = [
   {
     id: 1,
-    email: 'admin@example.com',
+    email: 'admin',
     password: 'adminpassword',
     role: 'admin',
   },

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef, useContext } from 'react';
 import axios from 'axios';
 import UserModal from '../../components/UserModal';
 import ResetPasswordModal from '../../components/ResetPasswordModal';
@@ -7,6 +7,7 @@ import ActionConfirmModal from '../../components/ActionConfirmModal';
 import SuccessModal from '../../components/SuccessModal';
 import ErrorModal from '../../components/ErrorModal';
 import '../../css/Users.css';
+import NotificationContext from '../../context/NotificationContext';
 import '../../css/Claims.css';
 import '../../css/Transactions.css';
 
@@ -20,6 +21,7 @@ const BASE = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
 const PAGE_SIZE = 10;
 
 const Users = () => {
+  const { addNotification } = useContext(NotificationContext);
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -143,6 +145,11 @@ const Users = () => {
           }
         });
       } else {
+        addNotification({
+          title: userToEdit ? 'User Updated' : 'User Created',
+          message: `The account for ${formData.email} has been ${userToEdit ? 'updated' : 'created'}.`,
+          type: 'success'
+        });
         setSuccessConfig({
           show: true,
           title: userToEdit ? 'User Updated!' : 'User Created!',
@@ -191,6 +198,11 @@ const Users = () => {
       });
       setUsers(users.map(u => u.id === user.id ? response.data : u));
       setActiveActions(null);
+      addNotification({
+        title: response.data.is_active ? 'Account Enabled' : 'Account Disabled',
+        message: `The account for ${user.email} is now ${response.data.is_active ? 'active' : 'inactive'}.`,
+        type: 'info'
+      });
       setSuccessConfig({
         show: true,
         title: response.data.is_active ? 'Account Enabled' : 'Account Disabled',
@@ -210,6 +222,11 @@ const Users = () => {
     try {
       await axios.delete(`${BASE}/api/users/${user.id}/`);
       setUsers(prev => prev.filter(u => u.id !== user.id));
+      addNotification({
+        title: 'User Deleted',
+        message: `The account for ${user.email} has been permanently removed.`,
+        type: 'warning'
+      });
       setSuccessConfig({
         show: true,
         title: 'User Deleted',

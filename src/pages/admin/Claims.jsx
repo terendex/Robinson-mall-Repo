@@ -1,10 +1,11 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef, useContext } from 'react';
 import axios from 'axios';
 import ClaimDetailsModal from '../../components/ClaimDetailsModal';
 import Pagination from '../../components/Pagination';
 import ActionConfirmModal from '../../components/ActionConfirmModal';
 import SuccessModal from '../../components/SuccessModal';
 import ErrorModal from '../../components/ErrorModal';
+import NotificationContext from '../../context/NotificationContext';
 import '../../css/Claims.css';
 import '../../css/Transactions.css';
 
@@ -35,6 +36,7 @@ const fmtTimePH = (ds) => {
 };
 
 const Claims = () => {
+  const { addNotification } = useContext(NotificationContext);
   const [claims, setClaims] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -121,6 +123,11 @@ const Claims = () => {
     try {
       const res = await axios.patch(`${BASE}/api/claims/${id}/`, { status: 'Approved' });
       setClaims(prev => prev.map(c => c.id === id ? res.data : c));
+      addNotification({
+        title: 'Claim Approved',
+        message: 'A voucher has been successfully marked as claimed.',
+        type: 'success'
+      });
       setSuccessConfig({
         show: true,
         title: 'Claim Confirmed!',
@@ -183,6 +190,11 @@ const Claims = () => {
       const res = await axios.patch(`${BASE}/api/claims/${editClaim.id}/`, payload);
       setClaims(prev => prev.map(c => c.id === editClaim.id ? res.data : c));
       setShowEditModal(false);
+      addNotification({
+        title: 'Claim Updated',
+        message: 'The claim details have been updated.',
+        type: 'info'
+      });
       setSuccessConfig({
         show: true,
         title: 'Updated!',
@@ -203,6 +215,11 @@ const Claims = () => {
     try {
       await axios.delete(`${BASE}/api/claims/${claim.id}/`);
       setClaims(prev => prev.filter(c => c.id !== claim.id));
+      addNotification({
+        title: 'Claim Deleted',
+        message: 'A claim record has been permanently removed.',
+        type: 'warning'
+      });
       setSuccessConfig({
         show: true,
         title: 'Claim Deleted',

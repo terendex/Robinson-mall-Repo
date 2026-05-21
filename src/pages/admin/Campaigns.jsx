@@ -188,6 +188,11 @@ const Campaigns = () => {
     try {
       await axios.delete(`${BASE}/api/campaigns/${campaign.id}/`);
       setCampaigns(prev => prev.filter(c => c.id !== campaign.id));
+      addNotification({
+        title: 'Campaign Deleted',
+        message: `Campaign "${campaign.name}" has been removed.`,
+        type: 'warning'
+      });
       setSuccessConfig({
         show: true,
         title: 'Deleted!',

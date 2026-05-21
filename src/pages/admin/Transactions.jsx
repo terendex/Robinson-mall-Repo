@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef, useContext } from 'react';
 import axios from 'axios';
 import TransactionDetailsModal from '../../components/Transactiondetailsmodal';
 import TransactionModal from '../../components/Transactionmodal';
@@ -7,6 +7,7 @@ import Pagination from '../../components/Pagination';
 import ActionConfirmModal from '../../components/ActionConfirmModal';
 import SuccessModal from '../../components/SuccessModal';
 import ErrorModal from '../../components/ErrorModal';
+import NotificationContext from '../../context/NotificationContext';
 import '../../css/Transactions.css';
 
 // BUG-01 FIX: Use environment variable instead of hardcoded localhost URL
@@ -31,6 +32,7 @@ const fmtTimePH = (dateString) => {
 const PAGE_SIZE = 10;
 
 const Transactions = () => {
+  const { addNotification } = useContext(NotificationContext);
   const user = JSON.parse(localStorage.getItem('user') || sessionStorage.getItem('user') || '{}');
   const isAdmin = user.role === 'admin';
   const isStaff = user.role === 'staff';
@@ -141,6 +143,11 @@ const Transactions = () => {
       }
       setShowFormModal(false);
       setTransactionToEdit(null);
+      addNotification({
+        title: transactionToEdit ? 'Transaction Updated' : 'Transaction Created',
+        message: `Transaction record has been ${transactionToEdit ? 'updated' : 'recorded'}.`,
+        type: 'success'
+      });
       setSuccessConfig({
         show: true,
         title: transactionToEdit ? 'Updated!' : 'Created!',
@@ -179,6 +186,11 @@ const Transactions = () => {
     try {
       await axios.delete(`${BASE}/api/transactions/${txnId}/`);
       setTransactions(prev => prev.filter(t => t.id !== txnId));
+      addNotification({
+        title: 'Transaction Deleted',
+        message: 'A transaction record has been removed.',
+        type: 'warning'
+      });
       setSuccessConfig({
         show: true,
         title: 'Deleted!',
@@ -218,6 +230,11 @@ const Transactions = () => {
         { status: 'Approved' }
       );
       setTransactions(prev => prev.map(t => t.id === txn.id ? response.data : t));
+      addNotification({
+        title: 'Transaction Approved',
+        message: `Transaction ${txn.transaction_id} has been approved.`,
+        type: 'success'
+      });
       setSuccessConfig({
         show: true,
         title: 'Approved!',
@@ -271,6 +288,11 @@ const Transactions = () => {
         { status: 'Rejected', rejection_reason: rejectReason }
       );
       setTransactions(prev => prev.map(t => t.id === rejectTarget.id ? response.data : t));
+      addNotification({
+        title: 'Transaction Rejected',
+        message: `Transaction ${rejectTarget.transaction_id} has been rejected.`,
+        type: 'error'
+      });
       setSuccessConfig({
         show: true,
         title: 'Rejected!',
