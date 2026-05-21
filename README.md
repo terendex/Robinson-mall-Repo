@@ -91,9 +91,43 @@ Create a superuser (for admin access):
 python manage.py createsuperuser
 ```
 
-Or use the default pre-configured developer admin credentials:
-- **Email**: `admin@example.com`
-- **Password**: `RobinsonMall@2026`
+### 4. Seed Developer Accounts (Optional)
+To populate the database with a full set of pre-configured accounts and mock data (stores, campaigns, claims, transactions), run:
+```bash
+python manage.py seed_all
+```
+Alternatively, to seed only the user accounts, run:
+```bash
+python manage.py seed_users
+```
+
+Below are the pre-configured placeholder credentials available for testing each role and their specific workflows:
+
+#### Core Role-Based Accounts
+These accounts are ideal for testing general permissions and default layouts:
+
+| Role | Email | Password | Purpose / Notes |
+| :--- | :--- | :--- | :--- |
+| **Admin** | `admin@example.com` | `RobinsonMall@2026` / `adminpassword` | Access to entire portal, user management, and advanced statistics. |
+| **Manager** | `manager@example.com` | `managerpassword` | Create campaigns, manage stores, view dashboard statistics. |
+| **Staff** | `staff@example.com` | `staffpassword` | Scan/redeem vouchers, lookup claims, manage participating stores. |
+| **Customer** | `customer@example.com` | `customerpassword` | Submit voucher claims, view personal transactions and notifications. |
+
+#### Specific Test Accounts
+These accounts are seeded with customized profiles (names, active states, mock claims/transactions) to test edge cases, regional setups, or specialized user views:
+
+| Role | Name | Email | Password | Status / Notes |
+| :--- | :--- | :--- | :--- | :--- |
+| **Manager** | Sophie Baek | `baeksophie.manager@gmail.com` | `Password123!` | Active Manager account |
+| **Staff** | Valerie Fletcher | `valerie.fletcher.staff@gmail.com` | `Password123!` | Active Staff account |
+| **Staff** | Davy Jones | `davy.jones.staff@gmail.com` | `Password123!` | Active Staff account |
+| **Customer** | John Doe | `johndoe@gmail.com` | `Password123!` | Active Customer account |
+| **Customer** | Maria Santos | `maria@example.com` | `Password123!` | Active Customer account (has approved claim data) |
+| **Customer** | Juan Dela Cruz | `juan@example.com` | `Password123!` | Active Customer account (has pending claim data) |
+| **Customer** | Ana Garcia | `ana@example.com` | `Password123!` | Active Customer account (has pending claim data) |
+| **Customer** | Sofia Cruz | `sofia@example.com` | `Password123!` | Active Customer account (has approved claim data) |
+| **Customer** | Pedro Reyes | `pedro@example.com` | `Password123!` | Active Customer account (has rejected claim data) |
+| **Customer** | Joshua Hong | `hongjoshua123095@gmail.com` | `Password123!` | **Inactive** Customer account (tests disabled account guards) |
 
 ---
 
