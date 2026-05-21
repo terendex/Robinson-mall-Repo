@@ -882,8 +882,24 @@ class TransactionViewSet(viewsets.ModelViewSet):
         if user.role in ['admin', 'manager', 'staff']:
             qs = Transaction.objects.all()
         else:
-            # Customers only see their own transactions strictly linked to their account (no anonymous/loose name matches)
-            qs = Transaction.objects.filter(user=user)
+            from django.db.models import Q
+            full_name  = f"{user.first_name} {user.last_name}".strip() or user.email
+            phone      = user.phone_number or ""
+            # Staff often enter "First L" (first name + last initial) so match that too
+            matchers = (
+                Q(user=user) |
+                Q(user_name__iexact=full_name) |
+                Q(user_name__iexact=user.email)
+            )
+            if user.first_name and user.last_name:
+                # "Joshua V"  →  first="Joshua", last="Villareal"
+                initial = f"{user.first_name} {user.last_name[0]}"
+                matchers |= Q(user_name__iexact=initial)
+                matchers |= Q(user_name__iexact=f"{initial}.")
+            elif user.first_name:
+                matchers |= Q(user_name__iexact=user.first_name)
+
+            qs = Transaction.objects.filter(matchers).distinct()
 
         qs = qs.order_by('-created_at')
 
