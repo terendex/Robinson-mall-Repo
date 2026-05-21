@@ -113,22 +113,6 @@ These accounts are ideal for testing general permissions and default layouts:
 | **Staff** | `staff@example.com` | `staffpassword` | Scan/redeem vouchers, lookup claims, manage participating stores. |
 | **Customer** | `customer@example.com` | `customerpassword` | Submit voucher claims, view personal transactions and notifications. |
 
-#### Specific Test Accounts
-These accounts are seeded with customized profiles (names, active states, mock claims/transactions) to test edge cases, regional setups, or specialized user views:
-
-| Role | Name | Email | Password | Status / Notes |
-| :--- | :--- | :--- | :--- | :--- |
-| **Manager** | Sophie Baek | `baeksophie.manager@gmail.com` | `Password123!` | Active Manager account |
-| **Staff** | Valerie Fletcher | `valerie.fletcher.staff@gmail.com` | `Password123!` | Active Staff account |
-| **Staff** | Davy Jones | `davy.jones.staff@gmail.com` | `Password123!` | Active Staff account |
-| **Customer** | John Doe | `johndoe@gmail.com` | `Password123!` | Active Customer account |
-| **Customer** | Maria Santos | `maria@example.com` | `Password123!` | Active Customer account (has approved claim data) |
-| **Customer** | Juan Dela Cruz | `juan@example.com` | `Password123!` | Active Customer account (has pending claim data) |
-| **Customer** | Ana Garcia | `ana@example.com` | `Password123!` | Active Customer account (has pending claim data) |
-| **Customer** | Sofia Cruz | `sofia@example.com` | `Password123!` | Active Customer account (has approved claim data) |
-| **Customer** | Pedro Reyes | `pedro@example.com` | `Password123!` | Active Customer account (has rejected claim data) |
-| **Customer** | Joshua Hong | `hongjoshua123095@gmail.com` | `Password123!` | **Inactive** Customer account (tests disabled account guards) |
-
 ---
 
 ## Running the Application
