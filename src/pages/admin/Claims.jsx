@@ -304,7 +304,8 @@ const Claims = () => {
   const openActionMenu = (e, claimId) => {
     if (activeActions === claimId) { setActiveActions(null); setActionMenuPos(null); return; }
     const rect = e.currentTarget.getBoundingClientRect();
-    setActionMenuPos({ top: rect.bottom + window.scrollY + 4, right: window.innerWidth - rect.right });
+    setActionMenuPos({ top: rect.bottom + 4, right: window.innerWidth - rect.right });
+
     setActiveActions(claimId);
   };
 

@@ -40,37 +40,43 @@
 }
 
 /* ── TABLET / iPad (768px – 1024px) ── */
-/* Sidebar slides in/out via JS .open class (defaults OPEN on load via window.innerWidth) */
+/*
+ * Sidebar slides in/out via the .open class (defaults OPEN on tablets via window.innerWidth).
+ * The sidebar is 230px wide on this breakpoint (see SideNav.css).
+ * CRITICAL: The two selectors MUST be separate — grouping them with a comma
+ * and setting margin-left:0 on both blocks the sidebar-push behaviour entirely.
+ */
 @media (min-width: 768px) and (max-width: 1024px) {
-  .admin-layout-main,
-  .admin-layout-main.sidebar-open {
-    padding: 1.25rem 0.5rem;
-    padding-top: 110px; /* Fixed underlap after removing Customer.css pollution */
-    margin-left: 0; 
+  .admin-layout-main {
+    padding: 1.25rem;
+    padding-top: 110px;
+    margin-left: 0; /* Sidebar closed — no offset */
     transition: margin-left 0.3s ease;
   }
 
-  /* Ensure title is visible on smaller tablets if they use overlay (rare but safe) */
-  /* Removed title shift logic to keep page stationary */
+  /* When sidebar is open on tablet, shift content by the 230px tablet sidebar width */
+  .admin-layout-main.sidebar-open {
+    margin-left: 230px;
+  }
 }
 
+/* ── PHONE — ≤767px ── */
+/* Sidebar is a full-overlay drawer on mobile; content NEVER shifts */
 @media (max-width: 767px) {
   .admin-layout-main,
   .admin-layout-main.sidebar-open {
-    margin-left: 0; 
+    margin-left: 0;
     padding: 15px;
-    padding-top: 110px; /* Fixed underlap */
-    transition: none; 
+    padding-top: 110px;
+    transition: none;
   }
-
-  /* Removed title shift logic to keep page stationary */
 }
 
 @media (max-width: 480px) {
   .admin-layout-main,
   .admin-layout-main.sidebar-open {
     padding: 12px;
-    padding-top: 110px; /* Fixed underlap */
+    padding-top: 110px;
   }
 }
 
@@ -78,7 +84,7 @@
   .admin-layout-main,
   .admin-layout-main.sidebar-open {
     padding: 10px;
-    padding-top: 110px; /* Fixed underlap */
+    padding-top: 110px;
   }
 }
 

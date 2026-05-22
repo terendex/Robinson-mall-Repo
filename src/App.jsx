@@ -136,7 +136,10 @@ function App() {
       if (userData) {
         setUser(userData);
         const storage = rememberMe ? localStorage : sessionStorage;
-        
+        const otherStorage = rememberMe ? sessionStorage : localStorage;
+        // Clear stale data from the other storage to prevent role detection bugs
+        // (e.g., old "remember me" localStorage data overriding a fresh sessionStorage login)
+        ['user', 'accessToken', 'refreshToken'].forEach(k => otherStorage.removeItem(k));
         storage.setItem('user', JSON.stringify(userData));
         storage.setItem('accessToken', userData.access);
         storage.setItem('refreshToken', userData.refresh);

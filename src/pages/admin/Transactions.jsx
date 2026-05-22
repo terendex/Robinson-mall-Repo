@@ -33,15 +33,20 @@ const PAGE_SIZE = 10;
 
 const Transactions = () => {
   const { addNotification } = useContext(NotificationContext);
-  const user = JSON.parse(localStorage.getItem('user') || sessionStorage.getItem('user') || '{}');
+  // Determine which storage holds the active session by checking where the access token lives.
+  // This prevents stale localStorage data (e.g., a previous "remember me" session with a
+  // different role) from overriding the current sessionStorage session.
+  const activeStorage = localStorage.getItem('accessToken') ? localStorage : sessionStorage;
+  const user = JSON.parse(activeStorage.getItem('user') || '{}');
   const isAdmin = user.role === 'admin';
   const isStaff = user.role === 'staff';
   const isManager = user.role === 'manager';
   const isCustomer = user.role === 'customer';
 
-  // Admin and Staff have full control. Managers are view-only.
-  const canManage = isAdmin || isStaff;
-  const isViewOnly = isManager; 
+  // Edit + Approve/Reject: Admin, Manager, Staff
+  const canEdit = isAdmin || isManager || isStaff;
+  // Delete: Admin only (destructive — managers and staff cannot delete)
+  const canDelete = isAdmin;
 
   const [transactions, setTransactions]         = useState([]);
   const [loading, setLoading]                   = useState(true);
@@ -426,7 +431,7 @@ const Transactions = () => {
     }
     const rect = e.currentTarget.getBoundingClientRect();
     setActionMenuPos({
-      top:   rect.bottom + window.scrollY + 4,
+      top:   rect.bottom + 4,  // position:fixed uses viewport coords — do NOT add window.scrollY
       right: window.innerWidth - rect.right,
     });
     setActiveActions(txnId);
@@ -516,8 +521,8 @@ const Transactions = () => {
               )}
             </div>
 
-            {/* All roles including customers can initiate a new transaction */}
-            {(canManage || isManager || isCustomer) && (
+            {/* All non-customer roles can initiate a new transaction */}
+            {(canEdit || isCustomer) && (
               <button className="new-transaction-btn" onClick={openNewModal}>
                 <i className="fa-solid fa-plus"></i> New Transaction
               </button>
@@ -745,23 +750,23 @@ const Transactions = () => {
               <i className="fa-regular fa-eye"></i> View Details
             </button>
 
-            {/* Edit — non-view-only and not customer */}
-            {canManage && (
+            {/* Edit — Admin, Manager, Staff */}
+            {canEdit && (
               <button className="txn-action-item" onClick={() => openEditModal(txn)}>
                 <i className="fa-regular fa-pen-to-square"></i> Edit Transaction
               </button>
             )}
 
-            {/* Status actions — Pending only */}
-            {canManage && txn.status === 'Pending' && (
+            {/* Approve / Reject — Admin, Manager, Staff (Pending only) */}
+            {canEdit && txn.status === 'Pending' && (
               <>
                 <div className="txn-action-divider"></div>
                 <button
-                   className="txn-action-item txn-action-redeem"
-                   onClick={() => requestApproveConfirm(txn)}
-                 >
-                   <i className="fa-solid fa-circle-check"></i> Mark as Approved
-                 </button>
+                  className="txn-action-item txn-action-redeem"
+                  onClick={() => requestApproveConfirm(txn)}
+                >
+                  <i className="fa-solid fa-circle-check"></i> Mark as Approved
+                </button>
                 <button
                   className="txn-action-item txn-action-reject"
                   onClick={() => openRejectModal(txn)}
@@ -771,17 +776,17 @@ const Transactions = () => {
               </>
             )}
 
-            {/* Delete — Admin/Staff only */}
-            {canManage && (
+            {/* Delete — Admin only */}
+            {canDelete && (
               <>
                 <div className="txn-action-divider"></div>
-                <button 
-                   className="txn-action-item txn-action-reject" 
-                   onClick={() => requestDeleteConfirm(txn)}
-                   style={{ color: '#c40000' }}
-                 >
-                   <i className="fa-regular fa-trash-can"></i> Delete Transaction
-                 </button>
+                <button
+                  className="txn-action-item txn-action-reject"
+                  onClick={() => requestDeleteConfirm(txn)}
+                  style={{ color: '#c40000' }}
+                >
+                  <i className="fa-regular fa-trash-can"></i> Delete Transaction
+                </button>
               </>
             )}
           </div>

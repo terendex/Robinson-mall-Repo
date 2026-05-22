@@ -27,7 +27,7 @@ const AdminHeader = ({ toggleSidebar, user, isSidebarOpen, onLogout }) => {
     message: '',
     confirmText: '',
     variant: 'primary',
-    onConfirm: () => {}
+    onConfirm: () => { }
   });
 
   const role = user?.role || 'admin';
@@ -48,16 +48,16 @@ const AdminHeader = ({ toggleSidebar, user, isSidebarOpen, onLogout }) => {
   const filteredNotifications = useMemo(() => {
     // Admin sees everything
     if (role === 'admin') return notifications;
-    
-    // Customers only see their targeted notifications (already filtered by backend, but safe to keep broad here)
+
+    // Customers only see their targeted notifications
     if (role === 'customer') return notifications;
 
     // Staff and Managers filter based on their use cases to reduce noise
     const staffKeywords = ['voucher', 'campaign', 'claim', 'transaction'];
     const managerKeywords = [...staffKeywords, 'customer', 'approval', 'registration', 'store', 'shop'];
-    
+
     const keywords = role === 'manager' ? managerKeywords : staffKeywords;
-    
+
     return notifications.filter(n => {
       const msg = (n.message || '').toLowerCase();
       const title = (n.title || '').toLowerCase();
@@ -134,7 +134,7 @@ const AdminHeader = ({ toggleSidebar, user, isSidebarOpen, onLogout }) => {
       <div className={`admin-logo-section${!isSidebarOpen ? ' sidebar-closed' : ''}`}>
         <img src={isSidebarOpen ? robinsonsLogo : redROB} alt="Robinsons" className={`admin-header-logo${!isSidebarOpen ? ' red-logo' : ''}`} />
       </div>
-      
+
       <div className="admin-header-main">
         <div className="admin-header-left">
           <button className="sidebar-toggle-btn" onClick={toggleSidebar}>
@@ -143,9 +143,9 @@ const AdminHeader = ({ toggleSidebar, user, isSidebarOpen, onLogout }) => {
           <div className="header-separator"></div>
           <div className="header-search-container" ref={dropdownRef}>
             <i className="fa-solid fa-magnifying-glass"></i>
-            <input 
-              type="text" 
-              placeholder="Search pages..." 
+            <input
+              type="text"
+              placeholder="Search pages..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               onFocus={() => searchQuery.trim() !== '' && setShowDropdown(true)}
@@ -154,8 +154,8 @@ const AdminHeader = ({ toggleSidebar, user, isSidebarOpen, onLogout }) => {
               <div className="search-results-dropdown">
                 <div className="dropdown-header">Quick Results</div>
                 {filteredPages.map((page, index) => (
-                  <div 
-                    key={index} 
+                  <div
+                    key={index}
                     className="search-result-item"
                     onClick={() => handlePageSelect(page.path)}
                   >
@@ -172,7 +172,7 @@ const AdminHeader = ({ toggleSidebar, user, isSidebarOpen, onLogout }) => {
             )}
           </div>
         </div>
-        
+
         <div className="admin-header-right">
           <div className="header-icon-btn" onClick={() => navigate('/privacy-policy')}>
             <i className="fa-solid fa-question-circle"></i>
@@ -222,30 +222,30 @@ const AdminHeader = ({ toggleSidebar, user, isSidebarOpen, onLogout }) => {
               </div>
             )}
           </div>
-          
+
           <div className="header-user-profile" ref={profileDropdownRef}>
-            <div onClick={toggleProfileDropdown} style={{display: 'flex', alignItems: 'center', cursor: 'pointer'}}>
+            <div onClick={toggleProfileDropdown} style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
               <div className="profile-avatar">
                 <i className="fa-solid fa-user-circle"></i>
               </div>
               <i className="fa-solid fa-chevron-down profile-caret hide-mobile"></i>
             </div>
             {isProfileDropdownOpen && (
-                <div className="profile-dropdown">
-                    <div className="profile-dropdown-item" onClick={() => navigate(`${pathPrefix}/settings`)}>
-                        <i className="fa-solid fa-gear"></i>
-                        <span>Settings</span>
-                    </div>
-                    <div className="profile-dropdown-item" onClick={handleLogout}>
-                        <i className="fa-solid fa-arrow-right-from-bracket"></i>
-                        <span>Log Out</span>
-                    </div>
+              <div className="profile-dropdown">
+                <div className="profile-dropdown-item" onClick={() => navigate(`${pathPrefix}/settings`)}>
+                  <i className="fa-solid fa-gear"></i>
+                  <span>Settings</span>
                 </div>
+                <div className="profile-dropdown-item" onClick={handleLogout}>
+                  <i className="fa-solid fa-arrow-right-from-bracket"></i>
+                  <span>Log Out</span>
+                </div>
+              </div>
             )}
           </div>
         </div>
       </div>
-      <ActionConfirmModal 
+      <ActionConfirmModal
         {...confirmConfig}
         onClose={() => setConfirmConfig(p => ({ ...p, show: false }))}
       />

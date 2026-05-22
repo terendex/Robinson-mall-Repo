@@ -166,7 +166,8 @@
   transition: all 0.2s;
 }
 
-.custom-filter-button:hover, .custom-filter-button.active {
+.custom-filter-button:hover,
+.custom-filter-button.active {
   background-color: #eeeeee;
   border-color: #bdbdbd;
 }
@@ -287,7 +288,8 @@
 
 .timeline-cell {
   line-height: 1.6;
-  white-space: nowrap; /* Prevent date ranges wrapping to 2 lines */
+  white-space: nowrap;
+  /* Prevent date ranges wrapping to 2 lines */
 }
 
 /* Status Badges */
@@ -405,7 +407,8 @@
 /* -- Mobile Responsive -- */
 @media (max-width: 768px) {
   .campaigns-page {
-    padding: 1.25rem 0.5rem; /* Removed side white space */
+    padding: 1.25rem 0.5rem;
+    /* Removed side white space */
   }
 
   .campaigns-header {

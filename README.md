@@ -108,7 +108,7 @@ These accounts are ideal for testing general permissions and default layouts:
 
 | Role | Email | Password | Purpose / Notes |
 | :--- | :--- | :--- | :--- |
-| **Admin** | `admin` | `RobinsonMall@2026` | Access to entire portal, user management, and advanced statistics. |
+| **Admin** | `admin@example.com` | `RobinsonMall@2026` | Access to entire portal, user management, and advanced statistics. |
 | **Manager** | `manager@example.com` | `managerpassword` | Create campaigns, manage stores, view dashboard statistics. |
 | **Staff** | `staff@example.com` | `staffpassword` | Scan/redeem vouchers, lookup claims, manage participating stores. |
 | **Customer** | `customer@example.com` | `customerpassword` | Submit voucher claims, view personal transactions and notifications. |

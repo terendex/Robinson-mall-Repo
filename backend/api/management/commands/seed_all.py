@@ -20,8 +20,8 @@ class Command(BaseCommand):
         # Seed users
         users_data = [
             {
-                "email": "admin",
-                "password": "adminpassword",
+                "email": "admin@example.com",
+                "password": "RobinsonMall@2026",
                 "role": "admin",
                 "phone_number": "0917 123 4567"
             },
